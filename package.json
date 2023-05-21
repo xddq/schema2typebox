@@ -1,8 +1,13 @@
 {
   "name": "schema2typebox",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "dist/src/index.js",
-  "repository": "git@github.com:xddq/schema2typebox",
+  "source": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
+  "bin": {
+    "schema-to-typebox": "dist/src/index.js",
+    "schema2typebox": "dist/src/index.js"
+  },
   "author": "Pierre Dahmani <hi@pierre-dev.com>",
   "license": "MIT",
   "scripts": {
@@ -19,8 +24,32 @@
     "watch-node": "node tasks.mjs watch-node",
     "watch-ts": "node tasks.mjs watch-ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xddq/schema2typebox.git"
+  },
+  "keywords": [
+    "JSON schema",
+    "schema2typebox",
+    "schema-to-typebox",
+    "schema",
+    "typescript",
+    "typebox",
+    "ts",
+    "validation",
+    "parsing",
+    "IO",
+    "cli"
+  ],
+  "dependencies": {
+    "@sinclair/typebox": "0.28.10",
+    "minimist": "1.2.8",
+    "prettier": "2.8.7",
+    "typescript": "5.0.4"
+  },
   "devDependencies": {
     "@tsconfig/node18": "2.0.0",
+    "@types/minimist": "1.2.2",
     "@types/node": "18.16.8",
     "@types/nodemon": "1.19.2",
     "@types/shelljs": "0.8.12",

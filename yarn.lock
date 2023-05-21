@@ -289,6 +289,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sinclair/typebox@npm:0.28.10":
+  version: 0.28.10
+  resolution: "@sinclair/typebox@npm:0.28.10"
+  checksum: 3fd5c74e78d554cef8df3a983618dc3c0ea4a2447572754b3ea843357fe266c68fdb715501d2e7730f4818feaab7580bad7c752df65baf8addd55e453c601c12
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -324,6 +331,13 @@ __metadata:
   version: 5.1.2
   resolution: "@types/minimatch@npm:5.1.2"
   checksum: 0391a282860c7cb6fe262c12b99564732401bdaa5e395bee9ca323c312c1a0f45efbf34dce974682036e857db59a5c9b1da522f3d6055aeead7097264c8705a8
+  languageName: node
+  linkType: hard
+
+"@types/minimist@npm:1.2.2":
+  version: 1.2.2
+  resolution: "@types/minimist@npm:1.2.2"
+  checksum: b8da83c66eb4aac0440e64674b19564d9d86c80ae273144db9681e5eeff66f238ade9515f5006ffbfa955ceff8b89ad2bd8ec577d7caee74ba101431fb07045d
   languageName: node
   linkType: hard
 
@@ -1735,6 +1749,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimist@npm:1.2.8":
+  version: 1.2.8
+  resolution: "minimist@npm:1.2.8"
+  checksum: 75a6d645fb122dad29c06a7597bddea977258957ed88d7a6df59b5cd3fe4a527e253e9bbf2e783e4b73657f9098b96a5fe96ab8a113655d4109108577ecf85b0
+  languageName: node
+  linkType: hard
+
 "minipass-collect@npm:^1.0.2":
   version: 1.0.2
   resolution: "minipass-collect@npm:1.0.2"
@@ -1875,27 +1896,6 @@ __metadata:
   checksum: b860e9976fa645ca0789c69e25387401b4396b93c8375489b5151a6c55cf2640a3b6183c212b38625ef7c508994930b72198338e3d09b9d7ade5acc4aaf51ea7
   languageName: node
   linkType: hard
-
-"nodejs-typescript-modern-starter@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "nodejs-typescript-modern-starter@workspace:."
-  dependencies:
-    "@tsconfig/node18": 2.0.0
-    "@types/node": 18.16.8
-    "@types/nodemon": 1.19.2
-    "@types/shelljs": 0.8.12
-    "@typescript-eslint/eslint-plugin": 5.59.6
-    "@typescript-eslint/parser": 5.59.6
-    concurrently: 7.6.0
-    esbuild: 0.17.18
-    eslint: 8.40.0
-    eslint-config-prettier: 8.8.0
-    nodemon: 2.0.22
-    prettier: 2.8.8
-    shelljs: 0.8.5
-    typescript: 5.0.4
-  languageName: unknown
-  linkType: soft
 
 "nodemon@npm:2.0.22":
   version: 2.0.22
@@ -2245,6 +2245,33 @@ __metadata:
   checksum: cab8f25ae6f1434abee8d80023d7e72b598cf1327164ddab31003c51215526801e40b66c5e65d658a0af1e9d6478cadcb4c745f4bd6751f97d8644786c0978b0
   languageName: node
   linkType: hard
+
+"schema2typebox@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "schema2typebox@workspace:."
+  dependencies:
+    "@sinclair/typebox": 0.28.10
+    "@tsconfig/node18": 2.0.0
+    "@types/minimist": 1.2.2
+    "@types/node": 18.16.8
+    "@types/nodemon": 1.19.2
+    "@types/shelljs": 0.8.12
+    "@typescript-eslint/eslint-plugin": 5.59.6
+    "@typescript-eslint/parser": 5.59.6
+    concurrently: 7.6.0
+    esbuild: 0.17.18
+    eslint: 8.40.0
+    eslint-config-prettier: 8.8.0
+    minimist: 1.2.8
+    nodemon: 2.0.22
+    prettier: 2.8.8
+    shelljs: 0.8.5
+    typescript: 5.0.4
+  bin:
+    schema-to-typebox: dist/src/index.js
+    schema2typebox: dist/src/index.js
+  languageName: unknown
+  linkType: soft
 
 "semver@npm:^5.7.1":
   version: 5.7.1

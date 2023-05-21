@@ -1,18 +1,23 @@
-const main = () => {
-  console.log("hello Node.js and Typescript world :]");
+#!/usr/bin/env node
+// import minimist from "minimist";
+
+// import { ts2typebox } from "./programmatic-usage";
+// export { ts2typebox, Ts2TypeboxOptions } from "./programmatic-usage";
+
+const main = async () => {
+  // const args = minimist(process.argv.slice(2), {
+  //   alias: {
+  //     input: "i",
+  //     output: "o",
+  //     help: "h",
+  //   },
+  //   default: {
+  //     input: "schema.json",
+  //     output: "generated-types.ts",
+  //   },
+  // });
+
+  console.log("Dummy output. Package is WIP.");
 };
-
-// This was just here to force a linting error for now to demonstrate/test the
-// eslint pipeline. You can uncomment this and run "yarn check-lint" to test the
-// linting.
-// const x: number[] = [1, 2];
-// const y: Array<number> = [3, 4];
-
-// This was just here to force a linting error for now to demonstrate/test the
-// eslint pipeline. You can uncomment this and run "yarn check-lint" to test the
-// linting.
-// if (x == y) {
-//   console.log("equal!");
-// }
 
 main();
