@@ -51,7 +51,6 @@ const mapSimpleType = (
  *
  * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
  * @param propertyName The name of the attribute/property currently being collected.
- * @param description The description of the attribute/property currently being collected.
  * @throws Error
  */
 export const collect = (
