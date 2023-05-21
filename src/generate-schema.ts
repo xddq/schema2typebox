@@ -9,11 +9,18 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  name: string;
+  name?: string;
 };
 
 const PersonSchema = Type.Object({
-  name: Type.String(),
+  name: Type.Optional(
+    Type.String({
+      description: "full name of the person",
+      minLength: 1,
+      maxLength: 100,
+      pattern: `^[a-zA-Z]+(\s)+[a-zA-Z]+$`,
+    })
+  ),
 });
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
@@ -30,9 +37,5 @@ export const x: Equal<Person, PersonTypeFromSchema> = true;
 
 export const generateDummySchema = () => {
   const schemaAsString = JSON.stringify(PersonSchema, null, 2);
-  fs.writeFileSync(
-    process.cwd() + "/dummy-schema.json",
-    schemaAsString,
-    "utf-8"
-  );
+  fs.writeFileSync(process.cwd() + "/schema.json", schemaAsString, "utf-8");
 };

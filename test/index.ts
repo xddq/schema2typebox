@@ -76,4 +76,57 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with optional string property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      name: Type.Optional(Type.String()),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with string that has schemaOptions", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "full name of the person",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[a-zA-Z]+(s)+[a-zA-Z]+$",
+          "type": "string"
+        }
+      }
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      name: Type.Optional(
+        Type.String({
+          description: "full name of the person",
+          minLength: 1,
+          maxLength: 100,
+          pattern: "^[a-zA-Z]+(\s)+[a-zA-Z]+$",
+        })
+      ),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

@@ -10,7 +10,6 @@ export const schema2Typebox = (jsonSchema: string) => {
   // console.log("** for now we are just printing the schema itself **");
   // console.log(jsonSchema);
   const schemaObj = JSON.parse(jsonSchema);
-  console.error("Schema that was given\n", jsonSchema);
 
   const typeBoxType = collect(schemaObj, []);
   // TODO: rather use "title" from json schema than default to "T"
@@ -36,6 +35,7 @@ const generateTypeForName = (name: string) => {
  *
  * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
  * @param propertyName The name of the attribute/property currently being collected.
+ * @param description The description of the attribute/property currently being collected.
  * @throws Error
  */
 export const collect = (
@@ -57,14 +57,67 @@ export const collect = (
     );
     return `Type.Object({\n${typeboxForProperties}\n})`;
   } else if (type === "string") {
+    console.log("type was string");
     if (propertyName === undefined) {
       throw new Error("expected propertyName to be defined. Got: undefined");
     }
+    const schemaOptions = getSchemaOptions(schemaObj).reduce<
+      Record<string, any>
+    >((prev, [optionName, optionValue]) => {
+      prev[optionName] = optionValue;
+      return prev;
+    }, {});
+    if (Object.keys(schemaOptions).length === 0) {
+      return requiredAttributes.includes(propertyName)
+        ? `${propertyName}: Type.String()\n`
+        : `${propertyName}: Type.Optional(Type.String())\n`;
+    }
     return requiredAttributes.includes(propertyName)
-      ? `${propertyName}: Type.String()\n`
-      : `${propertyName}: Type.Optional(Type.String())\n`;
+      ? `${propertyName}: Type.String(${JSON.stringify(schemaOptions)})\n`
+      : `${propertyName}: Type.Optional(Type.String(${JSON.stringify(
+          schemaOptions
+        )}))\n`;
   }
   throw new Error(`cant collect ${type} yet`);
+};
+
+type SchemaOptionName = string;
+type SchemaOptionValue = any;
+
+/**
+ * Takes an object describing a JSON schema instance and returns a list of
+ * tuples for all attributes/properties where the first item is the attribute name and the second one the corresponding value.
+ * Only returns property/value pairs which are required to build the typebox
+ * schemaOptions (meaning something like "type" is ignored since it does not
+ * control the schemaOptions in typebox :]).
+ *
+ * Example:
+ *
+ * ```
+ * {
+ *   "description": "full name of the person",
+ *   "type": "string"
+ * }
+ *
+ * ```
+ *
+ * Returns:
+ *
+ * ```
+ * [["description", "full name of the person"]]
+ *
+ * ```
+ */
+const getSchemaOptions = (
+  schemaObj: Record<string, any>
+): (readonly [SchemaOptionName, SchemaOptionValue])[] => {
+  const properties = Object.keys(schemaObj);
+  const schemaOptionProperties = properties.filter((currItem) => {
+    return currItem !== "type";
+  });
+  return schemaOptionProperties.map((currItem) => {
+    return [currItem, schemaObj[currItem]] as const;
+  });
 };
 
 /**
