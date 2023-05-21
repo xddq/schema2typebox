@@ -76,4 +76,85 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with optional string property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      name: Type.Optional(Type.String()),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with string that has schemaOptions", () => {
+    // src for properties
+    // 1. https://datatracker.ietf.org/doc/html/draft-wright-json-schema-validation-00#section-5
+    // (careful, this is 2020 spec src):
+    // 2. https://json-schema.org/draft/2020-12/json-schema-validation.html#name-validation-keywords-for-num
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "full name of the person",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[a-zA-Z]+(s)+[a-zA-Z]+$",
+          "type": "string"
+        }
+      }
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      name: Type.Optional(
+        Type.String({
+          description: "full name of the person",
+          minLength: 1,
+          maxLength: 100,
+          pattern: "^[a-zA-Z]+(\s)+[a-zA-Z]+$",
+        })
+      ),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with required number property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "age"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      age: Type.Number()
+    })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

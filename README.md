@@ -29,8 +29,8 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
   can focus on putting the "business logic" inside `./src/schema-to-typebox.ts`.
 - You can use ./src/generate-dummy-schema.ts to generate a dummy json schema
   based on the typebox type you specify. Simply run `yarn build && yarn
-gen-dummy` and you will end up having that schema as ./dummy-schema.json inside
-  the root of the repo.
+gen-dummy` and you will end up having that schema as ./schema.json inside the
+  root of the repo.
 
 ### The stuff below is left over from copying from using the template from
 

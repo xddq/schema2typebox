@@ -9,11 +9,11 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  name: string;
+  age: number;
 };
 
 const PersonSchema = Type.Object({
-  name: Type.String(),
+  age: Type.Number(),
 });
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
@@ -30,9 +30,5 @@ export const x: Equal<Person, PersonTypeFromSchema> = true;
 
 export const generateDummySchema = () => {
   const schemaAsString = JSON.stringify(PersonSchema, null, 2);
-  fs.writeFileSync(
-    process.cwd() + "/dummy-schema.json",
-    schemaAsString,
-    "utf-8"
-  );
+  fs.writeFileSync(process.cwd() + "/schema.json", schemaAsString, "utf-8");
 };
