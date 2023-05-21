@@ -1,8 +1,8 @@
 {
-  "name": "nodejs-typescript-modern-starter",
+  "name": "schema2typebox",
   "version": "1.0.0",
   "main": "dist/src/index.js",
-  "repository": "git@github.com:xddq/nodejs-typescript-modern-starter",
+  "repository": "git@github.com:xddq/schema2typebox",
   "author": "Pierre Dahmani <hi@pierre-dev.com>",
   "license": "MIT",
   "scripts": {
