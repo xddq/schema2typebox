@@ -139,3 +139,4 @@ node_modules
 TODO
 # eslintignore specific
 .yarn
+generated-types.ts
