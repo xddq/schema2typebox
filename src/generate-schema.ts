@@ -10,12 +10,10 @@ import fs from "node:fs";
 
 type Person = {
   name: string;
-  age: number;
 };
 
 const PersonSchema = Type.Object({
   name: Type.String(),
-  age: Type.Number(),
 });
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
@@ -28,12 +26,7 @@ type PersonTypeFromSchema = Static<typeof PersonSchema>;
  * should work.
  */
 type Equal<T, U> = T extends U ? (U extends T ? true : false) : false;
-
-const x: Equal<Person, PersonTypeFromSchema> = true;
-console.log(
-  "dummy output in generate-schema.ts to quickly get rid of unused var error :] ",
-  x
-);
+export const x: Equal<Person, PersonTypeFromSchema> = true;
 
 export const generateDummySchema = () => {
   const schemaAsString = JSON.stringify(PersonSchema, null, 2);
