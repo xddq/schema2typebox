@@ -4,7 +4,7 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
 
 ## Installation
 
-- `npm i -g ts2typebox`
+- `npm i -g schema2typebox`
 
 ## Usage
 
