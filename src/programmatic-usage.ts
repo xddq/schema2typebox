@@ -55,10 +55,8 @@ export const schema2typebox = async ({
     return;
   }
 
-  // NOTE: for development use dummy-schema instead of schema.json
-  // perhaps just adapt generate-dummy-schema to output to schema.json file.
   const jsonSchema = fs.readFileSync(
-    process.cwd() + `/${input === undefined ? "dummy-schema.json" : input}`,
+    process.cwd() + `/${input === undefined ? "schema.json" : input}`,
     "utf8"
   );
   const generatedTypeboxCode = Schema2Typebox(jsonSchema);
