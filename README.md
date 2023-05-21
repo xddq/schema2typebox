@@ -13,7 +13,27 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
   output to "generated-types.ts" relative to the current working directory. For
   more see (TODO: link to documentation of cli usage here :])
 
+## DEV NOTES
+
+- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
+- link to meta schema: http://json-schema.org/draft-06/schema
+
+### DEV USAGE
+
+- I would suggest we use github discussions whenever we have ideas/thoughts and
+  use feature branch worklow (with reviews) whenever we want to put changes into
+  this codebase.
+- I would suggest we generate tests whenever we add new features in order to
+  decrease the mental overhead we have for reviewing or developing.
+- I created a skeleton package and prepared everything (more or less) so that we
+  can focus on putting the "business logic" inside `./src/schema-to-typebox.ts`.
+- You can use ./src/generate-dummy-schema.ts to generate a dummy json schema
+  based on the typebox type you specify. Simply run `yarn build && yarn
+gen-dummy` and you will end up having that schema as ./dummy-schema.json inside
+  the root of the repo.
+
 ### The stuff below is left over from copying from using the template from
+
 [here](https://github.com/xddq/nodejs-typescript-modern-starter) and can be read
 through for understanding the basic setup.
 

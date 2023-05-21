@@ -9,7 +9,8 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
   },
   "include": ["src", "test"],
   "exclude": ["dist", "bundle", "node_modules"]
