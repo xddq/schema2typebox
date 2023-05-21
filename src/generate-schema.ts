@@ -9,11 +9,11 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  age: number;
+  funny: boolean;
 };
 
 const PersonSchema = Type.Object({
-  age: Type.Number(),
+  funny: Type.Boolean(),
 });
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
