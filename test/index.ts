@@ -98,6 +98,10 @@ describe("schema2typebox - collect()", () => {
     );
   });
   test("object with string that has schemaOptions", () => {
+    // src for properties
+    // 1. https://datatracker.ietf.org/doc/html/draft-wright-json-schema-validation-00#section-5
+    // (careful, this is 2020 spec src):
+    // 2. https://json-schema.org/draft/2020-12/json-schema-validation.html#name-validation-keywords-for-num
     const dummySchema = `
     {
       "type": "object",
@@ -123,6 +127,30 @@ describe("schema2typebox - collect()", () => {
         })
       ),
     });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with required number property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "age"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      age: Type.Number()
+    })
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),

@@ -9,18 +9,11 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  name?: string;
+  age: number;
 };
 
 const PersonSchema = Type.Object({
-  name: Type.Optional(
-    Type.String({
-      description: "full name of the person",
-      minLength: 1,
-      maxLength: 100,
-      pattern: `^[a-zA-Z]+(\s)+[a-zA-Z]+$`,
-    })
-  ),
+  age: Type.Number(),
 });
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 

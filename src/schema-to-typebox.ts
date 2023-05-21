@@ -32,6 +32,22 @@ const generateTypeForName = (name: string) => {
 };
 
 /**
+ * "SimpleType" here basically means any type that is directly mapable to a
+ * Typebox type without any recursion (everything besides "array" and "object"
+ * in Practice :])
+ */
+const mapSimpleType = (
+  type: "string" | "number",
+  schemaOptions: Record<string, any>
+) => {
+  const schemaOptionsString =
+    Object.keys(schemaOptions).length > 0 ? JSON.stringify(schemaOptions) : "";
+  return type === "string"
+    ? `Type.String(${schemaOptionsString})`
+    : `Type.Number(${schemaOptionsString})`;
+};
+
+/**
  *
  * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
  * @param propertyName The name of the attribute/property currently being collected.
@@ -56,7 +72,7 @@ export const collect = (
       }
     );
     return `Type.Object({\n${typeboxForProperties}\n})`;
-  } else if (type === "string") {
+  } else if (type === "string" || type === "number") {
     console.log("type was string");
     if (propertyName === undefined) {
       throw new Error("expected propertyName to be defined. Got: undefined");
@@ -67,17 +83,12 @@ export const collect = (
       prev[optionName] = optionValue;
       return prev;
     }, {});
-    if (Object.keys(schemaOptions).length === 0) {
-      return requiredAttributes.includes(propertyName)
-        ? `${propertyName}: Type.String()\n`
-        : `${propertyName}: Type.Optional(Type.String())\n`;
-    }
+    const simpleType = mapSimpleType(type, schemaOptions);
     return requiredAttributes.includes(propertyName)
-      ? `${propertyName}: Type.String(${JSON.stringify(schemaOptions)})\n`
-      : `${propertyName}: Type.Optional(Type.String(${JSON.stringify(
-          schemaOptions
-        )}))\n`;
+      ? `${propertyName}: ${simpleType}\n`
+      : `${propertyName}: Type.Optional(${simpleType})\n`;
   }
+
   throw new Error(`cant collect ${type} yet`);
 };
 
@@ -128,7 +139,7 @@ const getSchemaOptions = (
  * "An instance has one of six primitive types, and a range of possible
    values depending on the type:"
  */
-const VALID_TYPE_VALUES = ["object", "string"] as const;
+const VALID_TYPE_VALUES = ["object", "string", "number"] as const;
 type VALID_TYPE_VALUE = (typeof VALID_TYPE_VALUES)[number];
 
 type PropertyName = string;
