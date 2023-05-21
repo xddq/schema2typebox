@@ -80,8 +80,13 @@ export const collect = (
       }
     );
     return `Type.Object({\n${typeboxForProperties}\n})`;
-  } else if (type === "string" || type === "number") {
-    console.log("type was string or number");
+  } else if (
+    type === "string" ||
+    type === "number" ||
+    type === "null" ||
+    type === "boolean"
+  ) {
+    console.log("type was string or number or null or boolean");
     if (propertyName === undefined) {
       throw new Error("expected propertyName to be defined. Got: undefined");
     }
@@ -92,14 +97,6 @@ export const collect = (
       return prev;
     }, {});
     const simpleType = mapSimpleType(type, schemaOptions);
-    return requiredAttributes.includes(propertyName)
-      ? `${propertyName}: ${simpleType}\n`
-      : `${propertyName}: Type.Optional(${simpleType})\n`;
-  } else if (type === "null" || type === "boolean") {
-    if (propertyName === undefined) {
-      throw new Error("expected propertyName to be defined. Got: undefined");
-    }
-    const simpleType = mapSimpleType(type, {});
     return requiredAttributes.includes(propertyName)
       ? `${propertyName}: ${simpleType}\n`
       : `${propertyName}: Type.Optional(${simpleType})\n`;
