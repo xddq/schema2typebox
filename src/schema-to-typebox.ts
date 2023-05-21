@@ -11,8 +11,25 @@ export const schema2Typebox = (jsonSchema: string) => {
   // console.log(jsonSchema);
   const schemaObj = JSON.parse(jsonSchema);
   console.error("Schema that was given\n", jsonSchema);
-  const result = collect(schemaObj, []);
-  return result;
+
+  const typeBoxType = collect(schemaObj, []);
+  // TODO: rather use "title" from json schema than default to "T"
+  const valueName = "T";
+  const typeForObj = generateTypeForName(valueName);
+  return `import { Type, Static } from "@sinclair/typebox";
+
+${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
+};
+
+const generateTypeForName = (name: string) => {
+  const [head, ...tail] = name;
+  if (head === undefined) {
+    throw new Error(`Can't generate type for empty string. Got input: ${name}`);
+  }
+  if (tail.length === 0) {
+    return `type ${head.toUpperCase()} = Static<typeof ${name}>`;
+  }
+  return `type ${head.toUpperCase}${tail.join("")} = Static<typeof ${name}>`;
 };
 
 /**
@@ -21,9 +38,9 @@ export const schema2Typebox = (jsonSchema: string) => {
  * @param propertyName The name of the attribute/property currently being collected.
  * @throws Error
  */
-const collect = (
+export const collect = (
   schemaObj: Record<string, any>,
-  requiredAttributes: string[],
+  requiredAttributes: string[] = [],
   propertyName?: string
 ): string => {
   const type = getType(schemaObj);
