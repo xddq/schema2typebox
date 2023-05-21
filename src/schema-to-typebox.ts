@@ -37,14 +37,23 @@ const generateTypeForName = (name: string) => {
  * in Practice :])
  */
 const mapSimpleType = (
-  type: "string" | "number",
+  // TODO: omit array and objeclater
+  type: VALID_TYPE_VALUE,
   schemaOptions: Record<string, any>
 ) => {
   const schemaOptionsString =
     Object.keys(schemaOptions).length > 0 ? JSON.stringify(schemaOptions) : "";
+  // TODO: use if else or switch case later. throw error if array or object (or
+  // cut the type)
   return type === "string"
     ? `Type.String(${schemaOptionsString})`
-    : `Type.Number(${schemaOptionsString})`;
+    : type === "number"
+    ? `Type.Number(${schemaOptionsString})`
+    : type === "null"
+    ? `Type.Null(${schemaOptionsString})`
+    : type === "boolean"
+    ? `Type.Boolean(${schemaOptionsString})`
+    : "WRONG";
 };
 
 /**
@@ -72,7 +81,7 @@ export const collect = (
     );
     return `Type.Object({\n${typeboxForProperties}\n})`;
   } else if (type === "string" || type === "number") {
-    console.log("type was string");
+    console.log("type was string or number");
     if (propertyName === undefined) {
       throw new Error("expected propertyName to be defined. Got: undefined");
     }
@@ -83,6 +92,14 @@ export const collect = (
       return prev;
     }, {});
     const simpleType = mapSimpleType(type, schemaOptions);
+    return requiredAttributes.includes(propertyName)
+      ? `${propertyName}: ${simpleType}\n`
+      : `${propertyName}: Type.Optional(${simpleType})\n`;
+  } else if (type === "null" || type === "boolean") {
+    if (propertyName === undefined) {
+      throw new Error("expected propertyName to be defined. Got: undefined");
+    }
+    const simpleType = mapSimpleType(type, {});
     return requiredAttributes.includes(propertyName)
       ? `${propertyName}: ${simpleType}\n`
       : `${propertyName}: Type.Optional(${simpleType})\n`;
@@ -138,7 +155,13 @@ const getSchemaOptions = (
  * "An instance has one of six primitive types, and a range of possible
    values depending on the type:"
  */
-const VALID_TYPE_VALUES = ["object", "string", "number"] as const;
+const VALID_TYPE_VALUES = [
+  "object",
+  "string",
+  "number",
+  "null",
+  "boolean",
+] as const;
 type VALID_TYPE_VALUE = (typeof VALID_TYPE_VALUES)[number];
 
 type PropertyName = string;

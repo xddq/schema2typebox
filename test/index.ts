@@ -157,4 +157,52 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with null property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "age"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      age: Type.Null()
+    })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with boolean property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "funny": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "funny"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      funny: Type.Boolean()
+    })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });
