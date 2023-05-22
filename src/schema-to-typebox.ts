@@ -92,19 +92,17 @@ export const collect = (
     type === "boolean"
   ) {
     console.log("type was string or number or null or boolean");
-    // propertyName is undefined if previous recursion was of type 'array' and
-    // we passed the 'items' object as new schemaObj. For this kind of schemaObj
-    // we also have no schemaOptions since they are passed to the parent 'array'
-    // schema (e.g. minItems: 2, uniqueItems: true, etc..)
-    if (propertyName === undefined) {
-      return mapSimpleType(type, {});
-    }
     const schemaOptions = getSchemaOptions(schemaObj).reduce<
       Record<string, any>
     >((prev, [optionName, optionValue]) => {
       prev[optionName] = optionValue;
       return prev;
     }, {});
+    // propertyName is undefined if previous recursion was of type 'array' and
+    // we passed the 'items' object as new schemaObj.
+    if (propertyName === undefined) {
+      return mapSimpleType(type, schemaOptions);
+    }
     const simpleType = mapSimpleType(type, schemaOptions);
     return requiredAttributes.includes(propertyName)
       ? `${propertyName}: ${simpleType}\n`

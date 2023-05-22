@@ -8,22 +8,12 @@
 import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
-type Address = {
-  street: string;
-  city: string;
-};
-
 type Person = {
-  address: Address;
+  hobbies: string[];
 };
-
-const AddressSchema = Type.Object({
-  street: Type.String(),
-  city: Type.String(),
-});
 
 const PersonSchema = Type.Object({
-  address: AddressSchema,
+  hobbies: Type.Array(Type.String({ minLength: 1 }), { minItems: 1 }),
 });
 
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
