@@ -57,6 +57,8 @@ const mapSimpleType = (
 };
 
 /**
+ * Takes the root schemaObject and recursively collects the corresponding types
+ * for it. Returns the matching typebox code representing the schemaObject.
  *
  * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
  * @param propertyName The name of the attribute/property currently being collected.
@@ -79,7 +81,10 @@ export const collect = (
         return collect(property, requiredAttributesOfObject, propertyName);
       }
     );
-    return `Type.Object({\n${typeboxForProperties}\n})`;
+    // propertyName will only be undefined for the "top level" schemaObj
+    return propertyName === undefined
+      ? `Type.Object({\n${typeboxForProperties}\n})`
+      : `${propertyName}: Type.Object({\n${typeboxForProperties}\n})`;
   } else if (
     type === "string" ||
     type === "number" ||
@@ -87,8 +92,12 @@ export const collect = (
     type === "boolean"
   ) {
     console.log("type was string or number or null or boolean");
+    // propertyName is undefined if previous recursion was of type 'array' and
+    // we passed the 'items' object as new schemaObj. For this kind of schemaObj
+    // we also have no schemaOptions since they are passed to the parent 'array'
+    // schema (e.g. minItems: 2, uniqueItems: true, etc..)
     if (propertyName === undefined) {
-      throw new Error("expected propertyName to be defined. Got: undefined");
+      return mapSimpleType(type, {});
     }
     const schemaOptions = getSchemaOptions(schemaObj).reduce<
       Record<string, any>
@@ -100,6 +109,30 @@ export const collect = (
     return requiredAttributes.includes(propertyName)
       ? `${propertyName}: ${simpleType}\n`
       : `${propertyName}: Type.Optional(${simpleType})\n`;
+  } else if (type === "array") {
+    console.log("type was array");
+    if (propertyName === undefined) {
+      throw new Error("expected propertyName to be defined. Got: undefined");
+    }
+    // assumes that instance of type "array" has the "items" key.
+    const itemsSchemaObj = schemaObj["items"];
+    if (itemsSchemaObj === undefined) {
+      throw new Error(
+        "expected instance of type 'array' to contain 'items' object. Got: undefined"
+      );
+    }
+    const schemaOptions = getSchemaOptions(schemaObj).reduce<
+      Record<string, any>
+    >((prev, [optionName, optionValue]) => {
+      prev[optionName] = optionValue;
+      return prev;
+    }, {});
+    if (Object.keys(schemaObj).length > 0) {
+      return `${propertyName}: Type.Array(${collect(
+        itemsSchemaObj
+      )}, (${JSON.stringify(schemaOptions)}))`;
+    }
+    return `${propertyName}: Type.Array(${collect(itemsSchemaObj)})`;
   }
 
   throw new Error(`cant collect ${type} yet`);
@@ -137,7 +170,7 @@ const getSchemaOptions = (
 ): (readonly [SchemaOptionName, SchemaOptionValue])[] => {
   const properties = Object.keys(schemaObj);
   const schemaOptionProperties = properties.filter((currItem) => {
-    return currItem !== "type";
+    return currItem !== "type" && currItem !== "items";
   });
   return schemaOptionProperties.map((currItem) => {
     return [currItem, schemaObj[currItem]] as const;
@@ -158,6 +191,7 @@ const VALID_TYPE_VALUES = [
   "number",
   "null",
   "boolean",
+  "array",
 ] as const;
 type VALID_TYPE_VALUE = (typeof VALID_TYPE_VALUES)[number];
 
@@ -222,7 +256,3 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
 
   return type;
 };
-
-export const generate = () => {};
-
-export const visit = () => {};

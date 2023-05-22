@@ -8,13 +8,24 @@
 import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
-type Person = {
-  funny: boolean;
+type Address = {
+  street: string;
+  city: string;
 };
 
-const PersonSchema = Type.Object({
-  funny: Type.Boolean(),
+type Person = {
+  address: Address;
+};
+
+const AddressSchema = Type.Object({
+  street: Type.String(),
+  city: Type.String(),
 });
+
+const PersonSchema = Type.Object({
+  address: AddressSchema,
+});
+
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
 /**
