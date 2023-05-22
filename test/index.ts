@@ -205,4 +205,72 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with array property and simple type (string)", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "hobbies": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "hobbies"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      hobbies: Type.Array(Type.String(), { minItems: 1 }),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  // TODO: test object with array property and object type
+  test("object with object property", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "object",
+          "properties": {
+            "street": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "street",
+            "city"
+          ]
+        }
+      },
+      "required": [
+        "address"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      address: Type.Object({
+      street: Type.String(),
+      city: Type.String()
+      })
+    })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

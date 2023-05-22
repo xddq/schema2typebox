@@ -9,12 +9,13 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  funny: boolean;
+  hobbies: string[];
 };
 
 const PersonSchema = Type.Object({
-  funny: Type.Boolean(),
+  hobbies: Type.Array(Type.String({ minLength: 1 }), { minItems: 1 }),
 });
+
 type PersonTypeFromSchema = Static<typeof PersonSchema>;
 
 /**
