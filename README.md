@@ -16,7 +16,9 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
 ## DEV NOTES
 
 - See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
-- link to meta schema: http://json-schema.org/draft-06/schema
+- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
+  that a JSON schema is created in order to validate that a given schema adheres
+  to a given JSON schema draft.
 
 ### DEV USAGE
 
