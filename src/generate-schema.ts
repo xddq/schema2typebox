@@ -9,27 +9,13 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  nickname: "xddq";
-  x: 99;
-  y: true;
-  z: false;
-  a: 1[];
-  b: "hi"[];
-  c?: 10;
-  d?: 1[];
-  e?: "hi"[];
+  a: 1 | 2;
+  b: string | number | null;
 };
 
 const PersonSchema = Type.Object({
-  nickname: Type.Literal("xddq"),
-  x: Type.Literal(99),
-  y: Type.Literal(true),
-  z: Type.Literal(false),
-  a: Type.Array(Type.Literal(1)),
-  b: Type.Array(Type.Literal("hi")),
-  c: Type.Optional(Type.Literal(10)),
-  d: Type.Optional(Type.Array(Type.Literal(1))),
-  e: Type.Optional(Type.Array(Type.Literal("hi"))),
+  a: Type.Union([Type.Literal(1), Type.Literal(2)]),
+  b: Type.Union([Type.String(), Type.Number(), Type.Null()]),
 });
 
 type PersonTypeFromSchema = Static<typeof PersonSchema>;

@@ -355,4 +355,52 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with anyOf", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "a": {
+          "anyOf": [
+            {
+              "const": 1,
+              "type": "number"
+            },
+            {
+              "const": 2,
+              "type": "number"
+            }
+          ]
+        },
+        "b": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "a",
+        "b"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      a: Type.Union([Type.Literal(1), Type.Literal(2)]),
+      b: Type.Union([Type.String(), Type.Number(), Type.Null()]),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

@@ -69,6 +69,13 @@ const mapTypeLiteral = (
   return `Type.Literal(${value})`;
 };
 
+type AnyOfSchemaObj = Record<string, any> & { anyOf: Record<string, any>[] };
+const isAnyOfSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is AnyOfSchemaObj => {
+  return schemaObj["anyOf"] !== undefined;
+};
+
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
  * for it. Returns the matching typebox code representing the schemaObject.
@@ -94,8 +101,18 @@ export const collect = (
     propertyName ?? "__NO_MATCH__"
   );
   const isArrayItem = propertyName === undefined;
-  const type = getType(schemaObj);
 
+  // check if we an object with anyOf
+  if (isAnyOfSchemaObj(schemaObj)) {
+    const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
+      collect(currItem)
+    );
+    return propertyName === undefined
+      ? `Type.Union([${typeboxForAnyOfObjects}])\n`
+      : `${propertyName}: Type.Union([\n${typeboxForAnyOfObjects}])\n`;
+  }
+
+  const type = getType(schemaObj);
   if (type === "object") {
     console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
