@@ -58,15 +58,31 @@ const mapSimpleType = (
 const mapTypeLiteral = (
   value: any,
   type: SIMPLE_TYPE,
-  _schemaOptions: Record<string, any>
+  schemaOptions: Record<string, any>
 ) => {
+  delete schemaOptions["const"];
+  let result = "";
+  const hasSchemaOptions = Object.keys(schemaOptions).length > 0;
   if (type === "null") {
-    return `Type.Literal(null)`;
+    if (hasSchemaOptions) {
+      result = `Type.Literal(null, ${JSON.stringify(schemaOptions)})`;
+    } else {
+      result = `Type.Literal(null)`;
+    }
+  } else if (type === "string") {
+    if (hasSchemaOptions) {
+      result = `Type.Literal("${value}", ${JSON.stringify(schemaOptions)})`;
+    } else {
+      result = `Type.Literal("${value}")`;
+    }
+  } else {
+    if (hasSchemaOptions) {
+      result = `Type.Literal(${value}, ${JSON.stringify(schemaOptions)})`;
+    } else {
+      result = `Type.Literal(${value})`;
+    }
   }
-  if (type === "string") {
-    return `Type.Literal("${value}")`;
-  }
-  return `Type.Literal(${value})`;
+  return result;
 };
 
 type AnyOfSchemaObj = Record<string, any> & { anyOf: Record<string, any>[] };
@@ -112,9 +128,22 @@ export const collect = (
     const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
       collect(currItem)
     );
-    return propertyName === undefined
-      ? `Type.Union([${typeboxForAnyOfObjects}])\n`
-      : `${propertyName}: Type.Union([${typeboxForAnyOfObjects}])\n`;
+    let result = "";
+    if (Object.keys(schemaOptions).length > 0) {
+      result = `Type.Union([${typeboxForAnyOfObjects}],${JSON.stringify(
+        schemaOptions
+      )})`;
+    } else {
+      result = `Type.Union([${typeboxForAnyOfObjects}])`;
+    }
+
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+    return result + "\n";
   }
 
   if (isAllOfSchemaObj(schemaObj)) {

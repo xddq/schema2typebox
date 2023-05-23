@@ -384,18 +384,34 @@ describe("schema2typebox - collect()", () => {
               "type": "null"
             }
           ]
+        },
+        "c": {
+          "description": "a union type",
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "description": "can only be 1",
+              "const": 1,
+              "type": "number"
+            }
+          ]
         }
       },
       "required": [
         "a",
-        "b"
-      ]
+        "c"
+    ]
     }
     `;
     const expectedTypebox = `
     Type.Object({
       a: Type.Union([Type.Literal(1), Type.Literal(2)]),
-      b: Type.Union([Type.String(), Type.Number(), Type.Null()]),
+      b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
+      c: Type.Union([Type.String({ maxLength: 20 }),
+          Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",}),
     });
     `;
     expectEqualIgnoreFormatting(
@@ -454,11 +470,7 @@ describe("schema2typebox - collect()", () => {
     Type.Object({
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
       b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
-      c: Type.Intersect(
-        [Type.String({ description: "important" }), Type.Number({ minimum: 1 })],
-        {description: "intersection of two types",}
-      ),
-    });
+      c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),

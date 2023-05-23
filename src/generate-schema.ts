@@ -9,18 +9,21 @@ import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
 type Person = {
-  a: 1 & 2;
-  b?: string & number;
-  c: string & number;
+  a: 1 | 2;
+  b?: string | number | null;
+  c: string | 1;
 };
 
 const PersonSchema = Type.Object({
-  a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
-  b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
-  c: Type.Intersect(
-    [Type.String({ description: "important" }), Type.Number({ minimum: 1 })],
+  a: Type.Union([Type.Literal(1), Type.Literal(2)]),
+  b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
+  c: Type.Union(
+    [
+      Type.String({ maxLength: 20 }),
+      Type.Literal(1, { description: "can only be 1" }),
+    ],
     {
-      description: "intersection of two types",
+      description: "a union type",
     }
   ),
 });
