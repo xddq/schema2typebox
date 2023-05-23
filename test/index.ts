@@ -273,4 +273,86 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with const", () => {
+    const dummySchema = `
+      {
+    "type": "object",
+    "properties": {
+      "nickname": {
+        "const": "xddq",
+        "type": "string"
+      },
+      "x": {
+        "const": 99,
+        "type": "number"
+      },
+      "y": {
+        "const": true,
+        "type": "boolean"
+      },
+      "z": {
+        "const": false,
+        "type": "boolean"
+      },
+      "a": {
+        "type": "array",
+        "items": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "b": {
+        "type": "array",
+        "items": {
+          "const": "hi",
+          "type": "string"
+        }
+      },
+      "c": {
+        "const": 10,
+        "type": "number"
+      },
+      "d": {
+        "type": "array",
+        "items": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "e": {
+        "type": "array",
+        "items": {
+          "const": "hi",
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "nickname",
+      "x",
+      "y",
+      "z",
+      "a",
+      "b"
+    ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      nickname: Type.Literal("xddq"),
+      x: Type.Literal(99),
+      y: Type.Literal(true),
+      z: Type.Literal(false),
+      a: Type.Array(Type.Literal(1)),
+      b: Type.Array(Type.Literal("hi")),
+      c: Type.Optional(Type.Literal(10)),
+      d: Type.Optional(Type.Array(Type.Literal(1))),
+      e: Type.Optional(Type.Array(Type.Literal("hi"))),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

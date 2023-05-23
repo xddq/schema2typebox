@@ -37,8 +37,7 @@ const generateTypeForName = (name: string) => {
  * in Practice :])
  */
 const mapSimpleType = (
-  // TODO: omit array and objeclater
-  type: VALID_TYPE_VALUE,
+  type: SIMPLE_TYPE,
   schemaOptions: Record<string, any>
 ) => {
   const schemaOptionsString =
@@ -56,6 +55,20 @@ const mapSimpleType = (
     : "WRONG";
 };
 
+const mapTypeLiteral = (
+  value: any,
+  type: SIMPLE_TYPE,
+  _schemaOptions: Record<string, any>
+) => {
+  if (type === "null") {
+    return `Type.Literal(null)`;
+  }
+  if (type === "string") {
+    return `Type.Literal("${value}")`;
+  }
+  return `Type.Literal(${value})`;
+};
+
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
  * for it. Returns the matching typebox code representing the schemaObject.
@@ -69,7 +82,20 @@ export const collect = (
   requiredAttributes: string[] = [],
   propertyName?: string
 ): string => {
+  const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
+    (prev, [optionName, optionValue]) => {
+      prev[optionName] = optionValue;
+      return prev;
+    },
+    {}
+  );
+  const isTypeLiteral = schemaOptions["const"] !== undefined;
+  const isRequiredAttribute = requiredAttributes.includes(
+    propertyName ?? "__NO_MATCH__"
+  );
+  const isArrayItem = propertyName === undefined;
   const type = getType(schemaObj);
+
   if (type === "object") {
     console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
@@ -92,21 +118,34 @@ export const collect = (
     type === "boolean"
   ) {
     console.log("type was string or number or null or boolean");
-    const schemaOptions = getSchemaOptions(schemaObj).reduce<
-      Record<string, any>
-    >((prev, [optionName, optionValue]) => {
-      prev[optionName] = optionValue;
-      return prev;
-    }, {});
-    // propertyName is undefined if previous recursion was of type 'array' and
-    // we passed the 'items' object as new schemaObj.
-    if (propertyName === undefined) {
+
+    if (isArrayItem) {
+      if (isTypeLiteral) {
+        const resultingType = mapTypeLiteral(
+          schemaOptions["const"],
+          type,
+          schemaOptions
+        );
+        return resultingType;
+      }
       return mapSimpleType(type, schemaOptions);
     }
-    const simpleType = mapSimpleType(type, schemaOptions);
-    return requiredAttributes.includes(propertyName)
-      ? `${propertyName}: ${simpleType}\n`
-      : `${propertyName}: Type.Optional(${simpleType})\n`;
+
+    if (isTypeLiteral) {
+      const resultingType = mapTypeLiteral(
+        schemaOptions["const"],
+        type,
+        schemaOptions
+      );
+      return isRequiredAttribute
+        ? `${propertyName}: ${resultingType}\n`
+        : `${propertyName}: Type.Optional(${resultingType})\n`;
+    }
+
+    const resultingType = mapSimpleType(type, schemaOptions);
+    return isRequiredAttribute
+      ? `${propertyName}: ${resultingType}\n`
+      : `${propertyName}: Type.Optional(${resultingType})\n`;
   } else if (type === "array") {
     console.log("type was array");
     if (propertyName === undefined) {
@@ -119,22 +158,40 @@ export const collect = (
         "expected instance of type 'array' to contain 'items' object. Got: undefined"
       );
     }
-    const schemaOptions = getSchemaOptions(schemaObj).reduce<
-      Record<string, any>
-    >((prev, [optionName, optionValue]) => {
-      prev[optionName] = optionValue;
-      return prev;
-    }, {});
-    if (Object.keys(schemaObj).length > 0) {
-      return `${propertyName}: Type.Array(${collect(
+    if (Object.keys(schemaOptions).length > 0) {
+      if (isRequiredAttribute) {
+        return `${propertyName}: Type.Array(${collect(
+          itemsSchemaObj
+        )}, (${JSON.stringify(schemaOptions)}))\n`;
+      }
+      return `${propertyName}: Type.Optional(Type.Array(${collect(
         itemsSchemaObj
-      )}, (${JSON.stringify(schemaOptions)}))`;
+      )}, (${JSON.stringify(schemaOptions)})))\n`;
     }
-    return `${propertyName}: Type.Array(${collect(itemsSchemaObj)})`;
+
+    if (isRequiredAttribute) {
+      return `${propertyName}: Type.Array(${collect(itemsSchemaObj)})\n`;
+    }
+    return `${propertyName}: Type.Optional(Type.Array(${collect(
+      itemsSchemaObj
+    )})\n)`;
   }
 
   throw new Error(`cant collect ${type} yet`);
 };
+
+// TODO: think about how we could chain "functions" to properly construct the
+// strings?
+// const addOptional = (
+//   requiredAttributes: string[],
+//   propertyName: string | undefined,
+//   rest: string
+// ) => {
+//   if (propertyName === undefined || requiredAttributes.includes(propertyName)) {
+//     return rest;
+//   }
+//   return `Type.Optional(${rest})`;
+// };
 
 type SchemaOptionName = string;
 type SchemaOptionValue = any;
@@ -192,6 +249,7 @@ const VALID_TYPE_VALUES = [
   "array",
 ] as const;
 type VALID_TYPE_VALUE = (typeof VALID_TYPE_VALUES)[number];
+type SIMPLE_TYPE = "null" | "string" | "number" | "boolean";
 
 type PropertyName = string;
 type PropertiesOfProperty = Record<string, any>;
