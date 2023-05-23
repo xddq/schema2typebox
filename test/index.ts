@@ -403,4 +403,66 @@ describe("schema2typebox - collect()", () => {
       expectedTypebox
     );
   });
+  test("object with allOf", () => {
+    const dummySchema = `
+      {
+      "type": "object",
+      "properties": {
+        "a": {
+          "allOf": [
+            {
+              "const": 1,
+              "type": "number"
+            },
+            {
+              "const": 2,
+              "type": "number"
+            }
+          ]
+        },
+        "b": {
+          "allOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "c": {
+          "description": "intersection of two types",
+          "allOf": [
+            {
+              "description": "important",
+              "type": "string"
+            },
+            {
+              "minimum": 1,
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": [
+        "a",
+        "c"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
+      b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
+      c: Type.Intersect(
+        [Type.String({ description: "important" }), Type.Number({ minimum: 1 })],
+        {description: "intersection of two types",}
+      ),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });

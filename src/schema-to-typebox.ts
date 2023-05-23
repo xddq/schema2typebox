@@ -75,6 +75,12 @@ const isAnyOfSchemaObj = (
 ): schemaObj is AnyOfSchemaObj => {
   return schemaObj["anyOf"] !== undefined;
 };
+type AllOfSchemaObj = Record<string, any> & { allOf: Record<string, any>[] };
+const isAllOfSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is AllOfSchemaObj => {
+  return schemaObj["allOf"] !== undefined;
+};
 
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
@@ -102,14 +108,35 @@ export const collect = (
   );
   const isArrayItem = propertyName === undefined;
 
-  // check if we an object with anyOf
   if (isAnyOfSchemaObj(schemaObj)) {
     const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
       collect(currItem)
     );
     return propertyName === undefined
       ? `Type.Union([${typeboxForAnyOfObjects}])\n`
-      : `${propertyName}: Type.Union([\n${typeboxForAnyOfObjects}])\n`;
+      : `${propertyName}: Type.Union([${typeboxForAnyOfObjects}])\n`;
+  }
+
+  if (isAllOfSchemaObj(schemaObj)) {
+    const typeboxForAnyOfObjects = schemaObj.allOf.map((currItem) =>
+      collect(currItem)
+    );
+    let result = "";
+    if (Object.keys(schemaOptions).length > 0) {
+      result = `Type.Intersect([${typeboxForAnyOfObjects}],${JSON.stringify(
+        schemaOptions
+      )})`;
+    } else {
+      result = `Type.Intersect([${typeboxForAnyOfObjects}])`;
+    }
+
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+    return result + "\n";
   }
 
   const type = getType(schemaObj);
@@ -126,8 +153,8 @@ export const collect = (
     );
     // propertyName will only be undefined for the "top level" schemaObj
     return propertyName === undefined
-      ? `Type.Object({\n${typeboxForProperties}\n})`
-      : `${propertyName}: Type.Object({\n${typeboxForProperties}\n})`;
+      ? `Type.Object({\n${typeboxForProperties}})`
+      : `${propertyName}: Type.Object({\n${typeboxForProperties}})`;
   } else if (
     type === "string" ||
     type === "number" ||
@@ -165,9 +192,6 @@ export const collect = (
       : `${propertyName}: Type.Optional(${resultingType})\n`;
   } else if (type === "array") {
     console.log("type was array");
-    if (propertyName === undefined) {
-      throw new Error("expected propertyName to be defined. Got: undefined");
-    }
     // assumes that instance of type "array" has the "items" key.
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {
@@ -175,23 +199,22 @@ export const collect = (
         "expected instance of type 'array' to contain 'items' object. Got: undefined"
       );
     }
-    if (Object.keys(schemaOptions).length > 0) {
-      if (isRequiredAttribute) {
-        return `${propertyName}: Type.Array(${collect(
-          itemsSchemaObj
-        )}, (${JSON.stringify(schemaOptions)}))\n`;
-      }
-      return `${propertyName}: Type.Optional(Type.Array(${collect(
-        itemsSchemaObj
-      )}, (${JSON.stringify(schemaOptions)})))\n`;
-    }
 
-    if (isRequiredAttribute) {
-      return `${propertyName}: Type.Array(${collect(itemsSchemaObj)})\n`;
+    let result = "";
+    if (Object.keys(schemaOptions).length > 0) {
+      result = `Type.Array(${collect(itemsSchemaObj)}, (${JSON.stringify(
+        schemaOptions
+      )}))`;
+    } else {
+      result = `Type.Array(${collect(itemsSchemaObj)})`;
     }
-    return `${propertyName}: Type.Optional(Type.Array(${collect(
-      itemsSchemaObj
-    )})\n)`;
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+    return result + "\n";
   }
 
   throw new Error(`cant collect ${type} yet`);
@@ -217,8 +240,8 @@ type SchemaOptionValue = any;
  * Takes an object describing a JSON schema instance and returns a list of
  * tuples for all attributes/properties where the first item is the attribute name and the second one the corresponding value.
  * Only returns property/value pairs which are required to build the typebox
- * schemaOptions (meaning something like "type" is ignored since it does not
- * control the schemaOptions in typebox :]).
+ * schemaOptions (meaning something like "type", "anyOf", "allOf", etc.. is
+ * ignored since it does not control the schemaOptions in typebox :]).
  *
  * Example:
  *
@@ -242,7 +265,12 @@ const getSchemaOptions = (
 ): (readonly [SchemaOptionName, SchemaOptionValue])[] => {
   const properties = Object.keys(schemaObj);
   const schemaOptionProperties = properties.filter((currItem) => {
-    return currItem !== "type" && currItem !== "items";
+    return (
+      currItem !== "type" &&
+      currItem !== "items" &&
+      currItem !== "allOf" &&
+      currItem !== "anyOf"
+    );
   });
   return schemaOptionProperties.map((currItem) => {
     return [currItem, schemaObj[currItem]] as const;
