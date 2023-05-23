@@ -20,6 +20,33 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
   that a JSON schema is created in order to validate that a given schema adheres
   to a given JSON schema draft.
 
+### Feature List
+
+Tracking the progress/features of `JSON schema -> TypeBox` transformation to see
+whats already implemented and what is missing.
+
+- [x] Type.String() via "string" instance type
+- [x] Type.Boolean() via "boolean" instance type
+- [x] Type.Number() via "number" instance type
+- [x] Type.Null() via "null" instance type
+- [x] Type.Array() via "array" instance type
+- [x] Type.Object() via "object" instance type
+- [x] Type.Literal() via "const" property
+- [x] Type.Union() via "anyOf" property
+- [x] Type.Intersect() via "allOf" property
+- [x] SchemaOptions for everything that is implemented
+- [ ] Type.Tuple() via "array" instance type with minimalItems,
+      maximalItems and additionalItems false
+- [ ] Type.Literal() (or maybe it is Type.Array() or Type.Tuple() ???) via
+      "enum"property
+- [ ] Type.Not() via "not" property
+  - TODO: Is this even possible? I am confused.
+- [ ] Supporting $def and $ref in the input JSON schema to create the
+      Type.Object().
+  - Initial idea to implement this via collecting all $defs in a "preprocessing"
+    step inside a map and whenever we get a $ref we query the map to insert the
+    correct type.
+
 ### DEV USAGE
 
 - I would suggest we use github discussions whenever we have ideas/thoughts and
