@@ -37,6 +37,8 @@
     "typescript",
     "typebox",
     "ts",
+    "validate",
+    "parse",
     "validation",
     "parsing",
     "IO",
