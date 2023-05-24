@@ -592,3 +592,5 @@ describe("schema2typebox - collect()", () => {
     );
   });
 });
+// TODO: Create tests for programmatic usage. Only do once feature complete and
+// releasing 1.0.0.

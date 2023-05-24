@@ -1,6 +1,6 @@
 {
   "name": "schema2typebox",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "dist/src/index.js",
   "source": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",

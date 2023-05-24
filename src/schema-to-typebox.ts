@@ -137,7 +137,6 @@ export const collect = (
   const isArrayItem = propertyName === undefined;
 
   if (isEnumSchemaObj(schemaObj)) {
-    console.error("IS ENUM SCHEMA");
     if (propertyName === undefined) {
       throw new Error("cant create enum without propertyName");
     }
@@ -214,7 +213,7 @@ export const collect = (
 
   const type = getType(schemaObj);
   if (type === "object") {
-    console.log("type was object");
+    // console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
     // TODO: replace "as string[]" here
     const requiredAttributesOfObject = (schemaObj["required"] ??
@@ -234,7 +233,7 @@ export const collect = (
     type === "null" ||
     type === "boolean"
   ) {
-    console.log("type was string or number or null or boolean");
+    // console.log("type was string or number or null or boolean");
 
     if (isArrayItem) {
       if (isTypeLiteral) {
@@ -264,7 +263,7 @@ export const collect = (
       ? `${propertyName}: ${resultingType}\n`
       : `${propertyName}: Type.Optional(${resultingType})\n`;
   } else if (type === "array") {
-    console.log("type was array");
+    // console.log("type was array");
     // assumes that instance of type "array" has the "items" key.
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {

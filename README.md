@@ -1,6 +1,8 @@
 # Schema2Typebox
 
 Cli tool used for converting JSON schema draft-06 files to typebox code.
+❗This is a WIP. You can already test it based on the feature list you see
+below, but this package is not finished yet. ❗
 
 ## Installation
 
@@ -10,15 +12,7 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
 
 - The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
   or by simply running `schema2typebox`. The input defaults to "schema.json" and the
-  output to "generated-types.ts" relative to the current working directory. For
-  more see (TODO: link to documentation of cli usage here :])
-
-## DEV NOTES
-
-- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
-- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
-  that a JSON schema is created in order to validate that a given schema adheres
-  to a given JSON schema draft.
+  output to "generated-types.ts" relative to the current working directory.
 
 ### Feature List
 
@@ -47,6 +41,13 @@ whats already implemented and what is missing.
       maximalItems and additionalItems false
 - [ ] (low prio) Type.Not() via "not" property
   - TODO: Is this even possible? I am confused.
+
+## DEV NOTES
+
+- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
+- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
+  that a JSON schema is created in order to validate that a given schema adheres
+  to a given JSON schema draft.
 
 ### DEV USAGE
 
