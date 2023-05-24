@@ -9,8 +9,7 @@ export const schema2Typebox = (jsonSchema: string) => {
   const typeForObj = generateTypeForName(valueName);
   return `import { Type, Static } from "@sinclair/typebox";
 
-${enumCode}
-${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
+${enumCode}${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -35,8 +34,7 @@ const mapSimpleType = (
 ) => {
   const schemaOptionsString =
     Object.keys(schemaOptions).length > 0 ? JSON.stringify(schemaOptions) : "";
-  // TODO: use if else or switch case later. throw error if array or object (or
-  // cut the type)
+  // TODO: use if else or switch case later. throw error if no match
   return type === "string"
     ? `Type.String(${schemaOptionsString})`
     : type === "number"
@@ -157,11 +155,17 @@ export const collect = (
           typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
         return `${prev}${enumKey} = ${correctEnumValue},\n`;
       }, `export enum ${enumName} {\n`) + "}";
-    enumCode = enumCode + enumInTypescript + "\n";
+    enumCode = enumCode + enumInTypescript + "\n\n";
 
-    // create typebox type
-    const typeboxType = `${propertyName}: Type.Enum(${enumName})\n`;
-    return typeboxType;
+    let result = `Type.Enum(${enumName})`;
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+
+    return result + "\n";
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {

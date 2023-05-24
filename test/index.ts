@@ -85,7 +85,7 @@ describe("schema2typebox", () => {
   //   `;
   //   expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
   // });
-  test("object with enum (mixed types for keys)", () => {
+  test("object with enum (mixed types for keys) and optional enum with string keys", () => {
     const dummySchema = `
      {
       "type": "object",
@@ -96,6 +96,12 @@ describe("schema2typebox", () => {
            true,
            "hello"
          ]
+        },
+        "optionalStatus": {
+         "enum": [
+          "unknown",
+          "accepted",
+          "denied"]
         }
       },
       "required": [
@@ -112,9 +118,16 @@ describe("schema2typebox", () => {
       HELLO = "hello",
     }
 
+    export enum OptionalStatusEnum {
+      UNKNOWN = "unknown",
+      ACCEPTED = "accepted",
+      DENIED = "denied",
+    }
+
     type T = Static<typeof T>
     const T = Type.Object({
-      status: Type.Enum(StatusEnum)
+      status: Type.Enum(StatusEnum),
+      optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);

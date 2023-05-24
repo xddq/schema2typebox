@@ -14,27 +14,6 @@ enum RequestStatus {
   UNKOWN = "unknown",
 }
 
-/**
- {
-  "title": "Request",
-  "type": "object",
-  "properties": {
-    "status": {
-     "enum": [
-    "unknown",
-    "accepted",
-    "denied"],
-    }
-  },
-  "required": [
-    "status",
-  ]
-}
-
-TODO: Type could be "undefined" for enum. probably default to string if that is
-the case.  could also be "type": "string" in status object.
-*/
-
 type Request = {
   status: RequestStatus;
 };
