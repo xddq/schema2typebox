@@ -1,6 +1,6 @@
-# Schema2Typebox
+# Schema2TypeBox
 
-Cli tool used for converting JSON schema draft-06 files to typebox code.
+Cli tool used for converting JSON schema draft-06 files to TypeBox code.
 
 ❗ This is a WIP/alpha release. Once it is finished it will be released with
 1.0.0. However, you can already test it based on the [feature list](#feature-list)
