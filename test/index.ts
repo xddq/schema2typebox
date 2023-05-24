@@ -47,9 +47,95 @@ describe("schema2typebox", () => {
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
   });
-  // TODO: probably rather test the collect() function than the schema2typebox
-  // one?
+  // TODO: why the hell does this (or the following) test fail ONLY if  we have
+  // them both active? Perhaps check if node.js test runner executes in parallel
+  // by default and disable it for now? Currently using global variable for enum
+  // typescript code
+  // test("object with enum (all keys string)", () => {
+  //   const dummySchema = `
+  //    {
+  //     "type": "object",
+  //     "properties": {
+  //       "status": {
+  //        "enum": [
+  //          "unknown",
+  //          "accepted",
+  //          "denied"
+  //        ]
+  //       }
+  //     },
+  //     "required": [
+  //       "status"
+  //     ]
+  //   }
+  //   `;
+  //   const expectedTypebox = `
+  //   import { Type, Static } from "@sinclair/typebox";
+  //
+  //   export enum StatusEnum {
+  //     UNKNOWN = "unknown",
+  //     ACCEPTED = "accepted",
+  //     DENIED = "denied",
+  //   }
+  //
+  //   type T = Static<typeof T>
+  //   const T = Type.Object({
+  //     status: Type.Enum(StatusEnum)
+  //   })
+  //   `;
+  //   expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  // });
+  test("object with enum (mixed types for keys) and optional enum with string keys", () => {
+    const dummySchema = `
+     {
+      "type": "object",
+      "properties": {
+        "status": {
+         "enum": [
+           1,
+           true,
+           "hello"
+         ]
+        },
+        "optionalStatus": {
+         "enum": [
+          "unknown",
+          "accepted",
+          "denied"]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export enum StatusEnum {
+      1 = 1,
+      TRUE = true,
+      HELLO = "hello",
+    }
+
+    export enum OptionalStatusEnum {
+      UNKNOWN = "unknown",
+      ACCEPTED = "accepted",
+      DENIED = "denied",
+    }
+
+    type T = Static<typeof T>
+    const T = Type.Object({
+      status: Type.Enum(StatusEnum),
+      optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
+    })
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    // NOTE: probably rather test the collect() function whenever we can instead
+    // of schema2typebox.
+  });
 });
+
 describe("schema2typebox - collect()", () => {
   // NOTE: I currently think it is best to test the collect() function
   // directly(less overhead) instead of schema2typebox for now.
@@ -471,6 +557,34 @@ describe("schema2typebox - collect()", () => {
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
       b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
       c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with enum", () => {
+    const dummySchema = `
+     {
+      "type": "object",
+      "properties": {
+        "status": {
+         "enum": [
+           "unknown",
+           "accepted",
+           "denied"
+         ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      status: Type.Enum(StatusEnum),
+    })
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),

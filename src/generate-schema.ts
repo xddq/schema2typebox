@@ -8,27 +8,21 @@
 import { Static, Type } from "@sinclair/typebox";
 import fs from "node:fs";
 
-type Person = {
-  a: 1 | 2;
-  b?: string | number | null;
-  c: string | 1;
+enum RequestStatus {
+  ACCEPTED = "accepted",
+  DENIED = "denied",
+  UNKOWN = "unknown",
+}
+
+type Request = {
+  status: RequestStatus;
 };
 
-const PersonSchema = Type.Object({
-  a: Type.Union([Type.Literal(1), Type.Literal(2)]),
-  b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
-  c: Type.Union(
-    [
-      Type.String({ maxLength: 20 }),
-      Type.Literal(1, { description: "can only be 1" }),
-    ],
-    {
-      description: "a union type",
-    }
-  ),
+const RequestSchema = Type.Object({
+  status: Type.Enum(RequestStatus),
 });
 
-type PersonTypeFromSchema = Static<typeof PersonSchema>;
+type TypeFromSchema = Static<typeof RequestSchema>;
 
 /**
  *
@@ -39,9 +33,9 @@ type PersonTypeFromSchema = Static<typeof PersonSchema>;
  * should work.
  */
 type Equal<T, U> = T extends U ? (U extends T ? true : false) : false;
-export const x: Equal<Person, PersonTypeFromSchema> = true;
+export const x: Equal<Request, TypeFromSchema> = true;
 
 export const generateDummySchema = () => {
-  const schemaAsString = JSON.stringify(PersonSchema, null, 2);
+  const schemaAsString = JSON.stringify(RequestSchema, null, 2);
   fs.writeFileSync(process.cwd() + "/schema.json", schemaAsString, "utf-8");
 };

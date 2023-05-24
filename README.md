@@ -35,17 +35,18 @@ whats already implemented and what is missing.
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
 - [x] SchemaOptions for everything that is implemented
-- [ ] Type.Tuple() via "array" instance type with minimalItems,
-      maximalItems and additionalItems false
-- [ ] Type.Literal() (or maybe it is Type.Array() or Type.Tuple() ???) via
-      "enum"property
-- [ ] Type.Not() via "not" property
-  - TODO: Is this even possible? I am confused.
-- [ ] Supporting $def and $ref in the input JSON schema to create the
-      Type.Object().
+- [x] Type.Enum() via "enum" property
+  - NOTE: Interesting that Type.Enum() creates a json schema with a list of
+    anyOf consts instead of enum.
+- [ ] (prio) Supporting $ref to other schema files
+- [ ] Supporting $def in the same schema and referencing them
   - Initial idea to implement this via collecting all $defs in a "preprocessing"
     step inside a map and whenever we get a $ref we query the map to insert the
     correct type.
+- [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
+      maximalItems and additionalItems false
+- [ ] (low prio) Type.Not() via "not" property
+  - TODO: Is this even possible? I am confused.
 
 ### DEV USAGE
 

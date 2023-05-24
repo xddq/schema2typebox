@@ -1,23 +1,15 @@
+import { zip } from "./utils";
+
 /** Generates TypeBox code from JSON schema */
 export const schema2Typebox = (jsonSchema: string) => {
-  // Just thinking out "loud" with quick thoughts, not having put to much time
-  // into this.
-  //
-  // TODO: (perhaps?) check for any json schema parsers that are available.
-  // Otherwise I guess simply parsing the jsonSchema string into an object (I
-  // guess it is always a JSON object?) and iterating the keys via something
-  // like "Object.keys" should do it.
-  // console.log("** for now we are just printing the schema itself **");
-  // console.log(jsonSchema);
   const schemaObj = JSON.parse(jsonSchema);
-
   const typeBoxType = collect(schemaObj, []);
   // TODO: rather use "title" from json schema than default to "T"
   const valueName = "T";
   const typeForObj = generateTypeForName(valueName);
   return `import { Type, Static } from "@sinclair/typebox";
 
-${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
+${enumCode}${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -28,7 +20,7 @@ const generateTypeForName = (name: string) => {
   if (tail.length === 0) {
     return `type ${head.toUpperCase()} = Static<typeof ${name}>`;
   }
-  return `type ${head.toUpperCase}${tail.join("")} = Static<typeof ${name}>`;
+  return `type ${head.toUpperCase()}${tail.join("")} = Static<typeof ${name}>`;
 };
 
 /**
@@ -42,8 +34,7 @@ const mapSimpleType = (
 ) => {
   const schemaOptionsString =
     Object.keys(schemaOptions).length > 0 ? JSON.stringify(schemaOptions) : "";
-  // TODO: use if else or switch case later. throw error if array or object (or
-  // cut the type)
+  // TODO: use if else or switch case later. throw error if no match
   return type === "string"
     ? `Type.String(${schemaOptionsString})`
     : type === "number"
@@ -97,6 +88,27 @@ const isAllOfSchemaObj = (
 ): schemaObj is AllOfSchemaObj => {
   return schemaObj["allOf"] !== undefined;
 };
+type EnumSchemaObj = Record<string, any> & { enum: any[] };
+const isEnumSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is EnumSchemaObj => {
+  return schemaObj["enum"] !== undefined;
+};
+
+const createEnumName = (propertyName: string) => {
+  const [head, ...tail] = propertyName;
+  if (head === undefined) {
+    throw new Error("Can't create enum name with empty string.");
+  }
+  return `${head.toUpperCase()}${tail.join("")}Enum`;
+};
+
+/**
+ * Contains Typescript code for the enums that are created based on the JSON
+ * schema.
+ * NOTE: perhaps make this a map or something else if needed.
+ **/
+let enumCode = "";
 
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
@@ -123,6 +135,38 @@ export const collect = (
     propertyName ?? "__NO_MATCH__"
   );
   const isArrayItem = propertyName === undefined;
+
+  if (isEnumSchemaObj(schemaObj)) {
+    console.error("IS ENUM SCHEMA");
+    if (propertyName === undefined) {
+      throw new Error("cant create enum without propertyName");
+    }
+    const enumValues = schemaObj.enum;
+    const enumKeys = enumValues.map((currItem) =>
+      String(currItem).toUpperCase()
+    );
+    const pairs = zip(enumKeys, enumValues);
+
+    const enumName = createEnumName(propertyName);
+    // create typescript enum
+    const enumInTypescript =
+      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
+        const correctEnumValue =
+          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
+        return `${prev}${enumKey} = ${correctEnumValue},\n`;
+      }, `export enum ${enumName} {\n`) + "}";
+    enumCode = enumCode + enumInTypescript + "\n\n";
+
+    let result = `Type.Enum(${enumName})`;
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+
+    return result + "\n";
+  }
 
   if (isAnyOfSchemaObj(schemaObj)) {
     const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
