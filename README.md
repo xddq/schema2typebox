@@ -14,7 +14,8 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
 
 - The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
   or by simply running `schema2typebox`. The input defaults to "schema.json" and the
-  output to "generated-types.ts" relative to the current working directory.
+  output to "generated-types.ts" relative to the current working directory. For more
+  see [cli usage](#cli-usage).
 
 ### Feature List
 
