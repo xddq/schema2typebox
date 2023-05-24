@@ -95,7 +95,7 @@ export const schema2typebox = async ({
 export const getHelpText = {
   run: () => {
     return `
-    !WIP AND CURRENTLY IN ALPHA (unuseable :p) STATE!
+    ! WIP/ALPHA until 1.0.0 release !
     schema2typebox is a cli tool for converting JSON schema draft-06 files to
     typebox code.  The generated output is formatted based on the prettier
     config inside your repo (or the default one, if you don't have one).
@@ -111,12 +111,12 @@ export const getHelpText = {
        Displays this menu.
 
     -i, --input
-       Specifies the relative path to the file containing the typescript types
-       that will be used to generated typebox types. Defaults to "types.ts".
+       Specifies the relative path to the file containing the JSON schema that
+       will be used to generated typebox types. Defaults to "schema.json".
 
     -o, --output
        Specifies the relative path to generated file that will contain the
-       typebox types. Defaults to "generated-types.ts".
+       typebox code. Defaults to "generated-types.ts".
 
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
