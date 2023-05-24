@@ -2,6 +2,10 @@
 
 Cli tool used for converting JSON schema draft-06 files to typebox code.
 
+❗This is a WIP/alpha release. Once it is finished it will be released with
+1.0.0. However, you can already test it based on the feature list you see below
+❗
+
 ## Installation
 
 - `npm i -g schema2typebox`
@@ -10,15 +14,7 @@ Cli tool used for converting JSON schema draft-06 files to typebox code.
 
 - The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
   or by simply running `schema2typebox`. The input defaults to "schema.json" and the
-  output to "generated-types.ts" relative to the current working directory. For
-  more see (TODO: link to documentation of cli usage here :])
-
-## DEV NOTES
-
-- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
-- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
-  that a JSON schema is created in order to validate that a given schema adheres
-  to a given JSON schema draft.
+  output to "generated-types.ts" relative to the current working directory.
 
 ### Feature List
 
@@ -48,6 +44,13 @@ whats already implemented and what is missing.
 - [ ] (low prio) Type.Not() via "not" property
   - TODO: Is this even possible? I am confused.
 
+## DEV NOTES
+
+- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
+- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
+  that a JSON schema is created in order to validate that a given schema adheres
+  to a given JSON schema draft.
+
 ### DEV USAGE
 
 - I would suggest we use github discussions whenever we have ideas/thoughts and
@@ -61,6 +64,42 @@ whats already implemented and what is missing.
   based on the typebox type you specify. Simply run `yarn build && yarn
 gen-dummy` and you will end up having that schema as ./schema.json inside the
   root of the repo.
+
+## cli usage
+
+The following text is the output that will be displayed when you issue
+`schema2typebox -h` or `schema2typebox --help`.
+
+```
+
+    ! WIP/ALPHA until 1.0.0 release !
+    schema2typebox is a cli tool for converting JSON schema draft-06 files to
+    typebox code.  The generated output is formatted based on the prettier
+    config inside your repo (or the default one, if you don't have one).
+    Version: ${packageJson.version}
+
+    Usage:
+
+    schema2typebox [ARGUMENTS]
+
+    Arguments:
+
+    -h, --help
+       Displays this menu.
+
+    -i, --input
+       Specifies the relative path to the file containing the JSON schema that
+       will be used to generated typebox types. Defaults to "schema.json".
+
+    -o, --output
+       Specifies the relative path to generated file that will contain the
+       typebox code. Defaults to "generated-types.ts".
+
+    --output-stdout
+       Does not generate an output file and prints the generated code to stdout
+       instead. Has precedence over -o/--output.
+
+```
 
 ### The stuff below is left over from copying from using the template from
 
