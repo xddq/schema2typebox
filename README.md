@@ -25,7 +25,7 @@ Cli tool used for converting JSON schema draft-06 files to TypeBox code.
 ## Use Case
 
 - You got **JSON schemas** that you want to validate your data against. But you
-  also want **automatic type inference** after validating the data. You habe
+  also want **automatic type inference** after validating the data. You have
   chosen [typebox](https://github.com/sinclairzx81/typebox) for this, but figured
   that you would need to manually create the typebox code. To avoid this pain, you
   simply use `schema2typebox` to generate the required code for you🎉.
