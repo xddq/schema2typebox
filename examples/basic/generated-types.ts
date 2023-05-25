@@ -8,17 +8,16 @@
 
 import { Type, Static } from "@sinclair/typebox";
 
-export enum StatusEnum {
-  UNKNOWN = "unknown",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
+export enum FavoriteAnimalEnum {
+  DOG = "dog",
+  CAT = "cat",
+  SLOTH = "sloth",
 }
 
 export type Contract = Static<typeof Contract>;
 export const Contract = Type.Object({
-  person: Type.Object({
-    name: Type.String({ maxLength: 100 }),
-    age: Type.Number({ minimum: 18 }),
-  }),
-  status: Type.Optional(Type.Enum(StatusEnum)),
+  name: Type.String({ minLength: 20 }),
+  age: Type.Number({ minimum: 18, maximum: 90 }),
+  hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
+  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
 });

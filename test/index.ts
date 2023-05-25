@@ -167,9 +167,127 @@ describe("schema2typebox", () => {
     });
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
-    // NOTE: probably rather test the collect() function whenever we can instead
-    // of schema2typebox.
   });
+  test("/examples/basic", () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 20
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18,
+          "maximum": 90
+        },
+        "hobbies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "favoriteAnimal": {
+          "enum": ["dog", "cat", "sloth"]
+        }
+      },
+      "required": ["name", "age"]
+       }
+   `;
+
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export enum FavoriteAnimalEnum {
+      DOG = "dog",
+      CAT = "cat",
+      SLOTH = "sloth",
+    }
+
+    export type Contract = Static<typeof Contract>;
+    export const Contract = Type.Object({
+      name: Type.String({ minLength: 20 }),
+      age: Type.Number({ minimum: 18, maximum: 90 }),
+      hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
+      favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+    });
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  });
+  test("/examples/with-ref-to-files", () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "person": {
+          "$ref": "./person.json"
+        },
+        "status": {
+          "$ref": "./status.json"
+        }
+      },
+      "required": ["person"]
+    }
+    `;
+
+    const referencedPersonSchema = `
+    {
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18
+        }
+      },
+      "required": ["name", "age"]
+   }
+   `;
+
+    const referencedStatusSchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+
+    const expectedTypebox = `
+    Type.Object({
+      person: Type.Object({
+        name: Type.String({"maxLength":100}),
+        age: Type.Number({"minimum":18})
+      }),
+      status: Type.Optional(Type.Enum(StatusEnum))
+    })
+    `;
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  // NOTE: probably rather test the collect() function whenever we can instead
+  // of schema2typebox.
 });
 
 describe("schema2typebox - collect()", () => {
