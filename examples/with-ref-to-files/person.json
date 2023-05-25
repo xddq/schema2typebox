@@ -1,0 +1,15 @@
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18
+    }
+  },
+  "required": ["name", "age"]
+}

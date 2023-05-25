@@ -1,10 +1,20 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import * as prettier from "prettier";
+import shell from "shelljs";
+
 import {
   schema2Typebox as Schema2Typebox,
   collect,
 } from "../src/schema-to-typebox";
+import { zip } from "../src/utils";
+
+const SHELLJS_RETURN_CODE_OK = 0;
+const buildOsIndependentPath = (foldersOrFiles: string[]) => {
+  return foldersOrFiles.join(path.sep);
+};
 
 const formatWithPrettier = (input: string): string => {
   return prettier.format(input, { parser: "typescript" });
@@ -590,6 +600,75 @@ describe("schema2typebox - collect()", () => {
       collect(JSON.parse(dummySchema)),
       expectedTypebox
     );
+  });
+  test("$ref pointing to external files in relative path", () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "person": {
+          "$ref": "./person.json"
+        },
+        "status": {
+          "$ref": "./status.json"
+        }
+      },
+      "required": ["person"]
+    }
+    `;
+
+    const referencedPersonSchema = `
+    {
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18
+        }
+      },
+      "required": ["name", "age"]
+   }
+   `;
+
+    const referencedStatusSchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+
+    const expectedTypebox = `
+    Type.Object({
+      person: Type.Object({
+        name: Type.String({"maxLength":100}),
+        age: Type.Number({"minimum":18})
+      }),
+      status: Type.Optional(Type.Enum(StatusEnum))
+    })
+    `;
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
 });
 // TODO: Create tests for programmatic usage. Only do once feature complete and

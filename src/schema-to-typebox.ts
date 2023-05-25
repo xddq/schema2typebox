@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { zip } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
@@ -9,7 +10,7 @@ export const schema2Typebox = (jsonSchema: string) => {
   const typeForObj = generateTypeForName(valueName);
   return `import { Type, Static } from "@sinclair/typebox";
 
-${enumCode}${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
+${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -18,9 +19,11 @@ const generateTypeForName = (name: string) => {
     throw new Error(`Can't generate type for empty string. Got input: ${name}`);
   }
   if (tail.length === 0) {
-    return `type ${head.toUpperCase()} = Static<typeof ${name}>`;
+    return `export type ${head.toUpperCase()} = Static<typeof ${name}>`;
   }
-  return `type ${head.toUpperCase()}${tail.join("")} = Static<typeof ${name}>`;
+  return `export type ${head.toUpperCase()}${tail.join(
+    ""
+  )} = Static<typeof ${name}>`;
 };
 
 /**
@@ -94,6 +97,12 @@ const isEnumSchemaObj = (
 ): schemaObj is EnumSchemaObj => {
   return schemaObj["enum"] !== undefined;
 };
+type RefSchemaObj = { $ref: string };
+const isRefSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is RefSchemaObj => {
+  return schemaObj["$ref"] !== undefined;
+};
 
 const createEnumName = (propertyName: string) => {
   const [head, ...tail] = propertyName;
@@ -121,7 +130,8 @@ let enumCode = "";
 export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
-  propertyName?: string
+  propertyName?: string,
+  _parentWasRefSchemaObject: boolean = false
 ): string => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
@@ -135,6 +145,22 @@ export const collect = (
     propertyName ?? "__NO_MATCH__"
   );
   const isArrayItem = propertyName === undefined;
+
+  console.log(schemaObj);
+  // NOTE: for now assume it can only be file paths and it can only be relative
+  // paths to the current working directory.
+  if (isRefSchemaObj(schemaObj)) {
+    if (propertyName === undefined) {
+      throw new Error(
+        "expected a property name when resolving a $ref schema object"
+      );
+    }
+    const relativePath = schemaObj.$ref;
+    const absolutePath = process.cwd() + "/" + relativePath;
+    const schemaObjAsString = fs.readFileSync(absolutePath, "utf-8");
+    const parsedSchemaObj = JSON.parse(schemaObjAsString);
+    return collect(parsedSchemaObj, requiredAttributes, propertyName);
+  }
 
   if (isEnumSchemaObj(schemaObj)) {
     if (propertyName === undefined) {
@@ -213,7 +239,7 @@ export const collect = (
 
   const type = getType(schemaObj);
   if (type === "object") {
-    // console.log("type was object");
+    console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
     // TODO: replace "as string[]" here
     const requiredAttributesOfObject = (schemaObj["required"] ??
@@ -233,7 +259,7 @@ export const collect = (
     type === "null" ||
     type === "boolean"
   ) {
-    // console.log("type was string or number or null or boolean");
+    console.log("type was string or number or null or boolean");
 
     if (isArrayItem) {
       if (isTypeLiteral) {
@@ -263,7 +289,7 @@ export const collect = (
       ? `${propertyName}: ${resultingType}\n`
       : `${propertyName}: Type.Optional(${resultingType})\n`;
   } else if (type === "array") {
-    // console.log("type was array");
+    console.log("type was array");
     // assumes that instance of type "array" has the "items" key.
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {

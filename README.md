@@ -35,11 +35,14 @@ whats already implemented and what is missing.
 - [x] Type.Enum() via "enum" property
   - NOTE: Interesting that Type.Enum() creates a json schema with a list of
     anyOf consts instead of enum.
-- [ ] (prio) Supporting $ref to other schema files
-- [ ] Supporting $def in the same schema and referencing them
+- [x] $ref to other schema files via relative path
+- [ ] name resulting type based on "title" attribute
+  - are there other attributes one should check if "title" is undefined?
+- [ ] $ref to definitions inside the current schema
   - Initial idea to implement this via collecting all $defs in a "preprocessing"
     step inside a map and whenever we get a $ref we query the map to insert the
     correct type.
+- [ ] $ref to remote schemas
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 - [ ] (low prio) Type.Not() via "not" property
