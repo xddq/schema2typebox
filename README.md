@@ -2,7 +2,9 @@
     Schema2TypeBox
 </h1>
 
+<p align="center">
 Cli tool used for converting JSON schema draft-06 files to TypeBox code.
+</p>
 
 <p align="center">
   <a href="https://github.com/xddq/schema2typebox/blob/main/LICENSE">
