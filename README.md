@@ -22,12 +22,118 @@ Cli tool used for converting JSON schema draft-06 files to TypeBox code.
 
 - `npm i -g schema2typebox`
 
+## Use Case
+
+- You got **JSON schemas** that you want to validate your data against. But you
+  also want **automatic type inference** after validating the data. You habe
+  chosen [typebox](https://github.com/sinclairzx81/typebox) for this, but figured
+  that you would need to manually create the typebox code. To avoid this pain, you
+  simply use `schema2typebox` to generate the required code for you🎉.
+
 ## Usage
 
 - The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
   or by simply running `schema2typebox`. The input defaults to "schema.json" and the
   output to "generated-types.ts" relative to the current working directory. For more
   see [cli usage](#cli-usage).
+
+## Examples
+
+```typescript
+//
+// Let's start with our JSON schema
+//
+
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 20
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18,
+      "maximum": 90
+    },
+    "hobbies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "favoriteAnimal": {
+      "enum": ["dog", "cat", "sloth"]
+    }
+  },
+  "required": ["name", "age"]
+}
+
+//
+// Which becomes
+//
+
+import { Type, Static } from "@sinclair/typebox";
+
+export enum FavoriteAnimalEnum {
+  DOG = "dog",
+  CAT = "cat",
+  SLOTH = "sloth",
+}
+
+export type Person = Static<typeof Person>;
+export const Person = Type.Object({
+  name: Type.String({ minLength: 20 }),
+  age: Type.Number({ minimum: 18, maximum: 90 }),
+  hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
+  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+});
+
+//
+// Nice! But.. I have structured my JSON schemas into multiple files and I am
+// using the $ref keyword ...
+// No worries! Something like this
+//
+{
+  "title": "Contract",
+  "type": "object",
+  "properties": {
+    "person": {
+      "$ref": "./person.json"
+    },
+    "status": {
+      "$ref": "./status.json"
+    }
+  },
+  "required": ["person"]
+}
+
+//
+// Can easily become this
+//
+
+export enum StatusEnum {
+  UNKNOWN = "unknown",
+  ACCEPTED = "accepted",
+  DENIED = "denied",
+}
+
+export type Contract = Static<typeof Contract>;
+export const Contract = Type.Object({
+  person: Type.Object({
+    name: Type.String({ maxLength: 100 }),
+    age: Type.Number({ minimum: 18 }),
+  }),
+  status: Type.Optional(Type.Enum(StatusEnum)),
+});
+
+```
+
+Please take a look at the feature list below to see the currently supported
+features. For examples, take a look into the ./examples folder. You can also
+check the test cases, every feature is tested.
 
 ### Feature List
 
@@ -235,3 +341,7 @@ However, I made it **dead simple** to enable the default/recommended eslint
 rules, if you want to use them instead. Everything is documented, just browse to
 [./eslintrc.cjs](https://github.com/xddq/nodejs-typescript-modern-starter/blob/main/eslintrc.cjs)
 and adapt the code.
+
+```
+
+```

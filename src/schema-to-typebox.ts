@@ -155,7 +155,7 @@ export const collect = (
   );
   const isArrayItem = propertyName === undefined;
 
-  console.log(schemaObj);
+  // console.log(schemaObj);
   // NOTE: for now assume it can only be file paths and it can only be relative
   // paths to the current working directory.
   if (isRefSchemaObj(schemaObj)) {
@@ -248,7 +248,7 @@ export const collect = (
 
   const type = getType(schemaObj);
   if (type === "object") {
-    console.log("type was object");
+    // console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
     // TODO: replace "as string[]" here
     const requiredAttributesOfObject = (schemaObj["required"] ??
@@ -268,7 +268,7 @@ export const collect = (
     type === "null" ||
     type === "boolean"
   ) {
-    console.log("type was string or number or null or boolean");
+    // console.log("type was string or number or null or boolean");
 
     if (isArrayItem) {
       if (isTypeLiteral) {
@@ -298,7 +298,7 @@ export const collect = (
       ? `${propertyName}: ${resultingType}\n`
       : `${propertyName}: Type.Optional(${resultingType})\n`;
   } else if (type === "array") {
-    console.log("type was array");
+    // console.log("type was array");
     // assumes that instance of type "array" has the "items" key.
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {
