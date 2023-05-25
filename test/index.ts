@@ -1,4 +1,4 @@
-import { describe, test } from "node:test";
+import { afterEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -8,6 +8,7 @@ import shell from "shelljs";
 import {
   schema2Typebox as Schema2Typebox,
   collect,
+  resetEnumCode,
 } from "../src/schema-to-typebox";
 import { zip } from "../src/utils";
 
@@ -34,6 +35,10 @@ export const expectEqualIgnoreFormatting = (
 };
 
 describe("schema2typebox", () => {
+  // TODO: remove this once global state enumCode was removed
+  afterEach(() => {
+    resetEnumCode();
+  });
   test("object with required string property", () => {
     const dummySchema = `
     {
@@ -50,51 +55,47 @@ describe("schema2typebox", () => {
     const expectedTypebox = `
     import { Type, Static } from "@sinclair/typebox";
 
-    type T = Static<typeof T>;
-    const T = Type.Object({
+    export type T = Static<typeof T>;
+    export const T = Type.Object({
       name: Type.String(),
     });
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
   });
-  // TODO: why the hell does this (or the following) test fail ONLY if  we have
-  // them both active? Perhaps check if node.js test runner executes in parallel
-  // by default and disable it for now? Currently using global variable for enum
-  // typescript code
-  // test("object with enum (all keys string)", () => {
-  //   const dummySchema = `
-  //    {
-  //     "type": "object",
-  //     "properties": {
-  //       "status": {
-  //        "enum": [
-  //          "unknown",
-  //          "accepted",
-  //          "denied"
-  //        ]
-  //       }
-  //     },
-  //     "required": [
-  //       "status"
-  //     ]
-  //   }
-  //   `;
-  //   const expectedTypebox = `
-  //   import { Type, Static } from "@sinclair/typebox";
-  //
-  //   export enum StatusEnum {
-  //     UNKNOWN = "unknown",
-  //     ACCEPTED = "accepted",
-  //     DENIED = "denied",
-  //   }
-  //
-  //   type T = Static<typeof T>
-  //   const T = Type.Object({
-  //     status: Type.Enum(StatusEnum)
-  //   })
-  //   `;
-  //   expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
-  // });
+  test("object with enum (all keys string)", () => {
+    const dummySchema = `
+     {
+      "type": "object",
+      "properties": {
+        "status": {
+         "enum": [
+           "unknown",
+           "accepted",
+           "denied"
+         ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export enum StatusEnum {
+      UNKNOWN = "unknown",
+      ACCEPTED = "accepted",
+      DENIED = "denied",
+    }
+
+    export type T = Static<typeof T>
+    export const T = Type.Object({
+      status: Type.Enum(StatusEnum)
+    })
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  });
   test("object with enum (mixed types for keys) and optional enum with string keys", () => {
     const dummySchema = `
      {
@@ -134,11 +135,36 @@ describe("schema2typebox", () => {
       DENIED = "denied",
     }
 
-    type T = Static<typeof T>
-    const T = Type.Object({
+    export type T = Static<typeof T>
+    export const T = Type.Object({
       status: Type.Enum(StatusEnum),
       optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    // NOTE: probably rather test the collect() function whenever we can instead
+    // of schema2typebox.
+  });
+  test("generated typebox names are based on title attribute", () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+    `;
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export type Contract = Static<typeof Contract>;
+    export const Contract = Type.Object({
+      name: Type.String(),
+    });
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
     // NOTE: probably rather test the collect() function whenever we can instead

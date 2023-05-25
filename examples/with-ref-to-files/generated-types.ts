@@ -8,17 +8,7 @@
 
 import { Type, Static } from "@sinclair/typebox";
 
-export enum StatusEnum {
-  UNKNOWN = "unknown",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
-}
-
-export type T = Static<typeof T>;
-export const T = Type.Object({
-  person: Type.Object({
-    name: Type.String({ maxLength: 100 }),
-    age: Type.Number({ minimum: 18 }),
-  }),
-  status: Type.Optional(Type.Enum(StatusEnum)),
+export type Contract = Static<typeof Contract>;
+export const Contract = Type.Object({
+  name: Type.String(),
 });

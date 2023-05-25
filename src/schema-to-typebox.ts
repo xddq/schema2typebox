@@ -5,8 +5,8 @@ import { zip } from "./utils";
 export const schema2Typebox = (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
   const typeBoxType = collect(schemaObj, []);
-  // TODO: rather use "title" from json schema than default to "T"
-  const valueName = "T";
+  // TODO: Are there alternative attributes people use for naming the entities?
+  const valueName = schemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
   return `import { Type, Static } from "@sinclair/typebox";
 
@@ -120,6 +120,16 @@ const createEnumName = (propertyName: string) => {
 let enumCode = "";
 
 /**
+ * Workaround used for resetting enum code in test runs. Currently it would
+ * otherwise not get reset in test runs. Thats what we get for using globally
+ * mutable state :]. Probably adapt later, perhaps pass enumCode inside
+ * collect() and adapt all collect() calls.
+ */
+export const resetEnumCode = () => {
+  enumCode = "";
+};
+
+/**
  * Takes the root schemaObject and recursively collects the corresponding types
  * for it. Returns the matching typebox code representing the schemaObject.
  *
@@ -130,8 +140,7 @@ let enumCode = "";
 export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
-  propertyName?: string,
-  _parentWasRefSchemaObject: boolean = false
+  propertyName?: string
 ): string => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
