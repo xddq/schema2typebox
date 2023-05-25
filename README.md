@@ -1,6 +1,20 @@
-# Schema2TypeBox
+<h1 align="center">
+    Schema2TypeBox
+</h1>
 
 Cli tool used for converting JSON schema draft-06 files to TypeBox code.
+
+<p align="center">
+  <a href="https://github.com/xddq/schema2typebox/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="ts2typebox is released under the MIT license." />
+  </a>
+  <a href="https://www.npmjs.org/package/schema2typebox">
+    <img src="https://img.shields.io/npm/v/schema2typebox?color=brightgreen&label=npm%20package" alt="Current npm package version." />
+  </a>
+  <a href="https://github.com/xddq/schema2typebox/actions/workflows/buildAndTest.yaml">
+    <img src="https://github.com/xddq/schema2typebox/actions/workflows/buildAndTest.yaml/badge.svg" alt="State of Github Action" />
+  </a>
+</p>
 
 ## Installation
 
@@ -50,8 +64,8 @@ whats already implemented and what is missing.
 - If you have an idea or want to help implement something, feel free to do so.
   Please always start by creating a discussion post to avoid any unnecessary
   work.
-  - Please always generate tests for new features that are implemented. This
-    will decrease mental overhead for reviewing and developing in the long run.
+  - Please always create tests for new features that are implemented. This will
+    decrease mental overhead for reviewing and developing in the long run.
 - See specification for JSON schema draft-06
   [here](https://json-schema.org/specification-links.html#draft-6)
 - Link to [meta schema](http://json-schema.org/draft-06/schema). Meta schema
