@@ -72,10 +72,8 @@ Cli tool used for converting JSON schema draft-06 files to TypeBox code.
 }
 
 //
-// Which becomes
+// Which becomes..
 //
-
-import { Type, Static } from "@sinclair/typebox";
 
 export enum FavoriteAnimalEnum {
   DOG = "dog",
