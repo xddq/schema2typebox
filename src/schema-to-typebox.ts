@@ -1,15 +1,16 @@
+import fs from "node:fs";
 import { zip } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
 export const schema2Typebox = (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
   const typeBoxType = collect(schemaObj, []);
-  // TODO: rather use "title" from json schema than default to "T"
-  const valueName = "T";
+  // TODO: Are there alternative attributes people use for naming the entities?
+  const valueName = schemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
   return `import { Type, Static } from "@sinclair/typebox";
 
-${enumCode}${typeForObj}\nconst ${valueName} = ${typeBoxType}`;
+${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -18,9 +19,11 @@ const generateTypeForName = (name: string) => {
     throw new Error(`Can't generate type for empty string. Got input: ${name}`);
   }
   if (tail.length === 0) {
-    return `type ${head.toUpperCase()} = Static<typeof ${name}>`;
+    return `export type ${head.toUpperCase()} = Static<typeof ${name}>`;
   }
-  return `type ${head.toUpperCase()}${tail.join("")} = Static<typeof ${name}>`;
+  return `export type ${head.toUpperCase()}${tail.join(
+    ""
+  )} = Static<typeof ${name}>`;
 };
 
 /**
@@ -94,6 +97,12 @@ const isEnumSchemaObj = (
 ): schemaObj is EnumSchemaObj => {
   return schemaObj["enum"] !== undefined;
 };
+type RefSchemaObj = { $ref: string };
+const isRefSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is RefSchemaObj => {
+  return schemaObj["$ref"] !== undefined;
+};
 
 const createEnumName = (propertyName: string) => {
   const [head, ...tail] = propertyName;
@@ -109,6 +118,16 @@ const createEnumName = (propertyName: string) => {
  * NOTE: perhaps make this a map or something else if needed.
  **/
 let enumCode = "";
+
+/**
+ * Workaround used for resetting enum code in test runs. Currently it would
+ * otherwise not get reset in test runs. Thats what we get for using globally
+ * mutable state :]. Probably adapt later, perhaps pass enumCode inside
+ * collect() and adapt all collect() calls.
+ */
+export const resetEnumCode = () => {
+  enumCode = "";
+};
 
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
@@ -135,6 +154,22 @@ export const collect = (
     propertyName ?? "__NO_MATCH__"
   );
   const isArrayItem = propertyName === undefined;
+
+  // console.log(schemaObj);
+  // NOTE: for now assume it can only be file paths and it can only be relative
+  // paths to the current working directory.
+  if (isRefSchemaObj(schemaObj)) {
+    if (propertyName === undefined) {
+      throw new Error(
+        "expected a property name when resolving a $ref schema object"
+      );
+    }
+    const relativePath = schemaObj.$ref;
+    const absolutePath = process.cwd() + "/" + relativePath;
+    const schemaObjAsString = fs.readFileSync(absolutePath, "utf-8");
+    const parsedSchemaObj = JSON.parse(schemaObjAsString);
+    return collect(parsedSchemaObj, requiredAttributes, propertyName);
+  }
 
   if (isEnumSchemaObj(schemaObj)) {
     if (propertyName === undefined) {

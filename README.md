@@ -1,14 +1,34 @@
-# Schema2TypeBox
+<h1 align="center">
+    Schema2TypeBox
+</h1>
 
+<p align="center">
 Cli tool used for converting JSON schema draft-06 files to TypeBox code.
+</p>
 
-❗ This is a WIP/alpha release. Once it is finished it will be released with
-1.0.0. However, you can already test it based on the [feature list](#feature-list)
-you see below ❗
+<p align="center">
+  <a href="https://github.com/xddq/schema2typebox/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="ts2typebox is released under the MIT license." />
+  </a>
+  <a href="https://www.npmjs.org/package/schema2typebox">
+    <img src="https://img.shields.io/npm/v/schema2typebox?color=brightgreen&label=npm%20package" alt="Current npm package version." />
+  </a>
+  <a href="https://github.com/xddq/schema2typebox/actions/workflows/buildAndTest.yaml">
+    <img src="https://github.com/xddq/schema2typebox/actions/workflows/buildAndTest.yaml/badge.svg" alt="State of Github Action" />
+  </a>
+</p>
 
 ## Installation
 
 - `npm i -g schema2typebox`
+
+## Use Case
+
+- You got **JSON schemas** that you want to validate your data against. But you
+  also want **automatic type inference** after validating the data. You habe
+  chosen [typebox](https://github.com/sinclairzx81/typebox) for this, but figured
+  that you would need to manually create the typebox code. To avoid this pain, you
+  simply use `schema2typebox` to generate the required code for you🎉.
 
 ## Usage
 
@@ -16,6 +36,102 @@ you see below ❗
   or by simply running `schema2typebox`. The input defaults to "schema.json" and the
   output to "generated-types.ts" relative to the current working directory. For more
   see [cli usage](#cli-usage).
+
+## Examples
+
+```typescript
+//
+// Let's start with our JSON schema
+//
+
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 20
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18,
+      "maximum": 90
+    },
+    "hobbies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "favoriteAnimal": {
+      "enum": ["dog", "cat", "sloth"]
+    }
+  },
+  "required": ["name", "age"]
+}
+
+//
+// Which becomes..
+//
+
+export enum FavoriteAnimalEnum {
+  DOG = "dog",
+  CAT = "cat",
+  SLOTH = "sloth",
+}
+
+export type Person = Static<typeof Person>;
+export const Person = Type.Object({
+  name: Type.String({ minLength: 20 }),
+  age: Type.Number({ minimum: 18, maximum: 90 }),
+  hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
+  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+});
+
+//
+// Nice! But.. I have structured my JSON schemas into multiple files and I am
+// using the $ref keyword ...
+// No worries! Something like this
+//
+{
+  "title": "Contract",
+  "type": "object",
+  "properties": {
+    "person": {
+      "$ref": "./person.json"
+    },
+    "status": {
+      "$ref": "./status.json"
+    }
+  },
+  "required": ["person"]
+}
+
+//
+// Can easily become this
+//
+
+export enum StatusEnum {
+  UNKNOWN = "unknown",
+  ACCEPTED = "accepted",
+  DENIED = "denied",
+}
+
+export type Contract = Static<typeof Contract>;
+export const Contract = Type.Object({
+  person: Type.Object({
+    name: Type.String({ maxLength: 100 }),
+    age: Type.Number({ minimum: 18 }),
+  }),
+  status: Type.Optional(Type.Enum(StatusEnum)),
+});
+
+```
+
+Please take a look at the feature list below to see the currently supported
+features. For examples, take a look into the ./examples folder. You can also
+check the test cases, every feature is tested.
 
 ### Feature List
 
@@ -35,36 +151,32 @@ whats already implemented and what is missing.
 - [x] Type.Enum() via "enum" property
   - NOTE: Interesting that Type.Enum() creates a json schema with a list of
     anyOf consts instead of enum.
-- [ ] (prio) Supporting $ref to other schema files
-- [ ] Supporting $def in the same schema and referencing them
+- [x] $ref to other schema files via relative path
+- [x] name of generated value and type based on "title" attribute
+  - are there other attributes one should check if "title" is undefined?
+- [ ] (low prio?) $ref to definitions inside the current schema
+  - NOTE: perhaps wait and see if people mention the need
   - Initial idea to implement this via collecting all $defs in a "preprocessing"
     step inside a map and whenever we get a $ref we query the map to insert the
     correct type.
+- [ ] (low prio) $ref to remote schemas
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 - [ ] (low prio) Type.Not() via "not" property
   - TODO: Is this even possible? I am confused.
 
-## DEV NOTES
+## DEV/CONTRIBUTOR NOTES
 
-- See specification for JSON schema draft-06 [here](https://json-schema.org/specification-links.html#draft-6)
-- Link to meta schema: http://json-schema.org/draft-06/schema Meta schema means
-  that a JSON schema is created in order to validate that a given schema adheres
-  to a given JSON schema draft.
-
-### DEV USAGE
-
-- I would suggest we use github discussions whenever we have ideas/thoughts and
-  use feature branch worklow (with reviews) whenever we want to put changes into
-  this codebase.
-- I would suggest we generate tests whenever we add new features in order to
-  decrease the mental overhead we have for reviewing or developing.
-- I created a skeleton package and prepared everything (more or less) so that we
-  can focus on putting the "business logic" inside `./src/schema-to-typebox.ts`.
-- You can use ./src/generate-dummy-schema.ts to generate a dummy json schema
-  based on the typebox type you specify. Simply run `yarn build && yarn
-gen-dummy` and you will end up having that schema as ./schema.json inside the
-  root of the repo.
+- If you have an idea or want to help implement something, feel free to do so.
+  Please always start by creating a discussion post to avoid any unnecessary
+  work.
+  - Please always create tests for new features that are implemented. This will
+    decrease mental overhead for reviewing and developing in the long run.
+- See specification for JSON schema draft-06
+  [here](https://json-schema.org/specification-links.html#draft-6)
+- Link to [meta schema](http://json-schema.org/draft-06/schema). Meta schema
+  means that a JSON schema is created in order to validate that a given schema
+  adheres to a given JSON schema draft.
 
 ## cli usage
 
@@ -73,7 +185,6 @@ The following text is the output that will be displayed when you issue
 
 ```
 
-    ! WIP/ALPHA until 1.0.0 release !
     schema2typebox is a cli tool for converting JSON schema draft-06 files to
     typebox code.  The generated output is formatted based on the prettier
     config inside your repo (or the default one, if you don't have one).
@@ -228,3 +339,7 @@ However, I made it **dead simple** to enable the default/recommended eslint
 rules, if you want to use them instead. Everything is documented, just browse to
 [./eslintrc.cjs](https://github.com/xddq/nodejs-typescript-modern-starter/blob/main/eslintrc.cjs)
 and adapt the code.
+
+```
+
+```

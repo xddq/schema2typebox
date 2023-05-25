@@ -1,10 +1,21 @@
-import { describe, test } from "node:test";
+import { afterEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import * as prettier from "prettier";
+import shell from "shelljs";
+
 import {
   schema2Typebox as Schema2Typebox,
   collect,
+  resetEnumCode,
 } from "../src/schema-to-typebox";
+import { zip } from "../src/utils";
+
+const SHELLJS_RETURN_CODE_OK = 0;
+const buildOsIndependentPath = (foldersOrFiles: string[]) => {
+  return foldersOrFiles.join(path.sep);
+};
 
 const formatWithPrettier = (input: string): string => {
   return prettier.format(input, { parser: "typescript" });
@@ -24,6 +35,10 @@ export const expectEqualIgnoreFormatting = (
 };
 
 describe("schema2typebox", () => {
+  // TODO: remove this once global state enumCode was removed
+  afterEach(() => {
+    resetEnumCode();
+  });
   test("object with required string property", () => {
     const dummySchema = `
     {
@@ -40,51 +55,47 @@ describe("schema2typebox", () => {
     const expectedTypebox = `
     import { Type, Static } from "@sinclair/typebox";
 
-    type T = Static<typeof T>;
-    const T = Type.Object({
+    export type T = Static<typeof T>;
+    export const T = Type.Object({
       name: Type.String(),
     });
     `;
     expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
   });
-  // TODO: why the hell does this (or the following) test fail ONLY if  we have
-  // them both active? Perhaps check if node.js test runner executes in parallel
-  // by default and disable it for now? Currently using global variable for enum
-  // typescript code
-  // test("object with enum (all keys string)", () => {
-  //   const dummySchema = `
-  //    {
-  //     "type": "object",
-  //     "properties": {
-  //       "status": {
-  //        "enum": [
-  //          "unknown",
-  //          "accepted",
-  //          "denied"
-  //        ]
-  //       }
-  //     },
-  //     "required": [
-  //       "status"
-  //     ]
-  //   }
-  //   `;
-  //   const expectedTypebox = `
-  //   import { Type, Static } from "@sinclair/typebox";
-  //
-  //   export enum StatusEnum {
-  //     UNKNOWN = "unknown",
-  //     ACCEPTED = "accepted",
-  //     DENIED = "denied",
-  //   }
-  //
-  //   type T = Static<typeof T>
-  //   const T = Type.Object({
-  //     status: Type.Enum(StatusEnum)
-  //   })
-  //   `;
-  //   expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
-  // });
+  test("object with enum (all keys string)", () => {
+    const dummySchema = `
+     {
+      "type": "object",
+      "properties": {
+        "status": {
+         "enum": [
+           "unknown",
+           "accepted",
+           "denied"
+         ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export enum StatusEnum {
+      UNKNOWN = "unknown",
+      ACCEPTED = "accepted",
+      DENIED = "denied",
+    }
+
+    export type T = Static<typeof T>
+    export const T = Type.Object({
+      status: Type.Enum(StatusEnum)
+    })
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  });
   test("object with enum (mixed types for keys) and optional enum with string keys", () => {
     const dummySchema = `
      {
@@ -124,8 +135,8 @@ describe("schema2typebox", () => {
       DENIED = "denied",
     }
 
-    type T = Static<typeof T>
-    const T = Type.Object({
+    export type T = Static<typeof T>
+    export const T = Type.Object({
       status: Type.Enum(StatusEnum),
       optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
@@ -134,6 +145,149 @@ describe("schema2typebox", () => {
     // NOTE: probably rather test the collect() function whenever we can instead
     // of schema2typebox.
   });
+  test("generated typebox names are based on title attribute", () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+    `;
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export type Contract = Static<typeof Contract>;
+    export const Contract = Type.Object({
+      name: Type.String(),
+    });
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  });
+  test("/examples/basic", () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 20
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18,
+          "maximum": 90
+        },
+        "hobbies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "favoriteAnimal": {
+          "enum": ["dog", "cat", "sloth"]
+        }
+      },
+      "required": ["name", "age"]
+       }
+   `;
+
+    const expectedTypebox = `
+    import { Type, Static } from "@sinclair/typebox";
+
+    export enum FavoriteAnimalEnum {
+      DOG = "dog",
+      CAT = "cat",
+      SLOTH = "sloth",
+    }
+
+    export type Contract = Static<typeof Contract>;
+    export const Contract = Type.Object({
+      name: Type.String({ minLength: 20 }),
+      age: Type.Number({ minimum: 18, maximum: 90 }),
+      hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
+      favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+    });
+    `;
+    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+  });
+  test("/examples/with-ref-to-files", () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "person": {
+          "$ref": "./person.json"
+        },
+        "status": {
+          "$ref": "./status.json"
+        }
+      },
+      "required": ["person"]
+    }
+    `;
+
+    const referencedPersonSchema = `
+    {
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18
+        }
+      },
+      "required": ["name", "age"]
+   }
+   `;
+
+    const referencedStatusSchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+
+    const expectedTypebox = `
+    Type.Object({
+      person: Type.Object({
+        name: Type.String({"maxLength":100}),
+        age: Type.Number({"minimum":18})
+      }),
+      status: Type.Optional(Type.Enum(StatusEnum))
+    })
+    `;
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  // NOTE: probably rather test the collect() function whenever we can instead
+  // of schema2typebox.
 });
 
 describe("schema2typebox - collect()", () => {
@@ -590,6 +744,75 @@ describe("schema2typebox - collect()", () => {
       collect(JSON.parse(dummySchema)),
       expectedTypebox
     );
+  });
+  test("$ref pointing to external files in relative path", () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "person": {
+          "$ref": "./person.json"
+        },
+        "status": {
+          "$ref": "./status.json"
+        }
+      },
+      "required": ["person"]
+    }
+    `;
+
+    const referencedPersonSchema = `
+    {
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18
+        }
+      },
+      "required": ["name", "age"]
+   }
+   `;
+
+    const referencedStatusSchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+
+    const expectedTypebox = `
+    Type.Object({
+      person: Type.Object({
+        name: Type.String({"maxLength":100}),
+        age: Type.Number({"minimum":18})
+      }),
+      status: Type.Optional(Type.Enum(StatusEnum))
+    })
+    `;
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
 });
 // TODO: Create tests for programmatic usage. Only do once feature complete and
