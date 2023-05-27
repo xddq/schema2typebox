@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-Cli tool used for converting JSON schema draft-06 files to TypeBox code.
+Creating TypeBox code from JSON schemas.
 </p>
 
 <p align="center">
@@ -90,10 +90,34 @@ export const Person = Type.Object({
 });
 
 //
-// Nice! But.. I have structured my JSON schemas into multiple files and I am
-// using the $ref keyword ...
-// No worries! Something like this
+// You can also split your JSON schema definitions into multiple files when
+// using relative paths. Something like this:
 //
+
+// person.json
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18
+    }
+  },
+  "required": ["name", "age"]
+}
+
+// status.json
+{
+  "title": "Status",
+  "enum": ["unknown", "accepted", "denied"]
+}
+
+// schema.json
 {
   "title": "Contract",
   "type": "object",
@@ -109,7 +133,7 @@ export const Person = Type.Object({
 }
 
 //
-// Can easily become this
+// Will result in this:
 //
 
 export enum StatusEnum {
@@ -129,9 +153,30 @@ export const Contract = Type.Object({
 
 ```
 
-Please take a look at the feature list below to see the currently supported
-features. For examples, take a look into the ./examples folder. You can also
-check the test cases, every feature is tested.
+Please take a look at the [feature list](feature-list) below to see the
+currently supported features. For examples, take a look into the ./examples
+folder. You can also check the test cases, every feature is tested.
+
+### Schema Support
+
+The package is focused on supporting JSON schema draft-06 files, since this is
+the target TypeBox officially supports. From typebox repo "These types are fully
+compatible with the JSON Schema Draft 6 specification."
+
+However, since the amount of breaking changes is quite small between most JSON
+schema specs, support for other specs may "just work" or may be implemented at a
+later stage. Feel free to open a discussion or issue when you find problems.
+Happy about contributions if you want to implement it yourself.
+
+- [x] draft-04
+- [x] draft-06 (main goal of this package, see Feature List for the state)
+- [x] draft-07
+- [x] draft-2019-09
+  - should be working with the _current feature set_
+- [ ] draft-2020-12
+  - Probably not working due to new keywords or semantic changes for previous
+    keywords. Happy about issues with your JSON schema, expected TypeBox code
+    and the currently generated TypeBox code.
 
 ### Feature List
 
