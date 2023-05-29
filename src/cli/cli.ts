@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 import { createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import minimist from "minimist";
