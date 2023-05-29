@@ -1,6 +1,6 @@
 {
   "name": "schema2typebox",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
   "source": "dist/src/index.js",
@@ -24,7 +24,8 @@
     "start": "node tasks.mjs start",
     "test": "node tasks.mjs test",
     "watch-node": "node tasks.mjs watch-node",
-    "watch-ts": "node tasks.mjs watch-ts"
+    "watch-ts": "node tasks.mjs watch-ts",
+    "publish": "yarn build && npm publish"
   },
   "repository": {
     "type": "git",
