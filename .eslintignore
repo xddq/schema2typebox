@@ -140,3 +140,4 @@ TODO
 # eslintignore specific
 .yarn
 generated-types.ts
+examples

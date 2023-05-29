@@ -151,11 +151,16 @@ export const Contract = Type.Object({
   status: Type.Optional(Type.Enum(StatusEnum)),
 });
 
+//
+// For an example of programmatic usage check out the examples folder.
+//
+
 ```
 
 Please take a look at the [feature list](feature-list) below to see the
-currently supported features. For examples, take a look into the ./examples
-folder. You can also check the test cases, every feature is tested.
+currently supported features. For examples, take a look into the
+[examples](https://github.com/xddq/schema2typebox/tree/main/examples) folder.
+You can also check the test cases, every feature is tested.
 
 ### Schema Support
 
@@ -230,10 +235,9 @@ The following text is the output that will be displayed when you issue
 
 ```
 
-    schema2typebox is a cli tool for converting JSON schema draft-06 files to
-    typebox code.  The generated output is formatted based on the prettier
-    config inside your repo (or the default one, if you don't have one).
-    Version: ${packageJson.version}
+    schema2typebox generates TypeBox code from JSON schemas. The generated
+    output is formatted based on the prettier config inside your repo (or the
+    default one, if you don't have one). Version: ${packageJson.version}
 
     Usage:
 
@@ -246,15 +250,14 @@ The following text is the output that will be displayed when you issue
 
     -i, --input
        Specifies the relative path to the file containing the JSON schema that
-       will be used to generated typebox types. Defaults to "schema.json".
+       will be used to generated typebox code. Defaults to "schema.json".
 
     -o, --output
        Specifies the relative path to generated file that will contain the
-       typebox code. Defaults to "generated-types.ts".
+       typebox code. Defaults to "generated-typebox.ts".
 
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
-       instead. Has precedence over -o/--output.
 
 ```
 

@@ -1,13 +1,13 @@
 {
   "name": "schema2typebox",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
   "source": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "bin": {
-    "schema-to-typebox": "dist/src/index.js",
-    "schema2typebox": "dist/src/index.js"
+    "schema-to-typebox": "dist/src/cli/index.js",
+    "schema2typebox": "dist/src/cli/index.js"
   },
   "author": "Pierre Dahmani <hi@pierre-dev.com>",
   "license": "MIT",
