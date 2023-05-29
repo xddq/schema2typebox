@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { createWriteStream } from "node:fs";
+import { readFileSync, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import minimist from "minimist";
 
 import packageJson from "../../package.json";
 import { schema2typebox } from "../programmatic-usage";
 
-const runCli = async () => {
+export const runCli = async () => {
   const args = minimist(process.argv.slice(2), {
     alias: {
       input: "i",
@@ -25,12 +25,15 @@ const runCli = async () => {
     return process.stdout.write(getHelpText.run());
   }
 
-  // convert input path to file
+  const inputFileAsString = readFileSync(
+    process.cwd() + `/${args.input ?? "schema.json"}`,
+    "utf-8"
+  );
   const typeboxCode = await schema2typebox({
-    input: args.input,
+    input: inputFileAsString,
   });
 
-  const generatedCodeStream = Readable.from(typeboxCode.split("\n"));
+  const generatedCodeStream = Readable.from(typeboxCode.split(/(\r\n|\r|\n)/));
   if (args["output-stdout"]) {
     return generatedCodeStream.pipe(process.stdout);
   }
@@ -74,5 +77,3 @@ export const getHelpText = {
    `;
   },
 };
-
-runCli();

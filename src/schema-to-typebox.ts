@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { zip } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
-export const schema2Typebox = (jsonSchema: string) => {
+export const schema2typebox = (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
   const typeBoxType = collect(schemaObj, []);
   // TODO: Are there alternative attributes people use for naming the entities?

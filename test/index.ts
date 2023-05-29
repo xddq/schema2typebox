@@ -6,7 +6,7 @@ import * as prettier from "prettier";
 import shell from "shelljs";
 
 import {
-  schema2Typebox as Schema2Typebox,
+  schema2typebox,
   collect,
   resetEnumCode,
 } from "../src/schema-to-typebox";
@@ -60,7 +60,7 @@ describe("programmatic usage API", () => {
       name: Type.String(),
     });
     `;
-    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
   });
   test("object with enum (all keys string)", () => {
     const dummySchema = `
@@ -94,7 +94,7 @@ describe("programmatic usage API", () => {
       status: Type.Enum(StatusEnum)
     })
     `;
-    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
   });
   test("object with enum (mixed types for keys) and optional enum with string keys", () => {
     const dummySchema = `
@@ -141,7 +141,7 @@ describe("programmatic usage API", () => {
       optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
     `;
-    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
     // NOTE: probably rather test the collect() function whenever we can instead
     // of schema2typebox.
   });
@@ -166,7 +166,7 @@ describe("programmatic usage API", () => {
       name: Type.String(),
     });
     `;
-    expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
   });
   // NOTE: probably rather test the collect() function whenever we can instead
   // of schema2typebox.
@@ -698,126 +698,13 @@ describe("schema2typebox internal - collect()", () => {
   });
 });
 
-describe("cli usage", () => {});
-// TODO: Create tests for programmatic usage. Only do once feature complete and
-// releasing 1.0.0.
-
-// test("/examples/basic", () => {
-//   const dummySchema = `
-//     {
-//       "title": "Contract",
-//       "type": "object",
-//       "properties": {
-//         "name": {
-//           "type": "string",
-//           "minLength": 20
-//         },
-//         "age": {
-//           "type": "number",
-//           "minimum": 18,
-//           "maximum": 90
-//         },
-//         "hobbies": {
-//           "type": "array",
-//           "minItems": 1,
-//           "items": {
-//             "type": "string"
-//           }
-//         },
-//         "favoriteAnimal": {
-//           "enum": ["dog", "cat", "sloth"]
-//         }
-//       },
-//       "required": ["name", "age"]
-//        }
-//    `;
-//
-//   const expectedTypebox = `
-//     import { Type, Static } from "@sinclair/typebox";
-//
-//     export enum FavoriteAnimalEnum {
-//       DOG = "dog",
-//       CAT = "cat",
-//       SLOTH = "sloth",
-//     }
-//
-//     export type Contract = Static<typeof Contract>;
-//     export const Contract = Type.Object({
-//       name: Type.String({ minLength: 20 }),
-//       age: Type.Number({ minimum: 18, maximum: 90 }),
-//       hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
-//       favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
-//     });
-//     `;
-//   expectEqualIgnoreFormatting(Schema2Typebox(dummySchema), expectedTypebox);
+// NOTE: these are the most "high level" tests. Create them sparsely. Focus on
+// cli usage aspects rather then implementation of the business logic below it.
+// describe("cli usage", () => {
+// TODO: how can we test this?
+// test("pipes to stdout if -h or --help is given", async () => {
+//   const getHelpTextMock = mock.method(getHelpText, "run", () => {});
+//   await runCli();
+//   assert.equal(getHelpTextMock.mock.callCount(), 10);
 // });
-//
-// test("/examples/with-ref-to-files", () => {
-//   // prepares and writes a test types.ts file.
-//   const schemaWithRef = `
-//   {
-//     "title": "Contract",
-//     "type": "object",
-//     "properties": {
-//       "person": {
-//         "$ref": "./person.json"
-//       },
-//       "status": {
-//         "$ref": "./status.json"
-//       }
-//     },
-//     "required": ["person"]
-//   }
-//   `;
-//
-//   const referencedPersonSchema = `
-//   {
-//     "title": "Person",
-//     "type": "object",
-//     "properties": {
-//       "name": {
-//         "type": "string",
-//         "maxLength": 100
-//       },
-//       "age": {
-//         "type": "number",
-//         "minimum": 18
-//       }
-//     },
-//     "required": ["name", "age"]
-//  }
-//  `;
-//
-//   const referencedStatusSchema = `
-//   {
-//     "title": "Status",
-//     "enum": ["unknown", "accepted", "denied"]
-//   }
-//   `;
-//
-//   const expectedTypebox = `
-//   Type.Object({
-//     person: Type.Object({
-//       name: Type.String({"maxLength":100}),
-//       age: Type.Number({"minimum":18})
-//     }),
-//     status: Type.Optional(Type.Enum(StatusEnum))
-//   })
-//   `;
-//
-//   const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-//     buildOsIndependentPath([__dirname, "..", "..", currItem])
-//   );
-//   zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-//     ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
-//   );
-//
-//   expectEqualIgnoreFormatting(
-//     collect(JSON.parse(schemaWithRef)),
-//     expectedTypebox
-//   );
-//
-//   // cleanup generated files
-//   const { code: returnCode } = shell.rm("-f", inputPaths);
-//   assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
 // });

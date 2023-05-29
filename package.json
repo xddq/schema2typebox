@@ -6,8 +6,8 @@
   "source": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "bin": {
-    "schema-to-typebox": "dist/src/cli/cli.js",
-    "schema2typebox": "dist/src/cli/cli.js"
+    "schema-to-typebox": "dist/src/cli/index.js",
+    "schema2typebox": "dist/src/cli/index.js"
   },
   "author": "Pierre Dahmani <hi@pierre-dev.com>",
   "license": "MIT",

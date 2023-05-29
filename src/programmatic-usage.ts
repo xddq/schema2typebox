@@ -1,7 +1,7 @@
 import * as prettier from "prettier";
 import { cosmiconfig } from "cosmiconfig";
 import packageJson from "../package.json";
-import { schema2Typebox as Schema2Typebox } from "./schema-to-typebox";
+import { schema2typebox as Schema2Typebox } from "./schema-to-typebox";
 
 export type Schema2TypeboxOptions = {
   /**
