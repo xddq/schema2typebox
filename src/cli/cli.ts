@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { readFileSync, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import minimist from "minimist";
