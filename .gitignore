@@ -137,4 +137,4 @@ bundle
 dist
 node_modules
 TODO
-schema.json
+/schema.json

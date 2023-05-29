@@ -1,0 +1,26 @@
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 20
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18,
+      "maximum": 90
+    },
+    "hobbies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "favoriteAnimal": {
+      "enum": ["dog", "cat", "sloth"]
+    }
+  },
+  "required": ["name", "age"]
+}

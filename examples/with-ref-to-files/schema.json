@@ -1,0 +1,13 @@
+{
+  "title": "Contract",
+  "type": "object",
+  "properties": {
+    "person": {
+      "$ref": "./person.json"
+    },
+    "status": {
+      "$ref": "./status.json"
+    }
+  },
+  "required": ["person"]
+}
