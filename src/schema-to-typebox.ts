@@ -155,15 +155,9 @@ export const collect = (
   );
   const isArrayItem = propertyName === undefined;
 
-  // console.log(schemaObj);
   // NOTE: for now assume it can only be file paths and it can only be relative
   // paths to the current working directory.
   if (isRefSchemaObj(schemaObj)) {
-    if (propertyName === undefined) {
-      throw new Error(
-        "expected a property name when resolving a $ref schema object"
-      );
-    }
     const relativePath = schemaObj.$ref;
     const absolutePath = process.cwd() + "/" + relativePath;
     const schemaObjAsString = fs.readFileSync(absolutePath, "utf-8");
