@@ -696,6 +696,72 @@ describe("schema2typebox internal - collect()", () => {
     const { code: returnCode } = shell.rm("-f", inputPaths);
     assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
+  test("object with $ref inside anyOf", () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = {
+      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
+    };
+
+    const referencedCatSchema = {
+      title: "Cat",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "cat",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+
+    const referencedDogSchema = {
+      title: "Dog",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "dog",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+    const expectedTypebox = `
+    Type.Optional(
+      Type.Union([
+        Type.Object({
+          type: Type.Literal("cat"),
+          name: Type.String({ maxLength: 100 }),
+        }),
+        Type.Object({
+          type: Type.Literal("dog"),
+          name: Type.String({ maxLength: 100 }),
+        })
+      ])
+    );
+    `;
+
+    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
+      ([fileName, data]) =>
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+    );
+
+    expectEqualIgnoreFormatting(collect(schemaWithRef), expectedTypebox);
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
 });
 
 // NOTE: these are the most "high level" tests. Create them sparsely. Focus on
