@@ -9,6 +9,7 @@ import {
   schema2typebox,
   collect,
   resetEnumCode,
+  resetCustomTypes,
 } from "../src/schema-to-typebox";
 import { zip } from "../src/utils";
 
@@ -34,33 +35,13 @@ export const expectEqualIgnoreFormatting = (
   assert.equal(formatWithPrettier(input1), formatWithPrettier(input2));
 };
 
+// NOTE: Rather test the collect() function whenever we can instead
+// of schema2typebox.
 describe("programmatic usage API", () => {
-  // TODO: remove this once global state enumCode was removed
+  // TODO: remove this once global state enumCode and customCode were removed
   afterEach(() => {
     resetEnumCode();
-  });
-  test("object with required string property", () => {
-    const dummySchema = `
-    {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ]
-    }`;
-    const expectedTypebox = `
-    import { Type, Static } from "@sinclair/typebox";
-
-    export type T = Static<typeof T>;
-    export const T = Type.Object({
-      name: Type.String(),
-    });
-    `;
-    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+    resetCustomTypes();
   });
   test("object with enum (all keys string)", () => {
     const dummySchema = `
@@ -142,8 +123,6 @@ describe("programmatic usage API", () => {
     })
     `;
     expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
-    // NOTE: probably rather test the collect() function whenever we can instead
-    // of schema2typebox.
   });
   test("generated typebox names are based on title attribute", () => {
     const dummySchema = `
@@ -168,8 +147,58 @@ describe("programmatic usage API", () => {
     `;
     expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
   });
-  // NOTE: probably rather test the collect() function whenever we can instead
-  // of schema2typebox.
+  test("object with oneOf generates custom typebox TypeRegistry code", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "a": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": ["a"]
+    }
+    `;
+    const expectedTypebox = `
+import {
+  Type,
+  Kind,
+  TypeRegistry,
+  Static,
+  TSchema,
+  TUnion,
+  SchemaOptions,
+} from "@sinclair/typebox";
+
+TypeRegistry.Set(
+  "OneOf",
+  (schema: any, value) =>
+    1 ===
+    schema.oneOf.reduce(
+      (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
+      0
+    )
+);
+
+const OneOf = <T extends TSchema[]>(
+  oneOf: [...T],
+  options: SchemaOptions = {}
+) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "OneOf", oneOf });
+
+export type T = Static<typeof T>;
+export const T = Type.Object({
+  a: Type.OneOf([Type.String(), Type.Number()]),
+});
+    `;
+    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+  });
 });
 
 // NOTE: I think it is best to test the collect() function directly(less
@@ -534,6 +563,35 @@ describe("schema2typebox internal - collect()", () => {
       b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
       c: Type.Union([Type.String({ maxLength: 20 }),
           Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",}),
+    });
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with oneOf", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": {
+        "a": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": ["a"]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      a: Type.OneOf([Type.String(), Type.Number()]),
     });
     `;
     expectEqualIgnoreFormatting(

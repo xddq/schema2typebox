@@ -53,7 +53,7 @@ export const bundle = () => {
  * Runs your code. Only works if it was built before.
  */
 export const start = () => {
-  const pathToCode = ["dist", "src", "index.js"].join(path.sep);
+  const pathToCode = ["dist", "src", "cli", "index.js"].join(path.sep);
   const { code } = shell.exec(`node ${pathToCode}`);
   handleNonZeroReturnCode(code);
 };
