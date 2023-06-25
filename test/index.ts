@@ -176,6 +176,7 @@ import {
   TUnion,
   SchemaOptions,
 } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 TypeRegistry.Set(
   "OneOf",
@@ -194,7 +195,7 @@ const OneOf = <T extends TSchema[]>(
 
 export type T = Static<typeof T>;
 export const T = Type.Object({
-  a: Type.OneOf([Type.String(), Type.Number()]),
+  a: OneOf([Type.String(), Type.Number()]),
 });
     `;
     expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
@@ -591,7 +592,7 @@ describe("schema2typebox internal - collect()", () => {
     `;
     const expectedTypebox = `
     Type.Object({
-      a: Type.OneOf([Type.String(), Type.Number()]),
+      a: OneOf([Type.String(), Type.Number()]),
     });
     `;
     expectEqualIgnoreFormatting(

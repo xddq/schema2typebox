@@ -289,11 +289,11 @@ export const collect = (
     );
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.OneOf([${typeboxForAnyOfObjects}],${JSON.stringify(
+      result = `OneOf([${typeboxForAnyOfObjects}],${JSON.stringify(
         schemaOptions
       )})`;
     } else {
-      result = `Type.OneOf([${typeboxForAnyOfObjects}])`;
+      result = `OneOf([${typeboxForAnyOfObjects}])`;
     }
 
     if (!isRequiredAttribute) {
@@ -539,6 +539,7 @@ export const createOneOfTypeboxSupportCode = (): [Imports, Code] => {
   TUnion,
   SchemaOptions,
 } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 `;
   const code =
     "TypeRegistry.Set('OneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
