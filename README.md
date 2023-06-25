@@ -197,7 +197,7 @@ whats already implemented and what is missing.
 - [x] Type.Literal() via "const" property
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
-- [x] Type.oneOf() via "anyOf" property
+- [x] Type.oneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry in order to be able to align to
     oneOf json schema semantics and still be able to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
