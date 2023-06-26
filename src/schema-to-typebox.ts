@@ -248,9 +248,6 @@ export const collect = (
       result = `Type.Union([${typeboxForAnyOfObjects}])`;
     }
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
     if (propertyName !== undefined) {
       result = `${propertyName}: ${result}`;
     }
@@ -270,9 +267,6 @@ export const collect = (
       result = `Type.Intersect([${typeboxForAnyOfObjects}])`;
     }
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
     if (propertyName !== undefined) {
       result = `${propertyName}: ${result}`;
     }
@@ -296,9 +290,6 @@ export const collect = (
       result = `OneOf([${typeboxForAnyOfObjects}])`;
     }
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
     if (propertyName !== undefined) {
       result = `${propertyName}: ${result}`;
     }

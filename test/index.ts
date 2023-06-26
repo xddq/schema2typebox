@@ -561,7 +561,7 @@ describe("schema2typebox internal - collect()", () => {
     const expectedTypebox = `
     Type.Object({
       a: Type.Union([Type.Literal(1), Type.Literal(2)]),
-      b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
+      b: Type.Union([Type.String(), Type.Number(), Type.Null()]),
       c: Type.Union([Type.String({ maxLength: 20 }),
           Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",}),
     });
@@ -650,7 +650,7 @@ describe("schema2typebox internal - collect()", () => {
     const expectedTypebox = `
     Type.Object({
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
-      b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
+      b: Type.Intersect([Type.String(), Type.Number()]),
       c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
     `;
     expectEqualIgnoreFormatting(
@@ -793,7 +793,6 @@ describe("schema2typebox internal - collect()", () => {
       required: ["type", "name"],
     };
     const expectedTypebox = `
-    Type.Optional(
       Type.Union([
         Type.Object({
           type: Type.Literal("cat"),
@@ -803,8 +802,7 @@ describe("schema2typebox internal - collect()", () => {
           type: Type.Literal("dog"),
           name: Type.String({ maxLength: 100 }),
         })
-      ])
-    );
+      ]);
     `;
 
     const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
