@@ -22,7 +22,7 @@ TypeRegistry.Set("StringEnum", (schema: any, value) =>
 );
 
 TypeRegistry.Set(
-  "OneOf",
+  "ExtendedOneOf",
   (schema: any, value) =>
     1 ===
     schema.oneOf.reduce(
@@ -42,7 +42,12 @@ const StringEnum = <T extends string[]>(
 const OneOf = <T extends TSchema[]>(
   oneOf: [...T],
   options: SchemaOptions = {}
-) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "OneOf", oneOf });
+) =>
+  Type.Unsafe<Static<TUnion<T>>>({
+    ...options,
+    [Kind]: "ExtendedOneOf",
+    oneOf,
+  });
 
 // --------------------------------------------------------------------
 // Example

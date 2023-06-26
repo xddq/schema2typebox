@@ -179,7 +179,7 @@ import {
 import { Value } from "@sinclair/typebox/value";
 
 TypeRegistry.Set(
-  "OneOf",
+  "ExtendedOneOf",
   (schema: any, value) =>
     1 ===
     schema.oneOf.reduce(
@@ -191,7 +191,7 @@ TypeRegistry.Set(
 const OneOf = <T extends TSchema[]>(
   oneOf: [...T],
   options: SchemaOptions = {}
-) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "OneOf", oneOf });
+) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
 
 export type T = Static<typeof T>;
 export const T = Type.Object({

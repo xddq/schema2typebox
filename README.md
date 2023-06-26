@@ -198,8 +198,9 @@ whats already implemented and what is missing.
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
 - [x] Type.oneOf() via "oneOf" property
-  - This adds oneOf to the typebox type registry in order to be able to align to
-    oneOf json schema semantics and still be able to use the typebox compiler. [More
+  - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
+    order to be able to align to oneOf json schema semantics and still be able
+    to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
 - [x] SchemaOptions for everything that is implemented
 - [x] Type.Enum() via "enum" property

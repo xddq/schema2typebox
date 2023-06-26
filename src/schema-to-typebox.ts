@@ -273,7 +273,7 @@ export const collect = (
     return result + "\n";
   }
   if (isOneOfSchemaObj(schemaObj)) {
-    if (!customTypes.includes("TypeRegistry.Set('OneOf'")) {
+    if (!customTypes.includes("TypeRegistry.Set('ExtendedOneOf'")) {
       const [imports, code] = createOneOfTypeboxSupportCode();
       customTypes = customTypes + code;
       customTypesImports = customTypesImports + imports;
@@ -533,9 +533,9 @@ export const createOneOfTypeboxSupportCode = (): [Imports, Code] => {
 import { Value } from "@sinclair/typebox/value";
 `;
   const code =
-    "TypeRegistry.Set('OneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
+    "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
     "\n\n" +
-    "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'OneOf', oneOf })" +
+    "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })" +
     "\n\n";
   return [imports, code];
 };
