@@ -8,9 +8,15 @@ export const schema2typebox = (jsonSchema: string) => {
   // TODO: Are there alternative attributes people use for naming the entities?
   const valueName = schemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
-  return `import { Type, Static } from "@sinclair/typebox";
 
-${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
+  const normalImportStatements = `import { Type, Static } from "@sinclair/typebox";`;
+  return `${
+    customTypesImports.length === 0
+      ? normalImportStatements
+      : customTypesImports
+  }
+
+${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -91,6 +97,12 @@ const isAllOfSchemaObj = (
 ): schemaObj is AllOfSchemaObj => {
   return schemaObj["allOf"] !== undefined;
 };
+type OneOfSchemaObj = Record<string, any> & { oneOf: Record<string, any>[] };
+const isOneOfSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is OneOfSchemaObj => {
+  return schemaObj["oneOf"] !== undefined;
+};
 type EnumSchemaObj = Record<string, any> & { enum: any[] };
 const isEnumSchemaObj = (
   schemaObj: Record<string, any>
@@ -127,6 +139,33 @@ let enumCode = "";
  */
 export const resetEnumCode = () => {
   enumCode = "";
+};
+
+/**
+ * Adds custom types to the typebox registry in order to validate them and use
+ * the typecompiler against them. Used to e.g. implement 'oneOf' which does
+ * normally not exist in typebox. This code has the drawback that is does not
+ * compile to a validator when compiling the schema and is therefore a little
+ * slower than standard types. However this approach was picked in order to
+ * ensure sematic equality with the JSON schema sematics of oneOf.
+ * For more info see: https://github.com/xddq/schema2typebox/issues/16
+ */
+let customTypes = "";
+
+/**
+ * Workaround used for resetting custom types code in test runs. Currently it
+ * would otherwise not get reset in test runs. Thats what we get for using
+ * globally mutable state :]. Probably adapt later, perhaps pass customTypes inside
+ * collect() and adapt all collect() calls.
+ */
+export const resetCustomTypes = () => {
+  customTypes = "";
+};
+
+let customTypesImports = "";
+
+export const resetCustomTypesImports = () => {
+  customTypesImports = "";
 };
 
 /**
@@ -209,9 +248,6 @@ export const collect = (
       result = `Type.Union([${typeboxForAnyOfObjects}])`;
     }
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
     if (propertyName !== undefined) {
       result = `${propertyName}: ${result}`;
     }
@@ -231,9 +267,29 @@ export const collect = (
       result = `Type.Intersect([${typeboxForAnyOfObjects}])`;
     }
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
     }
+    return result + "\n";
+  }
+  if (isOneOfSchemaObj(schemaObj)) {
+    if (!customTypes.includes("TypeRegistry.Set('ExtendedOneOf'")) {
+      const [imports, code] = createOneOfTypeboxSupportCode();
+      customTypes = customTypes + code;
+      customTypesImports = customTypesImports + imports;
+    }
+    const typeboxForAnyOfObjects = schemaObj.oneOf.map((currItem) =>
+      collect(currItem)
+    );
+    let result = "";
+    if (Object.keys(schemaOptions).length > 0) {
+      result = `OneOf([${typeboxForAnyOfObjects}],${JSON.stringify(
+        schemaOptions
+      )})`;
+    } else {
+      result = `OneOf([${typeboxForAnyOfObjects}])`;
+    }
+
     if (propertyName !== undefined) {
       result = `${propertyName}: ${result}`;
     }
@@ -370,7 +426,8 @@ const getSchemaOptions = (
       currItem !== "type" &&
       currItem !== "items" &&
       currItem !== "allOf" &&
-      currItem !== "anyOf"
+      currItem !== "anyOf" &&
+      currItem !== "oneOf"
     );
   });
   return schemaOptionProperties.map((currItem) => {
@@ -457,4 +514,28 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
   }
 
   return type;
+};
+
+type Imports = string;
+type Code = string;
+
+// based on suggestion from https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
+export const createOneOfTypeboxSupportCode = (): [Imports, Code] => {
+  const imports = `import {
+  Type,
+  Kind,
+  TypeRegistry,
+  Static,
+  TSchema,
+  TUnion,
+  SchemaOptions,
+} from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
+`;
+  const code =
+    "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
+    "\n\n" +
+    "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })" +
+    "\n\n";
+  return [imports, code];
 };
