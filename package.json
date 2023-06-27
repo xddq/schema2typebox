@@ -47,6 +47,7 @@
     "cli"
   ],
   "dependencies": {
+    "@apidevtools/json-schema-ref-parser": "9.0.9",
     "@sinclair/typebox": "0.28.10",
     "cosmiconfig": "8.1.3",
     "minimist": "1.2.8",

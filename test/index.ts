@@ -43,7 +43,7 @@ describe("programmatic usage API", () => {
     resetEnumCode();
     resetCustomTypes();
   });
-  test("object with enum (all keys string)", () => {
+  test("object with enum (all keys string)", async () => {
     const dummySchema = `
      {
       "type": "object",
@@ -75,9 +75,12 @@ describe("programmatic usage API", () => {
       status: Type.Enum(StatusEnum)
     })
     `;
-    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(
+      await schema2typebox(dummySchema),
+      expectedTypebox
+    );
   });
-  test("object with enum (mixed types for keys) and optional enum with string keys", () => {
+  test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
     const dummySchema = `
      {
       "type": "object",
@@ -122,9 +125,12 @@ describe("programmatic usage API", () => {
       optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
     `;
-    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(
+      await schema2typebox(dummySchema),
+      expectedTypebox
+    );
   });
-  test("generated typebox names are based on title attribute", () => {
+  test("generated typebox names are based on title attribute", async () => {
     const dummySchema = `
     {
       "title": "Contract",
@@ -145,9 +151,230 @@ describe("programmatic usage API", () => {
       name: Type.String(),
     });
     `;
-    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(
+      await schema2typebox(dummySchema),
+      expectedTypebox
+    );
   });
-  test("object with oneOf generates custom typebox TypeRegistry code", () => {
+  test("object with $ref pointing to external files in relative path", async () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "person": {
+          "$ref": "person.json"
+        },
+        "status": {
+          "$ref": "status.json"
+        }
+      },
+      "required": ["person"]
+    }
+    `;
+
+    const referencedPersonSchema = `
+    {
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18
+        }
+      },
+      "required": ["name", "age"]
+   }
+   `;
+
+    const referencedStatusSchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+
+    const expectedTypebox = `
+      import { Type, Static } from "@sinclair/typebox";
+
+      export enum StatusEnum {
+        UNKNOWN = "unknown",
+        ACCEPTED = "accepted",
+        DENIED = "denied",
+      }
+
+      export type Contract = Static<typeof Contract>;
+      export const Contract = Type.Object({
+        person: Type.Object({
+          name: Type.String({ maxLength: 100 }),
+          age: Type.Number({ minimum: 18 }),
+        }),
+        status: Type.Optional(Type.Enum(StatusEnum)),
+      });
+    `;
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox(schemaWithRef),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  test("object with $ref inside anyOf", async () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = {
+      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
+    };
+
+    const referencedCatSchema = {
+      title: "Cat",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "cat",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+
+    const referencedDogSchema = {
+      title: "Dog",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "dog",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+    const expectedTypebox = `
+      import { Type, Static } from "@sinclair/typebox";
+
+      export type T = Static<typeof T>;
+      export const T = Type.Union([
+        Type.Object({
+          type: Type.Literal("cat"),
+          name: Type.String({ maxLength: 100 }),
+        }),
+        Type.Object({
+          type: Type.Literal("dog"),
+          name: Type.String({ maxLength: 100 }),
+        }),
+      ]);
+    `;
+
+    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
+      ([fileName, data]) =>
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox(JSON.stringify(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  test("object with $ref to remote files", async () => {
+    // prepares and writes a test types.ts file.
+    const schemaWithRef = {
+      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
+    };
+
+    const referencedCatSchema = {
+      title: "Cat",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "cat",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+
+    const referencedDogSchema = {
+      title: "Dog",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "dog",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+    const expectedTypebox = `
+      import { Type, Static } from "@sinclair/typebox";
+
+      export type T = Static<typeof T>;
+      export const T = Type.Union([
+        Type.Object({
+          type: Type.Literal("cat"),
+          name: Type.String({ maxLength: 100 }),
+        }),
+        Type.Object({
+          type: Type.Literal("dog"),
+          name: Type.String({ maxLength: 100 }),
+        }),
+      ]);
+    `;
+
+    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
+      ([fileName, data]) =>
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox(JSON.stringify(schemaWithRef)),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  test("object with oneOf generates custom typebox TypeRegistry code", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -198,12 +425,23 @@ export const T = Type.Object({
   a: OneOf([Type.String(), Type.Number()]),
 });
     `;
-    expectEqualIgnoreFormatting(schema2typebox(dummySchema), expectedTypebox);
+    expectEqualIgnoreFormatting(
+      await schema2typebox(dummySchema),
+      expectedTypebox
+    );
   });
 });
 
-// NOTE: I think it is best to test the collect() function directly(less
-// overhead) instead of programmatic usage or cli usage for new features.
+/**
+ * I think it is best to test the collect() function directly(less
+ * overhead) instead of programmatic usage or cli usage for new features
+ * whenever possible.
+ *
+ * For testing against schemas containing $refs please add these tests to the
+ * schema2typebox programmatic usage section instead. This is required since
+ * collect() expects an already dereferenced JSON schema and therefore testing with $refs
+ * would make no sense.
+ */
 describe("schema2typebox internal - collect()", () => {
   test("object with required string property", () => {
     const dummySchema = `
@@ -685,139 +923,6 @@ describe("schema2typebox internal - collect()", () => {
       collect(JSON.parse(dummySchema)),
       expectedTypebox
     );
-  });
-  test("object with $ref pointing to external files in relative path", () => {
-    // prepares and writes a test types.ts file.
-    const schemaWithRef = `
-    {
-      "title": "Contract",
-      "type": "object",
-      "properties": {
-        "person": {
-          "$ref": "./person.json"
-        },
-        "status": {
-          "$ref": "./status.json"
-        }
-      },
-      "required": ["person"]
-    }
-    `;
-
-    const referencedPersonSchema = `
-    {
-      "title": "Person",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "maxLength": 100
-        },
-        "age": {
-          "type": "number",
-          "minimum": 18
-        }
-      },
-      "required": ["name", "age"]
-   }
-   `;
-
-    const referencedStatusSchema = `
-    {
-      "title": "Status",
-      "enum": ["unknown", "accepted", "denied"]
-    }
-    `;
-
-    const expectedTypebox = `
-    Type.Object({
-      person: Type.Object({
-        name: Type.String({"maxLength":100}),
-        age: Type.Number({"minimum":18})
-      }),
-      status: Type.Optional(Type.Enum(StatusEnum))
-    })
-    `;
-
-    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
-    );
-    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
-    );
-
-    expectEqualIgnoreFormatting(
-      collect(JSON.parse(schemaWithRef)),
-      expectedTypebox
-    );
-
-    // cleanup generated files
-    const { code: returnCode } = shell.rm("-f", inputPaths);
-    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
-  });
-  test("object with $ref inside anyOf", () => {
-    // prepares and writes a test types.ts file.
-    const schemaWithRef = {
-      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
-    };
-
-    const referencedCatSchema = {
-      title: "Cat",
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          const: "cat",
-        },
-        name: {
-          type: "string",
-          maxLength: 100,
-        },
-      },
-      required: ["type", "name"],
-    };
-
-    const referencedDogSchema = {
-      title: "Dog",
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          const: "dog",
-        },
-        name: {
-          type: "string",
-          maxLength: 100,
-        },
-      },
-      required: ["type", "name"],
-    };
-    const expectedTypebox = `
-      Type.Union([
-        Type.Object({
-          type: Type.Literal("cat"),
-          name: Type.String({ maxLength: 100 }),
-        }),
-        Type.Object({
-          type: Type.Literal("dog"),
-          name: Type.String({ maxLength: 100 }),
-        })
-      ]);
-    `;
-
-    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
-    );
-    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
-      ([fileName, data]) =>
-        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
-    );
-
-    expectEqualIgnoreFormatting(collect(schemaWithRef), expectedTypebox);
-
-    // cleanup generated files
-    const { code: returnCode } = shell.rm("-f", inputPaths);
-    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
 });
 

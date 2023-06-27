@@ -1,0 +1,15 @@
+{
+  "title": "Dog",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "dog"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "required": ["type", "name"]
+}

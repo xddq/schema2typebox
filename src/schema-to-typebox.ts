@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import { zip } from "./utils";
+import $Refparser from "@apidevtools/json-schema-ref-parser";
 
 /** Generates TypeBox code from JSON schema */
-export const schema2typebox = (jsonSchema: string) => {
+export const schema2typebox = async (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
-  const typeBoxType = collect(schemaObj, []);
+  const dereferencedSchemaObj = await $Refparser.dereference(schemaObj);
+  const typeBoxType = collect(dereferencedSchemaObj, []);
   // TODO: Are there alternative attributes people use for naming the entities?
-  const valueName = schemaObj["title"] ?? "T";
+  const valueName = dereferencedSchemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
 
   const normalImportStatements = `import { Type, Static } from "@sinclair/typebox";`;

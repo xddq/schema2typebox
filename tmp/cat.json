@@ -1,0 +1,15 @@
+{
+  "title": "Cat",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "cat"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "required": ["type", "name"]
+}
