@@ -177,7 +177,6 @@ Happy about contributions if you want to implement it yourself.
 - [x] draft-06 (main goal of this package, see Feature List for the state)
 - [x] draft-07
 - [x] draft-2019-09
-  - should be working with the _current feature set_
 - [ ] draft-2020-12
   - Probably not working due to new keywords or semantic changes for previous
     keywords. Happy about issues with your JSON schema, expected TypeBox code
@@ -197,20 +196,19 @@ whats already implemented and what is missing.
 - [x] Type.Literal() via "const" property
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
-- [x] Type.oneOf() via "oneOf" property
+- [x] Type.Enum() via "enum" property
+- [x] oneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
     to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
-- [x] SchemaOptions for everything that is implemented
-- [x] Type.Enum() via "enum" property
+- [x] schemaOptions
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
 - [x] Name of generated value and type based on existing "title" attribute.
       Defaulting to "T" if title is not defined.
+- [ ] Type.Not() via "not" property
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
-- [ ] (low prio) Type.Not() via "not" property
-  - TODO: Is this even possible?
 
 ## DEV/CONTRIBUTOR NOTES
 
