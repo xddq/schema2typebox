@@ -1,0 +1,10 @@
+{
+  "anyOf": [
+    {
+      "$ref": "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/with-ref-to-remote-files/cat.json"
+    },
+    {
+      "$ref": "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/with-ref-to-remote-files/dog.json"
+    }
+  ]
+}

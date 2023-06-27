@@ -1,3 +1,0 @@
-{
-  "anyOf": [{ "$ref": "./cat.json" }, { "$ref": "./dog.json" }]
-}
