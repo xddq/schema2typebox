@@ -1,6 +1,6 @@
 name: build and test codebase
 
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 jobs:
   build-and-test:
