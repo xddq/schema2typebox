@@ -190,7 +190,6 @@ export const collect = (
     },
     {}
   );
-  const isTypeLiteral = schemaOptions["const"] !== undefined;
   const isRequiredAttribute = requiredAttributes.includes(
     propertyName ?? "__NO_MATCH__"
   );
@@ -322,6 +321,7 @@ export const collect = (
   ) {
     // console.log("type was string or number or null or boolean");
 
+    const isTypeLiteral = schemaOptions["const"] !== undefined;
     if (isArrayItem) {
       if (isTypeLiteral) {
         const resultingType = mapTypeLiteral(
@@ -511,7 +511,8 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
 
   if (!VALID_TYPE_VALUES.includes(type)) {
     throw new Error(
-      `JSON schema had invalid value for 'type' attribute. Got: ${type}`
+      `JSON schema had invalid value for 'type' attribute. Got: ${type}
+      Schemaobject was: ${JSON.stringify(schemaObj)}`
     );
   }
 
