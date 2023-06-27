@@ -304,43 +304,20 @@ describe("programmatic usage API", () => {
     const { code: returnCode } = shell.rm("-f", inputPaths);
     assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
+  // NOTE: This test might break if github adapts their links to raw github user
+  // content. The branch "feature/fix-refs-using-refparser" will not be deleted.
   test("object with $ref to remote files", async () => {
-    // prepares and writes a test types.ts file.
     const schemaWithRef = {
-      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
+      anyOf: [
+        {
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/feature/fix-refs-using-refparser/tmp/cat.json",
+        },
+        {
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/feature/fix-refs-using-refparser/tmp/dog.json",
+        },
+      ],
     };
 
-    const referencedCatSchema = {
-      title: "Cat",
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          const: "cat",
-        },
-        name: {
-          type: "string",
-          maxLength: 100,
-        },
-      },
-      required: ["type", "name"],
-    };
-
-    const referencedDogSchema = {
-      title: "Dog",
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          const: "dog",
-        },
-        name: {
-          type: "string",
-          maxLength: 100,
-        },
-      },
-      required: ["type", "name"],
-    };
     const expectedTypebox = `
       import { Type, Static } from "@sinclair/typebox";
 
@@ -357,22 +334,10 @@ describe("programmatic usage API", () => {
       ]);
     `;
 
-    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
-    );
-    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
-      ([fileName, data]) =>
-        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
-    );
-
     expectEqualIgnoreFormatting(
       await schema2typebox(JSON.stringify(schemaWithRef)),
       expectedTypebox
     );
-
-    // cleanup generated files
-    const { code: returnCode } = shell.rm("-f", inputPaths);
-    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
   test("object with oneOf generates custom typebox TypeRegistry code", async () => {
     const dummySchema = `
