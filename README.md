@@ -165,8 +165,8 @@ You can also check the test cases, every feature is tested.
 ### Schema Support
 
 The package is focused on supporting JSON schema draft-06 files, since this is
-the target TypeBox officially supports. From typebox repo "These types are fully
-compatible with the JSON Schema Draft 6 specification."
+the target TypeBox officially supports. Quote from typebox repo "These types are
+fully compatible with the JSON Schema Draft 6 specification."
 
 However, since the amount of breaking changes is quite small between most JSON
 schema specs, support for other specs may "just work" or may be implemented at a
@@ -204,21 +204,13 @@ whats already implemented and what is missing.
     info](https://github.com/xddq/schema2typebox/issues/16).
 - [x] SchemaOptions for everything that is implemented
 - [x] Type.Enum() via "enum" property
-  - NOTE: Interesting that Type.Enum() creates a json schema with a list of
-    anyOf consts instead of enum.
-- [x] $ref to other schema files via relative path
-- [x] name of generated value and type based on "title" attribute
-  - are there other attributes one should check if "title" is undefined?
-- [ ] (low prio?) $ref to definitions inside the current schema
-  - NOTE: perhaps wait and see if people mention the need
-  - Initial idea to implement this via collecting all $defs in a "preprocessing"
-    step inside a map and whenever we get a $ref we query the map to insert the
-    correct type.
-- [ ] (low prio) $ref to remote schemas
+- [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
+- [x] Name of generated value and type based on existing "title" attribute.
+      Defaulting to "T" if title is not defined.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 - [ ] (low prio) Type.Not() via "not" property
-  - TODO: Is this even possible? I am confused.
+  - TODO: Is this even possible?
 
 ## DEV/CONTRIBUTOR NOTES
 
