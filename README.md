@@ -263,6 +263,7 @@ The following text is the output that will be displayed when you issue
 
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
+       instead. Has precedence over -o/--output.
 
 ```
 
