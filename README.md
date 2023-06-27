@@ -177,6 +177,7 @@ Happy about contributions if you want to implement it yourself.
 - [x] draft-06 (main goal of this package, see Feature List for the state)
 - [x] draft-07
 - [x] draft-2019-09
+- should be working with the _current feature set_
 - [ ] draft-2020-12
   - Probably not working due to new keywords or semantic changes for previous
     keywords. Happy about issues with your JSON schema, expected TypeBox code
