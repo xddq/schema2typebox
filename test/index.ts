@@ -310,10 +310,10 @@ describe("programmatic usage API", () => {
     const schemaWithRef = {
       anyOf: [
         {
-          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/with-ref-to-remote-files/cat.json",
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/cat.json",
         },
         {
-          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/with-ref-to-remote-files/dog.json",
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/dog.json",
         },
       ],
     };
