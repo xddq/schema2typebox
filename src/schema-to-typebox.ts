@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import { zip } from "./utils";
+import $Refparser from "@apidevtools/json-schema-ref-parser";
 
 /** Generates TypeBox code from JSON schema */
-export const schema2typebox = (jsonSchema: string) => {
+export const schema2typebox = async (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
-  const typeBoxType = collect(schemaObj, []);
+  const dereferencedSchemaObj = await $Refparser.dereference(schemaObj);
+  const typeBoxType = collect(dereferencedSchemaObj, []);
   // TODO: Are there alternative attributes people use for naming the entities?
-  const valueName = schemaObj["title"] ?? "T";
+  const valueName = dereferencedSchemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
 
   const normalImportStatements = `import { Type, Static } from "@sinclair/typebox";`;
@@ -188,7 +190,6 @@ export const collect = (
     },
     {}
   );
-  const isTypeLiteral = schemaOptions["const"] !== undefined;
   const isRequiredAttribute = requiredAttributes.includes(
     propertyName ?? "__NO_MATCH__"
   );
@@ -320,6 +321,7 @@ export const collect = (
   ) {
     // console.log("type was string or number or null or boolean");
 
+    const isTypeLiteral = schemaOptions["const"] !== undefined;
     if (isArrayItem) {
       if (isTypeLiteral) {
         const resultingType = mapTypeLiteral(
@@ -509,7 +511,8 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
 
   if (!VALID_TYPE_VALUES.includes(type)) {
     throw new Error(
-      `JSON schema had invalid value for 'type' attribute. Got: ${type}`
+      `JSON schema had invalid value for 'type' attribute. Got: ${type}
+      Schemaobject was: ${JSON.stringify(schemaObj)}`
     );
   }
 

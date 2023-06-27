@@ -22,7 +22,7 @@ export type Schema2TypeboxOptions = {
 export const schema2typebox = async ({
   input,
 }: Schema2TypeboxOptions): Promise<string> => {
-  const generatedTypeboxCode = Schema2Typebox(input);
+  const generatedTypeboxCode = await Schema2Typebox(input);
 
   // TODO: create a "pipeline" for processing
   // post-processing
