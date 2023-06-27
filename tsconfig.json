@@ -1,7 +1,9 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
+    "module": "commonjs",
     "outDir": "dist",
+    "sourceMap": true,
     "baseUrl": ".",
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,

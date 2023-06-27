@@ -1372,6 +1372,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fp-ts@npm:2.16.0":
+  version: 2.16.0
+  resolution: "fp-ts@npm:2.16.0"
+  checksum: 0724a4d8b2171cc98e9d9a05e6fe7e0acbc8c79eaabe8e257cbe3a6a5a77acdbdd2572e2ca8135e91d6e02542237499db6e952a58829ba0796ab96063dd39eb2
+  languageName: node
+  linkType: hard
+
 "fs-minipass@npm:^2.0.0, fs-minipass@npm:^2.1.0":
   version: 2.1.0
   resolution: "fs-minipass@npm:2.1.0"
@@ -2436,6 +2443,7 @@ __metadata:
     esbuild: 0.17.18
     eslint: 8.40.0
     eslint-config-prettier: 8.8.0
+    fp-ts: 2.16.0
     minimist: 1.2.8
     nodemon: 2.0.22
     prettier: 2.8.8
