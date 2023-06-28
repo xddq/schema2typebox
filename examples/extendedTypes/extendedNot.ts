@@ -6,6 +6,7 @@ import {
   TSchema,
   SchemaOptions,
 } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 // --------------------------------------------------------------------
 // Registry
@@ -25,8 +26,6 @@ const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) =>
 // --------------------------------------------------------------------
 // Example
 // --------------------------------------------------------------------
-
-import { Value } from "@sinclair/typebox/value";
 
 const T = Type.Object({
   x: Not(Type.Number()),

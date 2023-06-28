@@ -7,6 +7,7 @@ import {
   TUnion,
   SchemaOptions,
 } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 // --------------------------------------------------------------------
 // Registry
@@ -38,8 +39,6 @@ const OneOf = <T extends TSchema[]>(
 // --------------------------------------------------------------------
 // Example
 // --------------------------------------------------------------------
-
-import { Value } from "@sinclair/typebox/value";
 
 const T = Type.Object({
   x: OneOf([Type.String(), Type.String(), Type.Number()]),

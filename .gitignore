@@ -136,6 +136,6 @@ dist
 bundle
 dist
 node_modules
-TODO
+TODO*
 /schema.json
 generated-typebox.ts
