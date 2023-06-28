@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { zip } from "./utils";
+import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
 
 /** Generates TypeBox code from JSON schema */

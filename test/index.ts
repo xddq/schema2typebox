@@ -6,12 +6,15 @@ import * as prettier from "prettier";
 import shell from "shelljs";
 
 import {
-  schema2typebox,
   collect,
   resetEnumCode,
   resetCustomTypes,
 } from "../src/schema-to-typebox";
-import { zip } from "../src/utils";
+import {
+  addCommentThatCodeIsGenerated,
+  schema2typebox,
+} from "../src/programmatic-usage";
+import { zip } from "fp-ts/Array";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 const buildOsIndependentPath = (foldersOrFiles: string[]) => {
@@ -61,7 +64,7 @@ describe("programmatic usage API", () => {
       ]
     }
     `;
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
     import { Type, Static } from "@sinclair/typebox";
 
     export enum StatusEnum {
@@ -74,9 +77,9 @@ describe("programmatic usage API", () => {
     export const T = Type.Object({
       status: Type.Enum(StatusEnum)
     })
-    `;
+    `);
     expectEqualIgnoreFormatting(
-      await schema2typebox(dummySchema),
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
   });
@@ -104,7 +107,7 @@ describe("programmatic usage API", () => {
       ]
     }
     `;
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
     import { Type, Static } from "@sinclair/typebox";
 
     export enum StatusEnum {
@@ -124,9 +127,9 @@ describe("programmatic usage API", () => {
       status: Type.Enum(StatusEnum),
       optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
     })
-    `;
+    `);
     expectEqualIgnoreFormatting(
-      await schema2typebox(dummySchema),
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
   });
@@ -143,22 +146,21 @@ describe("programmatic usage API", () => {
       "required": ["name"]
     }
     `;
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
     import { Type, Static } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
     export const Contract = Type.Object({
       name: Type.String(),
     });
-    `;
+    `);
     expectEqualIgnoreFormatting(
-      await schema2typebox(dummySchema),
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
   });
   test("object with $ref pointing to external files in relative path", async () => {
-    // prepares and writes a test types.ts file.
-    const schemaWithRef = `
+    const dummySchema = `
     {
       "title": "Contract",
       "type": "object",
@@ -199,7 +201,7 @@ describe("programmatic usage API", () => {
     }
     `;
 
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Type, Static } from "@sinclair/typebox";
 
       export enum StatusEnum {
@@ -216,7 +218,7 @@ describe("programmatic usage API", () => {
         }),
         status: Type.Optional(Type.Enum(StatusEnum)),
       });
-    `;
+    `);
 
     const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
       buildOsIndependentPath([__dirname, "..", "..", currItem])
@@ -226,7 +228,7 @@ describe("programmatic usage API", () => {
     );
 
     expectEqualIgnoreFormatting(
-      await schema2typebox(schemaWithRef),
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
 
@@ -235,8 +237,7 @@ describe("programmatic usage API", () => {
     assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
   test("object with $ref inside anyOf", async () => {
-    // prepares and writes a test types.ts file.
-    const schemaWithRef = {
+    const dummySchema = {
       anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
     };
 
@@ -271,7 +272,7 @@ describe("programmatic usage API", () => {
       },
       required: ["type", "name"],
     };
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Type, Static } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
@@ -285,7 +286,7 @@ describe("programmatic usage API", () => {
           name: Type.String({ maxLength: 100 }),
         }),
       ]);
-    `;
+    `);
 
     const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
       buildOsIndependentPath([__dirname, "..", "..", currItem])
@@ -296,7 +297,7 @@ describe("programmatic usage API", () => {
     );
 
     expectEqualIgnoreFormatting(
-      await schema2typebox(JSON.stringify(schemaWithRef)),
+      await schema2typebox({ input: JSON.stringify(dummySchema) }),
       expectedTypebox
     );
 
@@ -307,7 +308,7 @@ describe("programmatic usage API", () => {
   // NOTE: This test might break if github adapts their links to raw github user
   // content. The branch "feature/fix-refs-using-refparser" will not be deleted.
   test("object with $ref to remote files", async () => {
-    const schemaWithRef = {
+    const dummySchema = {
       anyOf: [
         {
           $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/cat.json",
@@ -318,7 +319,7 @@ describe("programmatic usage API", () => {
       ],
     };
 
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Type, Static } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
@@ -332,10 +333,10 @@ describe("programmatic usage API", () => {
           name: Type.String({ maxLength: 100 }),
         }),
       ]);
-    `;
+    `);
 
     expectEqualIgnoreFormatting(
-      await schema2typebox(JSON.stringify(schemaWithRef)),
+      await schema2typebox({ input: JSON.stringify(dummySchema) }),
       expectedTypebox
     );
   });
@@ -358,7 +359,7 @@ describe("programmatic usage API", () => {
       "required": ["a"]
     }
     `;
-    const expectedTypebox = `
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
 import {
   Type,
   Kind,
@@ -389,9 +390,9 @@ export type T = Static<typeof T>;
 export const T = Type.Object({
   a: OneOf([Type.String(), Type.Number()]),
 });
-    `;
+    `);
     expectEqualIgnoreFormatting(
-      await schema2typebox(dummySchema),
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
   });
