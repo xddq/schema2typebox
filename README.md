@@ -198,16 +198,19 @@ whats already implemented and what is missing.
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
 - [x] Type.Enum() via "enum" property
-- [x] oneOf() via "oneOf" property
+- [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
     to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
+- [x] Not() via "not" property
+  - This adds not to the typebox type registry as (Kind: 'ExtendedNot') in order
+    to be able to align to not json schema semantics and still be able to use
+    the typebox compiler. Similar to oneOf.
 - [x] schemaOptions
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
 - [x] Name of generated value and type based on existing "title" attribute.
       Defaulting to "T" if title is not defined.
-- [ ] Type.Not() via "not" property
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 
