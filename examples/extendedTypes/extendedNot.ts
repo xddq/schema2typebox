@@ -36,5 +36,5 @@ console.log(JSON.stringify(T));
 type T = Static<typeof T>;
 
 // testing Not
-console.log(Value.Check(T, { x: "q" })); // true (x passes, y passes)
-console.log(Value.Check(T, { x: 42 })); // false (x passes, y fails)
+console.log(Value.Check(T, { x: "q" })); // true
+console.log(Value.Check(T, { x: 42 })); // false
