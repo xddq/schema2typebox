@@ -65,7 +65,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export enum StatusEnum {
       UNKNOWN = "unknown",
@@ -108,7 +108,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export enum StatusEnum {
       1 = 1,
@@ -147,7 +147,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
     export const Contract = Type.Object({
@@ -202,7 +202,7 @@ describe("programmatic usage API", () => {
     `;
 
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export enum StatusEnum {
         UNKNOWN = "unknown",
@@ -273,7 +273,7 @@ describe("programmatic usage API", () => {
       required: ["type", "name"],
     };
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
       export const T = Type.Union([
@@ -320,7 +320,7 @@ describe("programmatic usage API", () => {
     };
 
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
       export const T = Type.Union([
@@ -337,6 +337,42 @@ describe("programmatic usage API", () => {
 
     expectEqualIgnoreFormatting(
       await schema2typebox({ input: JSON.stringify(dummySchema) }),
+      expectedTypebox
+    );
+  });
+  test("object with not generates custom typebox TypeRegistry code", async () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": { "x": { "not": { "type": "number" } } },
+      "required": ["x"]
+    }
+    `;
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+      import {
+        Kind,
+        SchemaOptions,
+        Static,
+        TSchema,
+        Type,
+        TypeRegistry,
+      } from "@sinclair/typebox";
+      import { Value } from "@sinclair/typebox/value";
+
+      TypeRegistry.Set("ExtendedNot", (schema: any, value) => {
+        return !Value.Check(schema.not, value);
+      });
+
+      const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) =>
+        Type.Unsafe({ ...options, [Kind]: "ExtendedNot", not });
+
+      export type T = Static<typeof T>;
+      export const T = Type.Object({
+        x: Not(Type.Number()),
+      });
+    `);
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
       expectedTypebox
     );
   });
@@ -360,36 +396,36 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-import {
-  Type,
-  Kind,
-  TypeRegistry,
-  Static,
-  TSchema,
-  TUnion,
-  SchemaOptions,
-} from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+      import {
+        Kind,
+        SchemaOptions,
+        Static,
+        TSchema,
+        TUnion,
+        Type,
+        TypeRegistry,
+      } from "@sinclair/typebox";
+      import { Value } from "@sinclair/typebox/value";
 
-TypeRegistry.Set(
-  "ExtendedOneOf",
-  (schema: any, value) =>
-    1 ===
-    schema.oneOf.reduce(
-      (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
-      0
-    )
-);
+      TypeRegistry.Set(
+        "ExtendedOneOf",
+        (schema: any, value) =>
+          1 ===
+          schema.oneOf.reduce(
+            (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
+            0
+          )
+      );
 
-const OneOf = <T extends TSchema[]>(
-  oneOf: [...T],
-  options: SchemaOptions = {}
-) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
+      const OneOf = <T extends TSchema[]>(
+        oneOf: [...T],
+        options: SchemaOptions = {}
+      ) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
 
-export type T = Static<typeof T>;
-export const T = Type.Object({
-  a: OneOf([Type.String(), Type.Number()]),
-});
+      export type T = Static<typeof T>;
+      export const T = Type.Object({
+        a: OneOf([Type.String(), Type.Number()]),
+      });
     `);
     expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),

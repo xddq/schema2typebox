@@ -1,10 +1,10 @@
 import {
-  Type,
   Kind,
-  TypeRegistry,
+  SchemaOptions,
   Static,
   TSchema,
-  SchemaOptions,
+  Type,
+  TypeRegistry,
 } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 
@@ -30,6 +30,8 @@ const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) =>
 const T = Type.Object({
   x: Not(Type.Number()),
 });
+
+console.log(JSON.stringify(T));
 
 type T = Static<typeof T>;
 

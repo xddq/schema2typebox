@@ -1,11 +1,11 @@
 import {
-  Type,
   Kind,
-  TypeRegistry,
+  SchemaOptions,
   Static,
   TSchema,
   TUnion,
-  SchemaOptions,
+  Type,
+  TypeRegistry,
 } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 
