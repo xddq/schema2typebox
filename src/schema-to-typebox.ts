@@ -6,17 +6,13 @@ import $Refparser from "@apidevtools/json-schema-ref-parser";
 export const schema2typebox = async (jsonSchema: string) => {
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchemaObj = await $Refparser.dereference(schemaObj);
+  updateRequiredImports("@sinclair/typebox", ["Type", "Static"]);
   const typeBoxType = collect(dereferencedSchemaObj, []);
   // TODO: Are there alternative attributes people use for naming the entities?
   const valueName = dereferencedSchemaObj["title"] ?? "T";
   const typeForObj = generateTypeForName(valueName);
 
-  const normalImportStatements = `import { Type, Static } from "@sinclair/typebox";`;
-  return `${
-    customTypesImports.length === 0
-      ? normalImportStatements
-      : customTypesImports
-  }
+  return `${generateRequiredImports()}
 
 ${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
@@ -99,12 +95,6 @@ const isAllOfSchemaObj = (
 ): schemaObj is AllOfSchemaObj => {
   return schemaObj["allOf"] !== undefined;
 };
-type OneOfSchemaObj = Record<string, any> & { oneOf: Record<string, any>[] };
-const isOneOfSchemaObj = (
-  schemaObj: Record<string, any>
-): schemaObj is OneOfSchemaObj => {
-  return schemaObj["oneOf"] !== undefined;
-};
 type EnumSchemaObj = Record<string, any> & { enum: any[] };
 const isEnumSchemaObj = (
   schemaObj: Record<string, any>
@@ -116,6 +106,18 @@ const isRefSchemaObj = (
   schemaObj: Record<string, any>
 ): schemaObj is RefSchemaObj => {
   return schemaObj["$ref"] !== undefined;
+};
+type OneOfSchemaObj = Record<string, any> & { oneOf: Record<string, any>[] };
+const isOneOfSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is OneOfSchemaObj => {
+  return schemaObj["oneOf"] !== undefined;
+};
+type NotSchemaObj = Record<string, any> & { not: Record<string, any>[] };
+const isNotSchemaObj = (
+  schemaObj: Record<string, any>
+): schemaObj is NotSchemaObj => {
+  return schemaObj["not"] !== undefined;
 };
 
 const createEnumName = (propertyName: string) => {
@@ -164,10 +166,11 @@ export const resetCustomTypes = () => {
   customTypes = "";
 };
 
-let customTypesImports = "";
-
-export const resetCustomTypesImports = () => {
-  customTypesImports = "";
+type PackageName = string;
+type ImportValue = string;
+const requiredImports = new Map<PackageName, Set<ImportValue>>();
+export const resetRequiredImports = () => {
+  requiredImports.clear();
 };
 
 /**
@@ -256,16 +259,16 @@ export const collect = (
   }
 
   if (isAllOfSchemaObj(schemaObj)) {
-    const typeboxForAnyOfObjects = schemaObj.allOf.map((currItem) =>
+    const typeboxForAllOfObjects = schemaObj.allOf.map((currItem) =>
       collect(currItem)
     );
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Intersect([${typeboxForAnyOfObjects}],${JSON.stringify(
+      result = `Type.Intersect([${typeboxForAllOfObjects}],${JSON.stringify(
         schemaOptions
       )})`;
     } else {
-      result = `Type.Intersect([${typeboxForAnyOfObjects}])`;
+      result = `Type.Intersect([${typeboxForAllOfObjects}])`;
     }
 
     if (propertyName !== undefined) {
@@ -275,20 +278,36 @@ export const collect = (
   }
   if (isOneOfSchemaObj(schemaObj)) {
     if (!customTypes.includes("TypeRegistry.Set('ExtendedOneOf'")) {
-      const [imports, code] = createOneOfTypeboxSupportCode();
+      const code = createOneOfTypeboxSupportCode();
       customTypes = customTypes + code;
-      customTypesImports = customTypesImports + imports;
     }
-    const typeboxForAnyOfObjects = schemaObj.oneOf.map((currItem) =>
+    const typeboxForOneOfObjects = schemaObj.oneOf.map((currItem) =>
       collect(currItem)
     );
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `OneOf([${typeboxForAnyOfObjects}],${JSON.stringify(
+      result = `OneOf([${typeboxForOneOfObjects}],${JSON.stringify(
         schemaOptions
       )})`;
     } else {
-      result = `OneOf([${typeboxForAnyOfObjects}])`;
+      result = `OneOf([${typeboxForOneOfObjects}])`;
+    }
+
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+    return result + "\n";
+  }
+
+  if (isNotSchemaObj(schemaObj)) {
+    const typeboxForNotObjects = collect(schemaObj.not);
+    let result = "";
+    if (Object.keys(schemaOptions).length > 0) {
+      result = `Type.Not(${typeboxForNotObjects},${JSON.stringify(
+        schemaOptions
+      )}, Type.Unknown())`;
+    } else {
+      result = `Type.Not(${typeboxForNotObjects}, Type.Unknown())`;
     }
 
     if (propertyName !== undefined) {
@@ -429,7 +448,8 @@ const getSchemaOptions = (
       currItem !== "items" &&
       currItem !== "allOf" &&
       currItem !== "anyOf" &&
-      currItem !== "oneOf"
+      currItem !== "oneOf" &&
+      currItem !== "not"
     );
   });
   return schemaOptionProperties.map((currItem) => {
@@ -519,26 +539,78 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
   return type;
 };
 
-type Imports = string;
 type Code = string;
 
+/**
+ * Updates the imports which are required for the generated code.
+ */
+const updateRequiredImports = (
+  packageName: PackageName,
+  importValues: ImportValue[]
+) => {
+  const currentImportValues = requiredImports.get(packageName);
+  if (currentImportValues === undefined) {
+    const newImportValues = new Set(importValues);
+    requiredImports.set(packageName, newImportValues);
+    return;
+  }
+
+  const updatedValues = importValues.reduce((acc, curr) => {
+    return acc.add(curr);
+  }, currentImportValues);
+  requiredImports.set(packageName, updatedValues);
+};
+
+const generateRequiredImports = () => {
+  const arr = Array.from(requiredImports);
+  return arr.map(packageNameImportValuesTupleToCode).join("\n");
+};
+
+const packageNameImportValuesTupleToCode = ([packageName, importValues]: [
+  PackageName,
+  Set<ImportValue>
+]): Code => {
+  return `import {${Array.from(importValues.values())
+    .sort()
+    .reduce((acc, curr) => `${acc}, ${curr}`)}} from "${packageName}"`;
+};
+
 // based on suggestion from https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
-export const createOneOfTypeboxSupportCode = (): [Imports, Code] => {
-  const imports = `import {
-  Type,
-  Kind,
-  TypeRegistry,
-  Static,
-  TSchema,
-  TUnion,
-  SchemaOptions,
-} from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
-`;
+export const createOneOfTypeboxSupportCode = (): Code => {
+  updateRequiredImports("@sinclair/typebox", [
+    "Kind",
+    "SchemaOptions",
+    "Static",
+    "TSchema",
+    "TUnion",
+    "Type",
+    "TypeRegistry",
+  ]);
+  updateRequiredImports("@sinclair/typebox/value", ["Value"]);
   const code =
     "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
     "\n\n" +
     "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })" +
     "\n\n";
-  return [imports, code];
+  return code;
 };
+
+// Obsolete since it is supported out of the box. [src](https://github.com/xddq/schema2typebox/pull/21)
+// export const createNotTypeboxSupportCode = (): Code => {
+//   updateRequiredImports("@sinclair/typebox", [
+//     "Kind",
+//     "SchemaOptions",
+//     "Static",
+//     "TSchema",
+//     "Type",
+//     "TypeRegistry",
+//   ]);
+//   updateRequiredImports("@sinclair/typebox/value", ["Value"]);
+//
+//   const code =
+//     "TypeRegistry.Set('ExtendedNot', (schema: any, value) => { return !Value.Check(schema.not, value); });" +
+//     "\n\n" +
+//     "const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) => Type.Unsafe({ ...options, [Kind]: 'ExtendedNot', not });" +
+//     "\n\n";
+//   return code;
+// };

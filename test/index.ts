@@ -65,7 +65,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export enum StatusEnum {
       UNKNOWN = "unknown",
@@ -108,7 +108,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export enum StatusEnum {
       1 = 1,
@@ -147,7 +147,7 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Type, Static } from "@sinclair/typebox";
+    import { Static, Type } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
     export const Contract = Type.Object({
@@ -202,7 +202,7 @@ describe("programmatic usage API", () => {
     `;
 
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export enum StatusEnum {
         UNKNOWN = "unknown",
@@ -273,7 +273,7 @@ describe("programmatic usage API", () => {
       required: ["type", "name"],
     };
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
       export const T = Type.Union([
@@ -320,7 +320,7 @@ describe("programmatic usage API", () => {
     };
 
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import { Type, Static } from "@sinclair/typebox";
+      import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
       export const T = Type.Union([
@@ -360,36 +360,36 @@ describe("programmatic usage API", () => {
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-import {
-  Type,
-  Kind,
-  TypeRegistry,
-  Static,
-  TSchema,
-  TUnion,
-  SchemaOptions,
-} from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+      import {
+        Kind,
+        SchemaOptions,
+        Static,
+        TSchema,
+        TUnion,
+        Type,
+        TypeRegistry,
+      } from "@sinclair/typebox";
+      import { Value } from "@sinclair/typebox/value";
 
-TypeRegistry.Set(
-  "ExtendedOneOf",
-  (schema: any, value) =>
-    1 ===
-    schema.oneOf.reduce(
-      (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
-      0
-    )
-);
+      TypeRegistry.Set(
+        "ExtendedOneOf",
+        (schema: any, value) =>
+          1 ===
+          schema.oneOf.reduce(
+            (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
+            0
+          )
+      );
 
-const OneOf = <T extends TSchema[]>(
-  oneOf: [...T],
-  options: SchemaOptions = {}
-) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
+      const OneOf = <T extends TSchema[]>(
+        oneOf: [...T],
+        options: SchemaOptions = {}
+      ) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
 
-export type T = Static<typeof T>;
-export const T = Type.Object({
-  a: OneOf([Type.String(), Type.Number()]),
-});
+      export type T = Static<typeof T>;
+      export const T = Type.Object({
+        a: OneOf([Type.String(), Type.Number()]),
+      });
     `);
     expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
@@ -855,7 +855,25 @@ describe("schema2typebox internal - collect()", () => {
     Type.Object({
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
       b: Type.Intersect([Type.String(), Type.Number()]),
-      c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
+      c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types"})});
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with not", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": { "x": { "not": { "type": "number" } } },
+      "required": ["x"]
+    }
+    `;
+    const expectedTypebox = `
+      Type.Object({
+        x: Type.Not(Type.Number(), Type.Unknown()),
+      });
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),

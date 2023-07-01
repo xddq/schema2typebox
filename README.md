@@ -32,10 +32,10 @@ Creating TypeBox code from JSON schemas.
 
 ## Usage
 
-- The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
-  or by simply running `schema2typebox`. The input defaults to "schema.json" and the
-  output to "generated-types.ts" relative to the current working directory. For more
-  see [cli usage](#cli-usage).
+- The cli can be used with `schema2typebox --input <fileName> --output
+<fileName>`, or by simply running `schema2typebox`. The input defaults to
+  "schema.json" and the output to "generated-typebox.ts" relative to the current
+  working directory. For more see [cli usage](#cli-usage).
 
 ## Examples
 
@@ -165,13 +165,13 @@ You can also check the test cases, every feature is tested.
 ### Schema Support
 
 The package is focused on supporting JSON schema draft-06 files, since this is
-the target TypeBox officially supports. Quote from typebox repo "These types are
-fully compatible with the JSON Schema Draft 6 specification."
+the target TypeBox officially supports. _These types are fully compatible with
+the JSON Schema Draft 6 specification._ (from typebox repo).
 
 However, since the amount of breaking changes is quite small between most JSON
-schema specs, support for other specs may "just work" or may be implemented at a
+schema specs, support for other specs may "just work" or be implemented at a
 later stage. Feel free to open a discussion or issue when you find problems.
-Happy about contributions if you want to implement it yourself.
+Happy about contributions if you want to help out.
 
 - [x] draft-04
 - [x] draft-06 (main goal of this package, see Feature List for the state)
@@ -198,16 +198,16 @@ whats already implemented and what is missing.
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
 - [x] Type.Enum() via "enum" property
-- [x] oneOf() via "oneOf" property
+- [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
     to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
+- [x] Type.Not() via "not" property
 - [x] schemaOptions
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
 - [x] Name of generated value and type based on existing "title" attribute.
       Defaulting to "T" if title is not defined.
-- [ ] Type.Not() via "not" property
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 
