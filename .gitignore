@@ -139,3 +139,4 @@ node_modules
 TODO*
 /schema.json
 generated-typebox.ts
+!examples/**
