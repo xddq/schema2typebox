@@ -259,16 +259,16 @@ export const collect = (
   }
 
   if (isAllOfSchemaObj(schemaObj)) {
-    const typeboxForAnyOfObjects = schemaObj.allOf.map((currItem) =>
+    const typeboxForAllOfObjects = schemaObj.allOf.map((currItem) =>
       collect(currItem)
     );
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Intersect([${typeboxForAnyOfObjects}],${JSON.stringify(
+      result = `Type.Intersect([${typeboxForAllOfObjects}],${JSON.stringify(
         schemaOptions
       )})`;
     } else {
-      result = `Type.Intersect([${typeboxForAnyOfObjects}])`;
+      result = `Type.Intersect([${typeboxForAllOfObjects}])`;
     }
 
     if (propertyName !== undefined) {
@@ -281,16 +281,16 @@ export const collect = (
       const code = createOneOfTypeboxSupportCode();
       customTypes = customTypes + code;
     }
-    const typeboxForAnyOfObjects = schemaObj.oneOf.map((currItem) =>
+    const typeboxForOneOfObjects = schemaObj.oneOf.map((currItem) =>
       collect(currItem)
     );
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `OneOf([${typeboxForAnyOfObjects}],${JSON.stringify(
+      result = `OneOf([${typeboxForOneOfObjects}],${JSON.stringify(
         schemaOptions
       )})`;
     } else {
-      result = `OneOf([${typeboxForAnyOfObjects}])`;
+      result = `OneOf([${typeboxForOneOfObjects}])`;
     }
 
     if (propertyName !== undefined) {
@@ -304,14 +304,12 @@ export const collect = (
       const code = createNotTypeboxSupportCode();
       customTypes = customTypes + code;
     }
-    const typeboxForAnyOfObjects = collect(schemaObj.not);
+    const typeboxForNotObjects = collect(schemaObj.not);
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Not(${typeboxForAnyOfObjects},${JSON.stringify(
-        schemaOptions
-      )})`;
+      result = `Not(${typeboxForNotObjects},${JSON.stringify(schemaOptions)})`;
     } else {
-      result = `Not(${typeboxForAnyOfObjects})`;
+      result = `Not(${typeboxForNotObjects})`;
     }
 
     if (propertyName !== undefined) {

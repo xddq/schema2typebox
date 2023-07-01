@@ -32,10 +32,10 @@ Creating TypeBox code from JSON schemas.
 
 ## Usage
 
-- The cli can be used with `schema2typebox --input <fileName> --output <fileName>`,
-  or by simply running `schema2typebox`. The input defaults to "schema.json" and the
-  output to "generated-types.ts" relative to the current working directory. For more
-  see [cli usage](#cli-usage).
+- The cli can be used with `schema2typebox --input <fileName> --output
+<fileName>`, or by simply running `schema2typebox`. The input defaults to
+  "schema.json" and the output to "generated-typebox.ts" relative to the current
+  working directory. For more see [cli usage](#cli-usage).
 
 ## Examples
 
