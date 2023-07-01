@@ -300,16 +300,14 @@ export const collect = (
   }
 
   if (isNotSchemaObj(schemaObj)) {
-    if (!customTypes.includes("TypeRegistry.Set('ExtendedNot'")) {
-      const code = createNotTypeboxSupportCode();
-      customTypes = customTypes + code;
-    }
     const typeboxForNotObjects = collect(schemaObj.not);
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Not(${typeboxForNotObjects},${JSON.stringify(schemaOptions)})`;
+      result = `Type.Not(${typeboxForNotObjects},${JSON.stringify(
+        schemaOptions
+      )}, Type.Unknown())`;
     } else {
-      result = `Not(${typeboxForNotObjects})`;
+      result = `Type.Not(${typeboxForNotObjects}, Type.Unknown())`;
     }
 
     if (propertyName !== undefined) {
@@ -597,21 +595,22 @@ export const createOneOfTypeboxSupportCode = (): Code => {
   return code;
 };
 
-export const createNotTypeboxSupportCode = (): Code => {
-  updateRequiredImports("@sinclair/typebox", [
-    "Kind",
-    "SchemaOptions",
-    "Static",
-    "TSchema",
-    "Type",
-    "TypeRegistry",
-  ]);
-  updateRequiredImports("@sinclair/typebox/value", ["Value"]);
-
-  const code =
-    "TypeRegistry.Set('ExtendedNot', (schema: any, value) => { return !Value.Check(schema.not, value); });" +
-    "\n\n" +
-    "const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) => Type.Unsafe({ ...options, [Kind]: 'ExtendedNot', not });" +
-    "\n\n";
-  return code;
-};
+// Obsolete since it is supported out of the box. [src](https://github.com/xddq/schema2typebox/pull/21)
+// export const createNotTypeboxSupportCode = (): Code => {
+//   updateRequiredImports("@sinclair/typebox", [
+//     "Kind",
+//     "SchemaOptions",
+//     "Static",
+//     "TSchema",
+//     "Type",
+//     "TypeRegistry",
+//   ]);
+//   updateRequiredImports("@sinclair/typebox/value", ["Value"]);
+//
+//   const code =
+//     "TypeRegistry.Set('ExtendedNot', (schema: any, value) => { return !Value.Check(schema.not, value); });" +
+//     "\n\n" +
+//     "const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) => Type.Unsafe({ ...options, [Kind]: 'ExtendedNot', not });" +
+//     "\n\n";
+//   return code;
+// };

@@ -2,5 +2,4 @@
 
 - Install dependencies of this repo `yarn` in root of repo.
 - Run `npx ts-node fileNameHere` and verify the results. E.g:
-  - `npx ts-node extendedOneOf.ts` or
-  - `npx ts-node extendedNot.ts`
+  - `npx ts-node extendedOneOf.ts`

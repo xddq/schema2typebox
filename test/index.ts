@@ -340,42 +340,6 @@ describe("programmatic usage API", () => {
       expectedTypebox
     );
   });
-  test("object with not generates custom typebox TypeRegistry code", async () => {
-    const dummySchema = `
-    {
-      "type": "object",
-      "properties": { "x": { "not": { "type": "number" } } },
-      "required": ["x"]
-    }
-    `;
-    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-      import {
-        Kind,
-        SchemaOptions,
-        Static,
-        TSchema,
-        Type,
-        TypeRegistry,
-      } from "@sinclair/typebox";
-      import { Value } from "@sinclair/typebox/value";
-
-      TypeRegistry.Set("ExtendedNot", (schema: any, value) => {
-        return !Value.Check(schema.not, value);
-      });
-
-      const Not = <T extends TSchema>(not: T, options: SchemaOptions = {}) =>
-        Type.Unsafe({ ...options, [Kind]: "ExtendedNot", not });
-
-      export type T = Static<typeof T>;
-      export const T = Type.Object({
-        x: Not(Type.Number()),
-      });
-    `);
-    expectEqualIgnoreFormatting(
-      await schema2typebox({ input: dummySchema }),
-      expectedTypebox
-    );
-  });
   test("object with oneOf generates custom typebox TypeRegistry code", async () => {
     const dummySchema = `
     {
@@ -892,6 +856,24 @@ describe("schema2typebox internal - collect()", () => {
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
       b: Type.Intersect([Type.String(), Type.Number()]),
       c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with not", () => {
+    const dummySchema = `
+    {
+      "type": "object",
+      "properties": { "x": { "not": { "type": "number" } } },
+      "required": ["x"]
+    }
+    `;
+    const expectedTypebox = `
+      Type.Object({
+        x: Type.Not(Type.Number(), Type.Unknown()),
+      });
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
