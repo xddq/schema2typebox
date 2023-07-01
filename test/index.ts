@@ -855,7 +855,7 @@ describe("schema2typebox internal - collect()", () => {
     Type.Object({
       a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
       b: Type.Intersect([Type.String(), Type.Number()]),
-      c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types",}),});
+      c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types"})});
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
