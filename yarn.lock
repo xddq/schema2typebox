@@ -345,7 +345,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinclair/typebox@npm:^0.29.0":
+"@sinclair/typebox@npm:0.29.0":
   version: 0.29.0
   resolution: "@sinclair/typebox@npm:0.29.0"
   checksum: eefe2217c7e18b4f5c0ba4a345f371fdcd1092faf1905a7cf9c758aebbae73500bec16c68beab39a735cba1f0a758963997a4780adefb7ce67934b87f80ef747
@@ -2505,7 +2505,7 @@ __metadata:
   resolution: "schema2typebox@workspace:."
   dependencies:
     "@apidevtools/json-schema-ref-parser": 9.0.9
-    "@sinclair/typebox": ^0.29.0
+    "@sinclair/typebox": 0.29.0
     "@tsconfig/node18": 2.0.0
     "@types/minimist": 1.2.2
     "@types/node": 18.16.8
