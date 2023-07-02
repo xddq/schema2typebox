@@ -305,9 +305,9 @@ export const collect = (
     if (Object.keys(schemaOptions).length > 0) {
       result = `Type.Not(${typeboxForNotObjects},${JSON.stringify(
         schemaOptions
-      )}, Type.Unknown())`;
+      )})`;
     } else {
-      result = `Type.Not(${typeboxForNotObjects}, Type.Unknown())`;
+      result = `Type.Not(${typeboxForNotObjects})`;
     }
 
     if (propertyName !== undefined) {
