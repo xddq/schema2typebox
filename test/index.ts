@@ -872,7 +872,7 @@ describe("schema2typebox internal - collect()", () => {
     `;
     const expectedTypebox = `
       Type.Object({
-        x: Type.Not(Type.Number(), Type.Unknown()),
+        x: Type.Not(Type.Number()),
       });
     `;
     expectEqualIgnoreFormatting(
