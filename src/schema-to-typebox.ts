@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
+import { capitalize } from "src/utils";
 
 /** Generates TypeBox code from JSON schema */
 export const schema2typebox = async (jsonSchema: string) => {
@@ -15,19 +16,6 @@ export const schema2typebox = async (jsonSchema: string) => {
   return `${generateRequiredImports()}
 
 ${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
-};
-
-const generateTypeForName = (name: string) => {
-  const [head, ...tail] = name;
-  if (head === undefined) {
-    throw new Error(`Can't generate type for empty string. Got input: ${name}`);
-  }
-  if (tail.length === 0) {
-    return `export type ${head.toUpperCase()} = Static<typeof ${name}>`;
-  }
-  return `export type ${head.toUpperCase()}${tail.join(
-    ""
-  )} = Static<typeof ${name}>`;
 };
 
 /**
@@ -120,12 +108,24 @@ const isNotSchemaObj = (
   return schemaObj["not"] !== undefined;
 };
 
+const generateTypeForName = (name: string) => {
+  if (!name?.length) {
+    throw new Error(`Can't generate type for empty string. Got input: ${name}`);
+  }
+  const typeName = capitalize(name);
+  return `export type ${typeName} = Static<typeof ${name}>`;
+};
+const createUnionName = (propertyName: string) => {
+  if (!propertyName?.length) {
+    throw new Error("Can't create union name with empty string.");
+  }
+  return `${capitalize(propertyName)}Union`;
+};
 const createEnumName = (propertyName: string) => {
-  const [head, ...tail] = propertyName;
-  if (head === undefined) {
+  if (!propertyName?.length) {
     throw new Error("Can't create enum name with empty string.");
   }
-  return `${head.toUpperCase()}${tail.join("")}Enum`;
+  return `${capitalize(propertyName)}Enum`;
 };
 
 /**
@@ -166,6 +166,17 @@ export const resetCustomTypes = () => {
   customTypes = "";
 };
 
+/**
+ * Enums in Typescript have been controversial and along with the limitations
+ * around valid key names, many developers prefer to use Union Types. This config
+ * will give the developer the option to choose between the two options.
+ */
+let enumMode: "enum" | "union" | "preferEnum" | "preferUnion" = "enum";
+
+export const setEnumMode = (mode: typeof enumMode) => {
+  enumMode = mode;
+};
+
 type PackageName = string;
 type ImportValue = string;
 const requiredImports = new Map<PackageName, Set<ImportValue>>();
@@ -184,7 +195,8 @@ export const resetRequiredImports = () => {
 export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
-  propertyName?: string
+  propertyName?: string,
+  itemPropertyName?: string
 ): string => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
@@ -209,8 +221,8 @@ export const collect = (
   }
 
   if (isEnumSchemaObj(schemaObj)) {
-    if (propertyName === undefined) {
-      throw new Error("cant create enum without propertyName");
+    if (propertyName === undefined && !itemPropertyName) {
+      throw new Error("cant create enum without propertyName or path");
     }
     const enumValues = schemaObj.enum;
     const enumKeys = enumValues.map((currItem) =>
@@ -218,17 +230,36 @@ export const collect = (
     );
     const pairs = zip(enumKeys, enumValues);
 
-    const enumName = createEnumName(propertyName);
+    const enumName = createEnumName(propertyName || itemPropertyName || "");
     // create typescript enum
     const enumInTypescript =
       pairs.reduce<string>((prev, [enumKey, enumValue]) => {
         const correctEnumValue =
           typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-        return `${prev}${enumKey} = ${correctEnumValue},\n`;
+        const correctEnumKey =
+          enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
+        return `${prev}${correctEnumKey} = ${correctEnumValue},\n`;
       }, `export enum ${enumName} {\n`) + "}";
-    enumCode = enumCode + enumInTypescript + "\n\n";
+    const unionName = createUnionName(propertyName || itemPropertyName || "");
+    const unionInTypescript =
+      enumValues.reduce((prev, enumValue) => {
+        const correctEnumValue =
+          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
 
-    let result = `Type.Enum(${enumName})`;
+        return `${prev}Type.Literal(${correctEnumValue}),\n`;
+      }, `export const ${unionName} = Type.Union([\n`) + "])";
+
+    enumCode = [
+      enumCode,
+      /enum/i.test(enumMode) && enumInTypescript,
+      /union/i.test(enumMode) && unionInTypescript,
+      "\n\n",
+    ]
+      .filter((x) => !!x)
+      .join("");
+
+    let result = enumMode === "enum" ? unionName : `Type.Enum(${enumName})`;
+
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
@@ -316,22 +347,33 @@ export const collect = (
     return result + "\n";
   }
 
-  const type = getType(schemaObj);
+  const type = getType(schemaObj, propertyName);
   if (type === "object") {
     // console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
     // TODO: replace "as string[]" here
     const requiredAttributesOfObject = (schemaObj["required"] ??
       []) as string[];
-    const typeboxForProperties = propertiesOfObj.map(
-      ([propertyName, property]) => {
+
+    let typeboxForProperties;
+    let typeboxType = "Object";
+
+    if (!propertiesOfObj) {
+      typeboxForProperties = `Type.String(),\nType.Unknown()\n`;
+      typeboxType = "Record";
+      // Handle an "unknown" as a "record" type; could make configurable...
+      return propertyName === undefined
+        ? `Type.${typeboxType}(\n${typeboxForProperties})`
+        : `${propertyName}: Type.${typeboxType}(\n${typeboxForProperties})`;
+    } else {
+      typeboxForProperties = propertiesOfObj.map(([propertyName, property]) => {
         return collect(property, requiredAttributesOfObject, propertyName);
-      }
-    );
+      });
+    }
     // propertyName will only be undefined for the "top level" schemaObj
     return propertyName === undefined
-      ? `Type.Object({\n${typeboxForProperties}})`
-      : `${propertyName}: Type.Object({\n${typeboxForProperties}})`;
+      ? `Type.${typeboxType}({\n${typeboxForProperties}})`
+      : `${propertyName}: Type.${typeboxType}({\n${typeboxForProperties}})`;
   } else if (
     type === "string" ||
     type === "number" ||
@@ -378,14 +420,27 @@ export const collect = (
       );
     }
 
+    const itemPropertyName = `${propertyName}Item`;
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Array(${collect(itemsSchemaObj)}, (${JSON.stringify(
-        schemaOptions
-      )}))`;
+      result = `Type.Array(${collect(
+        itemsSchemaObj,
+        undefined,
+        undefined,
+        itemPropertyName
+      )}, (${JSON.stringify(schemaOptions)}))`;
     } else {
       result = `Type.Array(${collect(itemsSchemaObj)})`;
     }
+    if (!isRequiredAttribute) {
+      result = `Type.Optional(${result})`;
+    }
+    if (propertyName !== undefined) {
+      result = `${propertyName}: ${result}`;
+    }
+    return result + "\n";
+  } else if (typeof type === "undefined") {
+    let result = `Type.Unknown()`;
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
@@ -502,12 +557,10 @@ type PropertiesOfProperty = Record<string, any>;
  */
 const getProperties = (
   schema: Record<string, any>
-): (readonly [PropertyName, PropertiesOfProperty])[] => {
+): (readonly [PropertyName, PropertiesOfProperty])[] | undefined => {
   const properties = schema["properties"];
   if (properties === undefined) {
-    throw new Error(
-      "JSON schema was expected to have 'properties' attribute/property. Got: undefined"
-    );
+    return undefined;
   }
   const propertyNames = Object.keys(properties);
   const listWithPropertyObjects = propertyNames.map((currItem) => {
@@ -526,13 +579,35 @@ const getProperties = (
  *
  * @throws Error
  */
-const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
-  const type = schemaObj["type"];
+const getType = (
+  schemaObj: Record<string, any>,
+  propertyName?: string
+): VALID_TYPE_VALUE => {
+  let type = schemaObj["type"];
 
-  if (!VALID_TYPE_VALUES.includes(type)) {
+  if (type?.constructor === Array) {
+    type = type.filter((t) => t !== "null");
+    if (type.length > 1) {
+      throw new Error(
+        `[${propertyName}] Cannot handle multiple types value for 'type' attribute. Got: ${schemaObj["type"]}`
+      );
+    }
+    type = type[0];
+  }
+
+  if (
+    !type &&
+    schemaObj["default"] &&
+    Object.keys(schemaObj["default"]).length > 0
+  ) {
+    return "object";
+  }
+
+  if (!VALID_TYPE_VALUES.includes(type) && Object.keys(schemaObj).length > 0) {
     throw new Error(
-      `JSON schema had invalid value for 'type' attribute. Got: ${type}
-      Schemaobject was: ${JSON.stringify(schemaObj)}`
+      `[${propertyName}] JSON schema had invalid value for 'type' attribute. Got: ${type} Schemaobject was: ${JSON.stringify(
+        schemaObj
+      )}`
     );
   }
 
