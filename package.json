@@ -1,5 +1,5 @@
 {
-  "name": "schema2typebox",
+  "name": "@shiftsmartinc/schema2typebox",
   "version": "1.4.1",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
@@ -29,7 +29,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xddq/schema2typebox.git"
+    "url": "git+https://github.com/shiftsmartinc/schema2typebox.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/shiftsmartinc"
   },
   "keywords": [
     "JSON schema",
