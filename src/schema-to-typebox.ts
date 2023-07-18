@@ -1,13 +1,16 @@
 import fs from "node:fs";
 import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
-import { capitalize } from "src/utils";
+import { capitalize } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
-export const schema2typebox = async (jsonSchema: string) => {
+export const schema2typebox = async (jsonSchema: string, opts?: { enumMode?: EnumModeOption, packageName?: PackageName }) => {
+  if(opts?.enumMode) enumMode = opts.enumMode;
+  if(opts?.packageName) packageName = opts.packageName;
+
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchemaObj = await $Refparser.dereference(schemaObj);
-  updateRequiredImports("@sinclair/typebox", ["Type", "Static"]);
+  updateRequiredImports(packageName, ["Type", "Static"]);
   const typeBoxType = collect(dereferencedSchemaObj, []);
   // TODO: Are there alternative attributes people use for naming the entities?
   const valueName = dereferencedSchemaObj["title"] ?? "T";
@@ -171,13 +174,19 @@ export const resetCustomTypes = () => {
  * around valid key names, many developers prefer to use Union Types. This config
  * will give the developer the option to choose between the two options.
  */
-let enumMode: "enum" | "union" | "preferEnum" | "preferUnion" = "enum";
+export type EnumModeOption = "enum" | "union" | "preferEnum" | "preferUnion"
+let enumMode: EnumModeOption  = "union";
 
 export const setEnumMode = (mode: typeof enumMode) => {
   enumMode = mode;
 };
 
-type PackageName = string;
+let packageName = '@sinclair/typebox';
+export const setPackageName = (typeboxPackageName: PackageName) => {
+  packageName = typeboxPackageName;
+}
+
+export type PackageName = '@sinclair/typebox' | '@feathersjs/typebox' | string;
 type ImportValue = string;
 const requiredImports = new Map<PackageName, Set<ImportValue>>();
 export const resetRequiredImports = () => {
@@ -258,7 +267,7 @@ export const collect = (
       .filter((x) => !!x)
       .join("");
 
-    let result = enumMode === "enum" ? unionName : `Type.Enum(${enumName})`;
+    let result = /union/i.test(enumMode) ? unionName : `Type.Enum(${enumName})`;
 
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
@@ -652,7 +661,7 @@ const packageNameImportValuesTupleToCode = ([packageName, importValues]: [
 
 // based on suggestion from https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
 export const createOneOfTypeboxSupportCode = (): Code => {
-  updateRequiredImports("@sinclair/typebox", [
+  updateRequiredImports(packageName, [
     "Kind",
     "SchemaOptions",
     "Static",
@@ -661,7 +670,7 @@ export const createOneOfTypeboxSupportCode = (): Code => {
     "Type",
     "TypeRegistry",
   ]);
-  updateRequiredImports("@sinclair/typebox/value", ["Value"]);
+  updateRequiredImports(`${packageName}/value`, ["Value"]);
   const code =
     "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))" +
     "\n\n" +
@@ -672,7 +681,7 @@ export const createOneOfTypeboxSupportCode = (): Code => {
 
 // Obsolete since it is supported out of the box. [src](https://github.com/xddq/schema2typebox/pull/21)
 // export const createNotTypeboxSupportCode = (): Code => {
-//   updateRequiredImports("@sinclair/typebox", [
+//   updateRequiredImports(packageName, [
 //     "Kind",
 //     "SchemaOptions",
 //     "Static",
@@ -680,7 +689,7 @@ export const createOneOfTypeboxSupportCode = (): Code => {
 //     "Type",
 //     "TypeRegistry",
 //   ]);
-//   updateRequiredImports("@sinclair/typebox/value", ["Value"]);
+//   updateRequiredImports(`${packageName}/value`, ["Value"]);
 //
 //   const code =
 //     "TypeRegistry.Set('ExtendedNot', (schema: any, value) => { return !Value.Check(schema.not, value); });" +

@@ -1,3 +1,5 @@
+import type { EnumModeOption, PackageName } from "./schema-to-typebox";
+
 import * as prettier from "prettier";
 import { cosmiconfig } from "cosmiconfig";
 import { schema2typebox as Schema2Typebox } from "./schema-to-typebox";
@@ -7,6 +9,10 @@ export type Schema2TypeboxOptions = {
    * The given JSON schema as utf-8 encoded string.
    */
   input: string;
+
+  enumMode?: EnumModeOption;
+
+  packageName?: PackageName;
 };
 
 /**
@@ -20,8 +26,9 @@ export type Schema2TypeboxOptions = {
 // TODO: perhaps check if we can stream the generation(for fun and practice)
 export const schema2typebox = async ({
   input,
+  ...rest
 }: Schema2TypeboxOptions): Promise<string> => {
-  const generatedTypeboxCode = await Schema2Typebox(input);
+  const generatedTypeboxCode = await Schema2Typebox(input, { ...rest });
 
   // TODO: create a "pipeline" for processing
   // post-processing
@@ -38,6 +45,11 @@ export const schema2typebox = async ({
   return result;
 };
 
+let additionalHeader = ``;
+export const setAdditionalHeader = (header: string) => {
+  additionalHeader = header;
+};
+
 /**
  * Declaring this as an object with a function in order to make it better
  * testable with mocks. Allows for tracking the call count.
@@ -51,7 +63,9 @@ export const addCommentThatCodeIsGenerated = {
  * you use to generate this file instead. The default file is called
  * "schema.json", perhaps have a look there! :]
  */
-
+${!!additionalHeader && `
+${additionalHeader}
+`}
 ${code}`;
   },
 };
