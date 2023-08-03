@@ -141,6 +141,13 @@ export const resetEnumCode = () => {
 };
 
 /**
+ * Used to programatically retrieve the enum code. Used in tests.
+ */
+export const getEnumCode = () => {
+  return enumCode;
+};
+
+/**
  * Adds custom types to the typebox registry in order to validate them and use
  * the typecompiler against them. Used to e.g. implement 'oneOf' which does
  * normally not exist in typebox. This code has the drawback that is does not
@@ -231,19 +238,19 @@ export const collect = (
     );
     const pairs = zip(enumKeys, enumValues);
 
-    const enumName = createEnumName(propertyName);
     // create typescript enum
+    const enumName = createEnumName(propertyName);
     const enumInTypescript =
-    pairs.reduce<string>((prev, [enumKey, enumValue]) => {
-      const correctEnumValue =
-      typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-      const validEnumKey =
-      enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
-      return `${prev}${validEnumKey} = ${correctEnumValue},\n`;
-    }, `export enum ${enumName} {\n`) + "}";
+      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
+        const correctEnumValue =
+          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
+        const validEnumKey =
+          enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
+        return `${prev}${validEnumKey} = ${correctEnumValue},\n`;
+      }, `export enum ${enumName} {\n`) + "}";
 
     // create typescript union
-    const unionName = createUnionName(propertyName || itemPropertyName || "");
+    const unionName = createUnionName(propertyName);
     const unionInTypescript =
       enumValues.reduce((prev, enumValue) => {
         const correctEnumValue =
@@ -254,8 +261,9 @@ export const collect = (
 
     enumCode = [
       enumCode,
-      /enum/i.test(enumMode) && enumInTypescript,
-      /union/i.test(enumMode) && unionInTypescript,
+      /enum|prefer/i.test(enumMode) && enumInTypescript,
+      /prefer/i.test(enumMode) && "\n",
+      /union|prefer/i.test(enumMode) && unionInTypescript,
       "\n\n",
     ]
       .filter((x) => !!x)

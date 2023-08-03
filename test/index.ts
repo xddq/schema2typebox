@@ -1,4 +1,4 @@
-import { afterEach, describe, test } from "node:test";
+import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,6 +9,8 @@ import {
   collect,
   resetEnumCode,
   resetCustomTypes,
+  setEnumMode,
+  getEnumCode,
 } from "../src/schema-to-typebox";
 import {
   addCommentThatCodeIsGenerated,
@@ -67,15 +69,15 @@ describe("programmatic usage API", () => {
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
     import { Static, Type } from "@sinclair/typebox";
 
-    export enum StatusEnum {
-      UNKNOWN = "unknown",
-      ACCEPTED = "accepted",
-      DENIED = "denied",
-    }
+    export const StatusUnion = Type.Union([
+      Type.Literal("unknown"),
+      Type.Literal("accepted"),
+      Type.Literal("denied"),
+    ])
 
     export type T = Static<typeof T>
     export const T = Type.Object({
-      status: Type.Enum(StatusEnum)
+      status: StatusUnion
     })
     `);
     expectEqualIgnoreFormatting(
@@ -110,22 +112,22 @@ describe("programmatic usage API", () => {
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
     import { Static, Type } from "@sinclair/typebox";
 
-    export enum StatusEnum {
-      1 = 1,
-      TRUE = true,
-      HELLO = "hello",
-    }
+    export const StatusUnion = Type.Union([
+      Type.Literal(1),
+      Type.Literal(true),
+      Type.Literal("hello"),
+    ])
 
-    export enum OptionalStatusEnum {
-      UNKNOWN = "unknown",
-      ACCEPTED = "accepted",
-      DENIED = "denied",
-    }
+    export const OptionalStatusUnion = Type.Union([
+      Type.Literal("unknown"),
+      Type.Literal("accepted"),
+      Type.Literal("denied"),
+    ])
 
     export type T = Static<typeof T>
     export const T = Type.Object({
-      status: Type.Enum(StatusEnum),
-      optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
+      status: StatusUnion,
+      optionalStatus: Type.Optional(OptionalStatusUnion)
     })
     `);
     expectEqualIgnoreFormatting(
@@ -204,11 +206,11 @@ describe("programmatic usage API", () => {
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Static, Type } from "@sinclair/typebox";
 
-      export enum StatusEnum {
-        UNKNOWN = "unknown",
-        ACCEPTED = "accepted",
-        DENIED = "denied",
-      }
+      export const StatusUnion = Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ]);
 
       export type Contract = Static<typeof Contract>;
       export const Contract = Type.Object({
@@ -216,7 +218,7 @@ describe("programmatic usage API", () => {
           name: Type.String({ maxLength: 100 }),
           age: Type.Number({ minimum: 18 }),
         }),
-        status: Type.Optional(Type.Enum(StatusEnum)),
+        status: Type.Optional(StatusUnion),
       });
     `);
 
@@ -880,33 +882,111 @@ describe("schema2typebox internal - collect()", () => {
       expectedTypebox
     );
   });
-  test("object with enum", () => {
-    const dummySchema = `
-     {
-      "type": "object",
-      "properties": {
-        "status": {
-         "enum": [
-           "unknown",
-           "accepted",
-           "denied"
-         ]
-        }
-      },
-      "required": [
-        "status"
-      ]
-    }
-    `;
-    const expectedTypebox = `
-    Type.Object({
-      status: Type.Enum(StatusEnum),
-    })
-    `;
-    expectEqualIgnoreFormatting(
-      collect(JSON.parse(dummySchema)),
-      expectedTypebox
-    );
+
+  describe("object with enum", () => {
+    let dummySchema: string;
+
+    beforeEach(() => {
+      dummySchema = `
+       {
+        "type": "object",
+        "properties": {
+          "status": {
+           "enum": [
+             "unknown",
+             "accepted", 
+             "denied"
+           ]
+          }
+        }, 
+        "required": [
+          "status"
+        ]
+      } 
+      `;
+    });
+
+    afterEach(() => {
+      resetEnumCode();
+    });
+
+    const expectedEnumCode = `export enum StatusEnum {
+      UNKNOWN = "unknown",
+      ACCEPTED = "accepted",
+      DENIED = "denied",
+    }`;
+    const expectedUnionCode = `export const StatusUnion = Type.Union([
+      Type.Literal("unknown"),
+      Type.Literal("accepted"),
+      Type.Literal("denied"),
+    ])`;
+
+    test("in enum mode", () => {
+      setEnumMode("enum");
+      const expectedTypebox = `
+      Type.Object({
+        status: Type.Enum(StatusEnum),
+      }) 
+      `;
+
+      expectEqualIgnoreFormatting(
+        collect(JSON.parse(dummySchema)),
+        expectedTypebox
+      );
+
+      expectEqualIgnoreFormatting(getEnumCode(), expectedEnumCode);
+    });
+    test("in preferEnum mode", () => {
+      setEnumMode("preferEnum");
+      const expectedTypebox = `
+      Type.Object({
+        status: Type.Enum(StatusEnum),
+      }) 
+      `;
+
+      expectEqualIgnoreFormatting(
+        collect(JSON.parse(dummySchema)),
+        expectedTypebox
+      );
+      expectEqualIgnoreFormatting(
+        getEnumCode(),
+        `${expectedEnumCode}${expectedUnionCode}`
+      );
+    });
+    test("in union mode", () => {
+      setEnumMode("union");
+
+      const expectedTypebox = `
+      Type.Object({
+        status: StatusUnion,
+      }) 
+      `;
+
+      expectEqualIgnoreFormatting(
+        collect(JSON.parse(dummySchema)),
+        expectedTypebox
+      );
+
+      expectEqualIgnoreFormatting(getEnumCode(), expectedUnionCode);
+    });
+    test("in preferUnion mode", () => {
+      setEnumMode("preferUnion");
+      const expectedTypebox = `
+      Type.Object({
+        status: StatusUnion,
+      }) 
+      `;
+
+      expectEqualIgnoreFormatting(
+        collect(JSON.parse(dummySchema)),
+        expectedTypebox
+      );
+
+      expectEqualIgnoreFormatting(
+        getEnumCode(),
+        `${expectedEnumCode}${expectedUnionCode}`
+      );
+    });
   });
 });
 
