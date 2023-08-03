@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
+import { capitalize } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
 export const schema2typebox = async (jsonSchema: string) => {
@@ -18,16 +19,11 @@ ${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxTyp
 };
 
 const generateTypeForName = (name: string) => {
-  const [head, ...tail] = name;
-  if (head === undefined) {
+  if (!name?.length) {
     throw new Error(`Can't generate type for empty string. Got input: ${name}`);
   }
-  if (tail.length === 0) {
-    return `export type ${head.toUpperCase()} = Static<typeof ${name}>`;
-  }
-  return `export type ${head.toUpperCase()}${tail.join(
-    ""
-  )} = Static<typeof ${name}>`;
+  const typeName = capitalize(name);
+  return `export type ${typeName} = Static<typeof ${name}>`;
 };
 
 /**
@@ -121,11 +117,10 @@ const isNotSchemaObj = (
 };
 
 const createEnumName = (propertyName: string) => {
-  const [head, ...tail] = propertyName;
-  if (head === undefined) {
+  if (!propertyName?.length) {
     throw new Error("Can't create enum name with empty string.");
   }
-  return `${head.toUpperCase()}${tail.join("")}Enum`;
+  return `${capitalize(propertyName)}Enum`;
 };
 
 /**
