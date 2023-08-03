@@ -25,12 +25,37 @@ export const build = (additionalArguments = []) => {
 /**
  * Tests the project.
  */
-export const test = () => {
+export const test = (additionalArguments = []) => {
   build();
+
+  if (additionalArguments.includes("--watch")) {
+    return testWatch();
+  }
+
   // runs tests based on the test runner execution model
   // src: https://nodejs.org/api/test.html#test-runner-execution-model"
   const { code } = shell.exec(`node --test --test-reporter spec`);
   handleNonZeroReturnCode(code);
+};
+
+export const testWatch = () => {
+  nodemon(
+    `--exec "node ${["node_modules", "typescript", "bin", "tsc"].join(
+      path.sep
+    )} && node --test --test-reporter spec" --watch src --watch test -e ts`
+  );
+
+  nodemon
+    .on("start", async function () {
+      console.log("Test Reporter has started");
+    })
+    .on("quit", function () {
+      console.log("Test Reporter has quit");
+      process.exit();
+    })
+    .on("restart", function (files) {
+      console.log("Test Reporter restarted due to: ", files);
+    });
 };
 
 /**
@@ -172,7 +197,7 @@ const main = () => {
     return start();
   }
   if (taskName === "test") {
-    return test();
+    return test(additionalArguments);
   }
   if (taskName === "watch-node") {
     return watchNode();

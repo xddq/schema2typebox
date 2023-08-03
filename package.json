@@ -23,6 +23,7 @@
     "lint-check": "node tasks.mjs lint",
     "start": "node tasks.mjs start",
     "test": "node tasks.mjs test",
+    "watch-test": "node tasks.mjs test --watch",
     "watch-node": "node tasks.mjs watch-node",
     "watch-ts": "node tasks.mjs watch-ts",
     "publish": "yarn build && npm publish"
