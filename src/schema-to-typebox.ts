@@ -161,6 +161,24 @@ export const resetCustomTypes = () => {
   customTypes = "";
 };
 
+/**
+ * Enums in Typescript have been controversial and along with the limitations
+ * around valid key names, many developers prefer to use Union Types. This config
+ * will give the developer the option to choose between the two options.
+ */
+let enumMode: "union" | "enum" | "preferEnum" | "preferUnion" = "union";
+
+export const setEnumMode = (mode: typeof enumMode) => {
+  enumMode = mode;
+};
+
+const createUnionName = (propertyName: string) => {
+  if (!propertyName?.length) {
+    throw new Error("Can't create union name with empty string.");
+  }
+  return `${capitalize(propertyName)}Union`;
+};
+
 type PackageName = string;
 type ImportValue = string;
 const requiredImports = new Map<PackageName, Set<ImportValue>>();
@@ -216,14 +234,35 @@ export const collect = (
     const enumName = createEnumName(propertyName);
     // create typescript enum
     const enumInTypescript =
-      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
+    pairs.reduce<string>((prev, [enumKey, enumValue]) => {
+      const correctEnumValue =
+      typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
+      const validEnumKey =
+      enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
+      return `${prev}${validEnumKey} = ${correctEnumValue},\n`;
+    }, `export enum ${enumName} {\n`) + "}";
+
+    // create typescript union
+    const unionName = createUnionName(propertyName || itemPropertyName || "");
+    const unionInTypescript =
+      enumValues.reduce((prev, enumValue) => {
         const correctEnumValue =
           typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-        return `${prev}${enumKey} = ${correctEnumValue},\n`;
-      }, `export enum ${enumName} {\n`) + "}";
-    enumCode = enumCode + enumInTypescript + "\n\n";
 
-    let result = `Type.Enum(${enumName})`;
+        return `${prev}Type.Literal(${correctEnumValue}),\n`;
+      }, `export const ${unionName} = Type.Union([\n`) + "])";
+
+    enumCode = [
+      enumCode,
+      /enum/i.test(enumMode) && enumInTypescript,
+      /union/i.test(enumMode) && unionInTypescript,
+      "\n\n",
+    ]
+      .filter((x) => !!x)
+      .join("");
+
+    let result = /union/i.test(enumMode) ? unionName : `Type.Enum(${enumName})`;
+
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
