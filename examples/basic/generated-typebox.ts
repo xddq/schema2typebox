@@ -8,16 +8,16 @@
 
 import { Static, Type } from "@sinclair/typebox";
 
-export enum FavoriteAnimalEnum {
-  DOG = "dog",
-  CAT = "cat",
-  SLOTH = "sloth",
-}
-
 export type Person = Static<typeof Person>;
 export const Person = Type.Object({
   name: Type.String({ minLength: 20 }),
   age: Type.Number({ minimum: 18, maximum: 90 }),
   hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
-  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+  favoriteAnimal: Type.Optional(
+    Type.Union([
+      Type.Literal("dog"),
+      Type.Literal("cat"),
+      Type.Literal("sloth"),
+    ])
+  ),
 });

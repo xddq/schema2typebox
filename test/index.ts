@@ -864,6 +864,27 @@ describe("schema2typebox internal - collect()", () => {
       expectedTypebox
     );
   });
+  test("enum schema", async () => {
+    const dummySchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Optional(
+      Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ])
+    );
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
 });
 
 // NOTE: these are the most "high level" tests. Create them sparsely. Focus on

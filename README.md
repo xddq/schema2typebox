@@ -75,18 +75,18 @@ Creating TypeBox code from JSON schemas.
 // Which becomes..
 //
 
-export enum FavoriteAnimalEnum {
-  DOG = "dog",
-  CAT = "cat",
-  SLOTH = "sloth",
-}
-
 export type Person = Static<typeof Person>;
 export const Person = Type.Object({
   name: Type.String({ minLength: 20 }),
   age: Type.Number({ minimum: 18, maximum: 90 }),
   hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
-  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+  favoriteAnimal: Type.Optional(
+    Type.Union([
+      Type.Literal("dog"),
+      Type.Literal("cat"),
+      Type.Literal("sloth"),
+    ])
+  ),
 });
 
 //
@@ -136,19 +136,19 @@ export const Person = Type.Object({
 // Will result in this:
 //
 
-export enum StatusEnum {
-  UNKNOWN = "unknown",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
-}
-
 export type Contract = Static<typeof Contract>;
 export const Contract = Type.Object({
   person: Type.Object({
     name: Type.String({ maxLength: 100 }),
     age: Type.Number({ minimum: 18 }),
   }),
-  status: Type.Optional(Type.Enum(StatusEnum)),
+  status: Type.Optional(
+      Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ])
+   ),
 });
 
 //

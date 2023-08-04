@@ -179,9 +179,6 @@ export const collect = (
   }
 
   if (isEnumSchemaObj(schemaObj)) {
-    if (propertyName === undefined) {
-      throw new Error("cant create enum without propertyName");
-    }
     let result =
       schemaObj.enum
         .map((enumValue) => {
@@ -198,6 +195,10 @@ export const collect = (
 
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
+    }
+
+    if (propertyName === undefined) {
+      return result;
     }
     return `${propertyName}: ${result}` + "\n";
   }
