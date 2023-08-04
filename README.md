@@ -195,9 +195,11 @@ whats already implemented and what is missing.
 - [x] Type.Array() via "array" instance type
 - [x] Type.Object() via "object" instance type
 - [x] Type.Literal() via "const" property
-- [x] Type.Union() via "anyOf" property
+- [x] Type.Union() via "anyOf" or "enum" property
+  - schema2typebox generates union types instead of enums. If you have a problem
+    with this behaviour and valid arguments for using enums please create an
+    issue and it may be considered again.
 - [x] Type.Intersect() via "allOf" property
-- [x] Type.Union() via "enum" property
 - [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
@@ -211,9 +213,10 @@ whats already implemented and what is missing.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 
-#### To Be Prioritized
-Support for the following types and functionality is being split from PR #23 into individual PRs
-- [ ] Type.Enum() via "enum" property
+#### Open Tasks
+
+See [here](https://github.com/xddq/schema2typebox/pull/23) and followup PRs.
+
 - [ ] Type.Array() with "array<enum>" instance type
 - [ ] Nullable Literal types, eg: `type: ['string', 'null']`
 - [ ] "Unknown" object types
