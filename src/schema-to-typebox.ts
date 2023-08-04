@@ -574,7 +574,7 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
   if (!VALID_TYPE_VALUES.includes(type)) {
     throw new Error(
       `JSON schema had invalid value for 'type' attribute. Got: ${type}
-      Schemaobject was: ${JSON.stringify(schemaObj)}`
+      Schema object was: ${JSON.stringify(schemaObj)}`
     );
   }
 

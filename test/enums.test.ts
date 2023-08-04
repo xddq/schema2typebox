@@ -9,10 +9,10 @@ import {
 import { expectEqualIgnoreFormatting } from "./utils";
 
 describe("object with enum", () => {
-    let dummySchema: string;
+  let dummySchema: string;
 
-    beforeEach(() => {
-      dummySchema = `
+  beforeEach(() => {
+    dummySchema = `
        {
         "type": "object",
         "properties": {
@@ -29,87 +29,89 @@ describe("object with enum", () => {
         ]
       } 
       `;
-    });
+  });
 
-    afterEach(() => {
-      resetEnumCode();
-    });
+  afterEach(() => {
+    resetEnumCode();
+  });
 
-    const expectedEnumCode = `export enum StatusEnum {
+  const expectedEnumCode = `export enum StatusEnum {
       UNKNOWN = "unknown",
       ACCEPTED = "accepted",
       DENIED = "denied",
     }`;
-    const expectedUnionCode = `export const StatusUnion = Type.Union([
+  const expectedUnionCode = `export const StatusUnion = Type.Union([
       Type.Literal("unknown"),
       Type.Literal("accepted"),
       Type.Literal("denied"),
     ])`;
 
-    test("in enum mode", () => {
-      setEnumMode("enum");
-      const expectedTypebox = `
+  test("in enum mode", () => {
+    setEnumMode("enum");
+    const expectedTypebox = `
       Type.Object({
         status: Type.Enum(StatusEnum),
       }) 
       `;
 
-      expectEqualIgnoreFormatting(
-        collect(JSON.parse(dummySchema)),
-        expectedTypebox
-      );
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
 
-      expectEqualIgnoreFormatting(getEnumCode(), expectedEnumCode);
-    });
-    test("in preferEnum mode", () => {
-      setEnumMode("preferEnum");
-      const expectedTypebox = `
-      Type.Object({
-        status: Type.Enum(StatusEnum),
-      }) 
-      `;
-
-      expectEqualIgnoreFormatting(
-        collect(JSON.parse(dummySchema)),
-        expectedTypebox
-      );
-      expectEqualIgnoreFormatting(
-        getEnumCode(),
-        `${expectedEnumCode}${expectedUnionCode}`
-      );
-    });
-    test("in union mode", () => {
-      setEnumMode("union");
-
-      const expectedTypebox = `
-      Type.Object({
-        status: StatusUnion,
-      }) 
-      `;
-
-      expectEqualIgnoreFormatting(
-        collect(JSON.parse(dummySchema)),
-        expectedTypebox
-      );
-
-      expectEqualIgnoreFormatting(getEnumCode(), expectedUnionCode);
-    });
-    test("in preferUnion mode", () => {
-      setEnumMode("preferUnion");
-      const expectedTypebox = `
-      Type.Object({
-        status: StatusUnion,
-      }) 
-      `;
-
-      expectEqualIgnoreFormatting(
-        collect(JSON.parse(dummySchema)),
-        expectedTypebox
-      );
-
-      expectEqualIgnoreFormatting(
-        getEnumCode(),
-        `${expectedEnumCode}${expectedUnionCode}`
-      );
-    });
+    expectEqualIgnoreFormatting(getEnumCode(), expectedEnumCode);
   });
+
+  test("in preferEnum mode", () => {
+    setEnumMode("preferEnum");
+    const expectedTypebox = `
+      Type.Object({
+        status: Type.Enum(StatusEnum),
+      }) 
+      `;
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+    expectEqualIgnoreFormatting(
+      getEnumCode(),
+      `${expectedEnumCode}${expectedUnionCode}`
+    );
+  });
+  test("in union mode", () => {
+    setEnumMode("union");
+
+    const expectedTypebox = `
+      Type.Object({
+        status: StatusUnion,
+      }) 
+      `;
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+
+    expectEqualIgnoreFormatting(getEnumCode(), expectedUnionCode);
+  });
+
+  test("in preferUnion mode", () => {
+    setEnumMode("preferUnion");
+    const expectedTypebox = `
+      Type.Object({
+        status: StatusUnion,
+      }) 
+      `;
+
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+
+    expectEqualIgnoreFormatting(
+      getEnumCode(),
+      `${expectedEnumCode}${expectedUnionCode}`
+    );
+  });
+});

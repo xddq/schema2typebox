@@ -1,8 +1,6 @@
 import { describe, test } from "node:test";
 
-import {
-  collect,
-} from "../src/schema-to-typebox";
+import { collect } from "../src/schema-to-typebox";
 import { expectEqualIgnoreFormatting } from "./utils";
 
 /**
@@ -487,5 +485,4 @@ describe("schema2typebox internal - collect()", () => {
       expectedTypebox
     );
   });
-
 });

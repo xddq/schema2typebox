@@ -1,4 +1,3 @@
-
 import path from "node:path";
 import * as prettier from "prettier";
 import assert from "node:assert/strict";
@@ -20,8 +19,8 @@ export const formatWithPrettier = (input: string): string => {
  * @throws Error
  **/
 export const expectEqualIgnoreFormatting = (
-    input1: string,
-    input2: string
-  ): void => {
-    assert.equal(formatWithPrettier(input1), formatWithPrettier(input2));
-  };
+  input1: string,
+  input2: string
+): void => {
+  assert.equal(formatWithPrettier(input1), formatWithPrettier(input2));
+};

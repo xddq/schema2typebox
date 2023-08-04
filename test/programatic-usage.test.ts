@@ -3,27 +3,28 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import shell from "shelljs";
 
-import {
-  resetEnumCode,
-  resetCustomTypes,
-} from "../src/schema-to-typebox";
+import { resetEnumCode, resetCustomTypes } from "../src/schema-to-typebox";
 import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
 } from "../src/programmatic-usage";
 import { zip } from "fp-ts/Array";
-import { SHELLJS_RETURN_CODE_OK, buildOsIndependentPath, expectEqualIgnoreFormatting } from "./utils";
+import {
+  SHELLJS_RETURN_CODE_OK,
+  buildOsIndependentPath,
+  expectEqualIgnoreFormatting,
+} from "./utils";
 
 // NOTE: Rather test the collect() function whenever we can instead
 // of schema2typebox.
 describe("programmatic usage API", () => {
-    // TODO: remove this once global state enumCode and customCode were removed
-    afterEach(() => {
-      resetEnumCode();
-      resetCustomTypes();
-    });
-    test("object with enum (all keys string)", async () => {
-      const dummySchema = `
+  // TODO: remove this once global state enumCode and customCode were removed
+  afterEach(() => {
+    resetEnumCode();
+    resetCustomTypes();
+  });
+  test("object with enum (all keys string)", async () => {
+    const dummySchema = `
        {
         "type": "object",
         "properties": {
@@ -40,7 +41,7 @@ describe("programmatic usage API", () => {
         ]
       }
       `;
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Static, Type } from "@sinclair/typebox";
   
       export const StatusUnion = Type.Union([
@@ -54,13 +55,13 @@ describe("programmatic usage API", () => {
         status: StatusUnion
       })
       `);
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: dummySchema }),
-        expectedTypebox
-      );
-    });
-    test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
-      const dummySchema = `
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
+      expectedTypebox
+    );
+  });
+  test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
+    const dummySchema = `
        {
         "type": "object",
         "properties": {
@@ -83,7 +84,7 @@ describe("programmatic usage API", () => {
         ]
       }
       `;
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Static, Type } from "@sinclair/typebox";
   
       export const StatusUnion = Type.Union([
@@ -104,13 +105,13 @@ describe("programmatic usage API", () => {
         optionalStatus: Type.Optional(OptionalStatusUnion)
       })
       `);
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: dummySchema }),
-        expectedTypebox
-      );
-    });
-    test("generated typebox names are based on title attribute", async () => {
-      const dummySchema = `
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
+      expectedTypebox
+    );
+  });
+  test("generated typebox names are based on title attribute", async () => {
+    const dummySchema = `
       {
         "title": "Contract",
         "type": "object",
@@ -122,7 +123,7 @@ describe("programmatic usage API", () => {
         "required": ["name"]
       }
       `;
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Static, Type } from "@sinclair/typebox";
   
       export type Contract = Static<typeof Contract>;
@@ -130,13 +131,13 @@ describe("programmatic usage API", () => {
         name: Type.String(),
       });
       `);
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: dummySchema }),
-        expectedTypebox
-      );
-    });
-    test("object with $ref pointing to external files in relative path", async () => {
-      const dummySchema = `
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
+      expectedTypebox
+    );
+  });
+  test("object with $ref pointing to external files in relative path", async () => {
+    const dummySchema = `
       {
         "title": "Contract",
         "type": "object",
@@ -151,8 +152,8 @@ describe("programmatic usage API", () => {
         "required": ["person"]
       }
       `;
-  
-      const referencedPersonSchema = `
+
+    const referencedPersonSchema = `
       {
         "title": "Person",
         "type": "object",
@@ -169,15 +170,15 @@ describe("programmatic usage API", () => {
         "required": ["name", "age"]
      }
      `;
-  
-      const referencedStatusSchema = `
+
+    const referencedStatusSchema = `
       {
         "title": "Status",
         "enum": ["unknown", "accepted", "denied"]
       }
       `;
-  
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
         import { Static, Type } from "@sinclair/typebox";
   
         export const StatusUnion = Type.Union([
@@ -195,60 +196,60 @@ describe("programmatic usage API", () => {
           status: Type.Optional(StatusUnion),
         });
       `);
-  
-      const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-        buildOsIndependentPath([__dirname, "..", "..", currItem])
-      );
-      zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-        ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
-      );
-  
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: dummySchema }),
-        expectedTypebox
-      );
-  
-      // cleanup generated files
-      const { code: returnCode } = shell.rm("-f", inputPaths);
-      assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
-    });
-    test("object with $ref inside anyOf", async () => {
-      const dummySchema = {
-        anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
-      };
-  
-      const referencedCatSchema = {
-        title: "Cat",
-        type: "object",
-        properties: {
-          type: {
-            type: "string",
-            const: "cat",
-          },
-          name: {
-            type: "string",
-            maxLength: 100,
-          },
+
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  test("object with $ref inside anyOf", async () => {
+    const dummySchema = {
+      anyOf: [{ $ref: "./cat.json" }, { $ref: "./dog.json" }],
+    };
+
+    const referencedCatSchema = {
+      title: "Cat",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "cat",
         },
-        required: ["type", "name"],
-      };
-  
-      const referencedDogSchema = {
-        title: "Dog",
-        type: "object",
-        properties: {
-          type: {
-            type: "string",
-            const: "dog",
-          },
-          name: {
-            type: "string",
-            maxLength: 100,
-          },
+        name: {
+          type: "string",
+          maxLength: 100,
         },
-        required: ["type", "name"],
-      };
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+      },
+      required: ["type", "name"],
+    };
+
+    const referencedDogSchema = {
+      title: "Dog",
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          const: "dog",
+        },
+        name: {
+          type: "string",
+          maxLength: 100,
+        },
+      },
+      required: ["type", "name"],
+    };
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
         import { Static, Type } from "@sinclair/typebox";
   
         export type T = Static<typeof T>;
@@ -263,39 +264,39 @@ describe("programmatic usage API", () => {
           }),
         ]);
       `);
-  
-      const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-        buildOsIndependentPath([__dirname, "..", "..", currItem])
-      );
-      zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
-        ([fileName, data]) =>
-          fs.writeFileSync(fileName, JSON.stringify(data), undefined)
-      );
-  
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: JSON.stringify(dummySchema) }),
-        expectedTypebox
-      );
-  
-      // cleanup generated files
-      const { code: returnCode } = shell.rm("-f", inputPaths);
-      assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
-    });
-    // NOTE: This test might break if github adapts their links to raw github user
-    // content. The branch "feature/fix-refs-using-refparser" will not be deleted.
-    test("object with $ref to remote files", async () => {
-      const dummySchema = {
-        anyOf: [
-          {
-            $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/cat.json",
-          },
-          {
-            $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/dog.json",
-          },
-        ],
-      };
-  
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+
+    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
+    );
+    zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
+      ([fileName, data]) =>
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+    );
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: JSON.stringify(dummySchema) }),
+      expectedTypebox
+    );
+
+    // cleanup generated files
+    const { code: returnCode } = shell.rm("-f", inputPaths);
+    assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+  });
+  // NOTE: This test might break if github adapts their links to raw github user
+  // content. The branch "feature/fix-refs-using-refparser" will not be deleted.
+  test("object with $ref to remote files", async () => {
+    const dummySchema = {
+      anyOf: [
+        {
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/cat.json",
+        },
+        {
+          $ref: "https://raw.githubusercontent.com/xddq/schema2typebox/main/examples/ref-to-remote-files/dog.json",
+        },
+      ],
+    };
+
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
         import { Static, Type } from "@sinclair/typebox";
   
         export type T = Static<typeof T>;
@@ -310,14 +311,14 @@ describe("programmatic usage API", () => {
           }),
         ]);
       `);
-  
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: JSON.stringify(dummySchema) }),
-        expectedTypebox
-      );
-    });
-    test("object with oneOf generates custom typebox TypeRegistry code", async () => {
-      const dummySchema = `
+
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: JSON.stringify(dummySchema) }),
+      expectedTypebox
+    );
+  });
+  test("object with oneOf generates custom typebox TypeRegistry code", async () => {
+    const dummySchema = `
       {
         "type": "object",
         "properties": {
@@ -335,7 +336,7 @@ describe("programmatic usage API", () => {
         "required": ["a"]
       }
       `;
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
         import {
           Kind,
           SchemaOptions,
@@ -367,10 +368,9 @@ describe("programmatic usage API", () => {
           a: OneOf([Type.String(), Type.Number()]),
         });
       `);
-      expectEqualIgnoreFormatting(
-        await schema2typebox({ input: dummySchema }),
-        expectedTypebox
-      );
-    });
+    expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema }),
+      expectedTypebox
+    );
   });
-  
+});

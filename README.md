@@ -212,7 +212,9 @@ whats already implemented and what is missing.
       maximalItems and additionalItems false
 
 #### To Be Prioritized
+
 Support for the following types and functionality is being split from PR #23 into individual PRs
+
 - [ ] Type.Enum() via "enum" property
 - [ ] Type.Array() with "array<enum>" instance type
 - [ ] Nullable Literal types, eg: `type: ['string', 'null']`

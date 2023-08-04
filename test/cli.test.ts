@@ -13,4 +13,3 @@
 //   assert.equal(getHelpTextMock.mock.callCount(), 10);
 // });
 // });
-
