@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
 import { capitalize } from "./utils";
 
@@ -15,7 +14,7 @@ export const schema2typebox = async (jsonSchema: string) => {
 
   return `${generateRequiredImports()}
 
-${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
+${customTypes}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
@@ -116,37 +115,6 @@ const isNotSchemaObj = (
   return schemaObj["not"] !== undefined;
 };
 
-const createEnumName = (propertyName: string) => {
-  if (!propertyName?.length) {
-    throw new Error("Can't create enum name with empty string.");
-  }
-  return `${capitalize(propertyName)}Enum`;
-};
-
-/**
- * Contains Typescript code for the enums that are created based on the JSON
- * schema.
- * NOTE: perhaps make this a map or something else if needed.
- **/
-let enumCode = "";
-
-/**
- * Workaround used for resetting enum code in test runs. Currently it would
- * otherwise not get reset in test runs. Thats what we get for using globally
- * mutable state :]. Probably adapt later, perhaps pass enumCode inside
- * collect() and adapt all collect() calls.
- */
-export const resetEnumCode = () => {
-  enumCode = "";
-};
-
-/**
- * Used to programatically retrieve the enum code. Used in tests.
- */
-export const getEnumCode = () => {
-  return enumCode;
-};
-
 /**
  * Adds custom types to the typebox registry in order to validate them and use
  * the typecompiler against them. Used to e.g. implement 'oneOf' which does
@@ -166,24 +134,6 @@ let customTypes = "";
  */
 export const resetCustomTypes = () => {
   customTypes = "";
-};
-
-/**
- * Enums in Typescript have been controversial and along with the limitations
- * around valid key names, many developers prefer to use Union Types. This config
- * will give the developer the option to choose between the two options.
- */
-let enumMode: "union" | "enum" | "preferEnum" | "preferUnion" = "union";
-
-export const setEnumMode = (mode: typeof enumMode) => {
-  enumMode = mode;
-};
-
-const createUnionName = (propertyName: string) => {
-  if (!propertyName?.length) {
-    throw new Error("Can't create union name with empty string.");
-  }
-  return `${capitalize(propertyName)}Union`;
 };
 
 type PackageName = string;
@@ -232,53 +182,24 @@ export const collect = (
     if (propertyName === undefined) {
       throw new Error("cant create enum without propertyName");
     }
-    const enumValues = schemaObj.enum;
-    const enumKeys = enumValues.map((currItem) =>
-      String(currItem).toUpperCase()
-    );
-    const pairs = zip(enumKeys, enumValues);
-
-    // create typescript enum
-    const enumName = createEnumName(propertyName);
-    const enumInTypescript =
-      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
-        const correctEnumValue =
-          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-        const validEnumKey =
-          enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
-        return `${prev}${validEnumKey} = ${correctEnumValue},\n`;
-      }, `export enum ${enumName} {\n`) + "}";
-
-    // create typescript union
-    const unionName = createUnionName(propertyName);
-    const unionInTypescript =
-      enumValues.reduce((prev, enumValue) => {
-        const correctEnumValue =
-          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-
-        return `${prev}Type.Literal(${correctEnumValue}),\n`;
-      }, `export const ${unionName} = Type.Union([\n`) + "])";
-
-    enumCode = [
-      enumCode,
-      /enum|prefer/i.test(enumMode) && enumInTypescript,
-      /prefer/i.test(enumMode) && "\n",
-      /union|prefer/i.test(enumMode) && unionInTypescript,
-      "\n\n",
-    ]
-      .filter((x) => !!x)
-      .join("");
-
-    let result = /union/i.test(enumMode) ? unionName : `Type.Enum(${enumName})`;
+    let result =
+      schemaObj.enum
+        .map((enumValue) => {
+          return typeof enumValue === "string"
+            ? `Type.Literal("${enumValue}")`
+            : `Type.Literal(${enumValue})`;
+        })
+        .reduce((prev, curr) => {
+          if (prev === "Type.Union([") {
+            return `${prev} ${curr}`;
+          }
+          return `${prev}, ${curr}`;
+        }, "Type.Union([") + "])";
 
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-
-    return result + "\n";
+    return `${propertyName}: ${result}` + "\n";
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {
@@ -441,7 +362,7 @@ export const collect = (
 };
 
 // TODO: think about how we could chain "functions" to properly construct the
-// strings?
+// strings? Probably use fp-ts flow
 // const addOptional = (
 //   requiredAttributes: string[],
 //   propertyName: string | undefined,
