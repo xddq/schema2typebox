@@ -197,7 +197,7 @@ whats already implemented and what is missing.
 - [x] Type.Literal() via "const" property
 - [x] Type.Union() via "anyOf" property
 - [x] Type.Intersect() via "allOf" property
-- [x] Type.Enum() via "enum" property
+- [x] Type.Union() via "enum" property
 - [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
@@ -210,6 +210,14 @@ whats already implemented and what is missing.
       Defaulting to "T" if title is not defined.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
+
+#### To Be Prioritized
+Support for the following types and functionality is being split from PR #23 into individual PRs
+- [ ] Type.Enum() via "enum" property
+- [ ] Type.Array() with "array<enum>" instance type
+- [ ] Nullable Literal types, eg: `type: ['string', 'null']`
+- [ ] "Unknown" object types
+- [ ] Disambiguation of overlapping property names in nested schemas
 
 ## DEV/CONTRIBUTOR NOTES
 
