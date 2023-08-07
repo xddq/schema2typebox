@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
+import { capitalize } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
 export const schema2typebox = async (jsonSchema: string) => {
@@ -14,20 +14,15 @@ export const schema2typebox = async (jsonSchema: string) => {
 
   return `${generateRequiredImports()}
 
-${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
+${customTypes}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
 };
 
 const generateTypeForName = (name: string) => {
-  const [head, ...tail] = name;
-  if (head === undefined) {
+  if (!name?.length) {
     throw new Error(`Can't generate type for empty string. Got input: ${name}`);
   }
-  if (tail.length === 0) {
-    return `export type ${head.toUpperCase()} = Static<typeof ${name}>`;
-  }
-  return `export type ${head.toUpperCase()}${tail.join(
-    ""
-  )} = Static<typeof ${name}>`;
+  const typeName = capitalize(name);
+  return `export type ${typeName} = Static<typeof ${name}>`;
 };
 
 /**
@@ -120,31 +115,6 @@ const isNotSchemaObj = (
   return schemaObj["not"] !== undefined;
 };
 
-const createEnumName = (propertyName: string) => {
-  const [head, ...tail] = propertyName;
-  if (head === undefined) {
-    throw new Error("Can't create enum name with empty string.");
-  }
-  return `${head.toUpperCase()}${tail.join("")}Enum`;
-};
-
-/**
- * Contains Typescript code for the enums that are created based on the JSON
- * schema.
- * NOTE: perhaps make this a map or something else if needed.
- **/
-let enumCode = "";
-
-/**
- * Workaround used for resetting enum code in test runs. Currently it would
- * otherwise not get reset in test runs. Thats what we get for using globally
- * mutable state :]. Probably adapt later, perhaps pass enumCode inside
- * collect() and adapt all collect() calls.
- */
-export const resetEnumCode = () => {
-  enumCode = "";
-};
-
 /**
  * Adds custom types to the typebox registry in order to validate them and use
  * the typecompiler against them. Used to e.g. implement 'oneOf' which does
@@ -209,34 +179,28 @@ export const collect = (
   }
 
   if (isEnumSchemaObj(schemaObj)) {
-    if (propertyName === undefined) {
-      throw new Error("cant create enum without propertyName");
-    }
-    const enumValues = schemaObj.enum;
-    const enumKeys = enumValues.map((currItem) =>
-      String(currItem).toUpperCase()
-    );
-    const pairs = zip(enumKeys, enumValues);
+    let result =
+      schemaObj.enum
+        .map((enumValue) => {
+          return typeof enumValue === "string"
+            ? `Type.Literal("${enumValue}")`
+            : `Type.Literal(${enumValue})`;
+        })
+        .reduce((prev, curr) => {
+          if (prev === "Type.Union([") {
+            return `${prev} ${curr}`;
+          }
+          return `${prev}, ${curr}`;
+        }, "Type.Union([") + "])";
 
-    const enumName = createEnumName(propertyName);
-    // create typescript enum
-    const enumInTypescript =
-      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
-        const correctEnumValue =
-          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-        return `${prev}${enumKey} = ${correctEnumValue},\n`;
-      }, `export enum ${enumName} {\n`) + "}";
-    enumCode = enumCode + enumInTypescript + "\n\n";
-
-    let result = `Type.Enum(${enumName})`;
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
 
-    return result + "\n";
+    if (propertyName === undefined) {
+      return result;
+    }
+    return `${propertyName}: ${result}` + "\n";
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {
@@ -399,7 +363,7 @@ export const collect = (
 };
 
 // TODO: think about how we could chain "functions" to properly construct the
-// strings?
+// strings? Probably use fp-ts flow
 // const addOptional = (
 //   requiredAttributes: string[],
 //   propertyName: string | undefined,

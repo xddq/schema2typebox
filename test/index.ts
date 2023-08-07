@@ -5,11 +5,7 @@ import path from "node:path";
 import * as prettier from "prettier";
 import shell from "shelljs";
 
-import {
-  collect,
-  resetEnumCode,
-  resetCustomTypes,
-} from "../src/schema-to-typebox";
+import { collect, resetCustomTypes } from "../src/schema-to-typebox";
 import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
@@ -43,95 +39,7 @@ export const expectEqualIgnoreFormatting = (
 describe("programmatic usage API", () => {
   // TODO: remove this once global state enumCode and customCode were removed
   afterEach(() => {
-    resetEnumCode();
     resetCustomTypes();
-  });
-  test("object with enum (all keys string)", async () => {
-    const dummySchema = `
-     {
-      "type": "object",
-      "properties": {
-        "status": {
-         "enum": [
-           "unknown",
-           "accepted",
-           "denied"
-         ]
-        }
-      },
-      "required": [
-        "status"
-      ]
-    }
-    `;
-    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Static, Type } from "@sinclair/typebox";
-
-    export enum StatusEnum {
-      UNKNOWN = "unknown",
-      ACCEPTED = "accepted",
-      DENIED = "denied",
-    }
-
-    export type T = Static<typeof T>
-    export const T = Type.Object({
-      status: Type.Enum(StatusEnum)
-    })
-    `);
-    expectEqualIgnoreFormatting(
-      await schema2typebox({ input: dummySchema }),
-      expectedTypebox
-    );
-  });
-  test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
-    const dummySchema = `
-     {
-      "type": "object",
-      "properties": {
-        "status": {
-         "enum": [
-           1,
-           true,
-           "hello"
-         ]
-        },
-        "optionalStatus": {
-         "enum": [
-          "unknown",
-          "accepted",
-          "denied"]
-        }
-      },
-      "required": [
-        "status"
-      ]
-    }
-    `;
-    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    import { Static, Type } from "@sinclair/typebox";
-
-    export enum StatusEnum {
-      1 = 1,
-      TRUE = true,
-      HELLO = "hello",
-    }
-
-    export enum OptionalStatusEnum {
-      UNKNOWN = "unknown",
-      ACCEPTED = "accepted",
-      DENIED = "denied",
-    }
-
-    export type T = Static<typeof T>
-    export const T = Type.Object({
-      status: Type.Enum(StatusEnum),
-      optionalStatus: Type.Optional(Type.Enum(OptionalStatusEnum))
-    })
-    `);
-    expectEqualIgnoreFormatting(
-      await schema2typebox({ input: dummySchema }),
-      expectedTypebox
-    );
   });
   test("generated typebox names are based on title attribute", async () => {
     const dummySchema = `
@@ -204,11 +112,6 @@ describe("programmatic usage API", () => {
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
       import { Static, Type } from "@sinclair/typebox";
 
-      export enum StatusEnum {
-        UNKNOWN = "unknown",
-        ACCEPTED = "accepted",
-        DENIED = "denied",
-      }
 
       export type Contract = Static<typeof Contract>;
       export const Contract = Type.Object({
@@ -216,7 +119,13 @@ describe("programmatic usage API", () => {
           name: Type.String({ maxLength: 100 }),
           age: Type.Number({ minimum: 18 }),
         }),
-        status: Type.Optional(Type.Enum(StatusEnum)),
+        status: Type.Optional(
+          Type.Union([
+            Type.Literal("unknown"),
+            Type.Literal("accepted"),
+            Type.Literal("denied"),
+          ])
+        ),
       });
     `);
 
@@ -880,7 +789,7 @@ describe("schema2typebox internal - collect()", () => {
       expectedTypebox
     );
   });
-  test("object with enum", () => {
+  test("object with enum (all keys string)", async () => {
     const dummySchema = `
      {
       "type": "object",
@@ -900,8 +809,76 @@ describe("schema2typebox internal - collect()", () => {
     `;
     const expectedTypebox = `
     Type.Object({
-      status: Type.Enum(StatusEnum),
+      status: Type.Union([
+      Type.Literal("unknown"),
+      Type.Literal("accepted"),
+      Type.Literal("denied"),
+      ])
     })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
+    const dummySchema = `
+     {
+      "type": "object",
+      "properties": {
+        "status": {
+         "enum": [
+           1,
+           true,
+           "hello"
+         ]
+        },
+        "optionalStatus": {
+         "enum": [
+          "unknown",
+          "accepted",
+          "denied"]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Object({
+      status: Type.Union([
+        Type.Literal(1),
+        Type.Literal(true),
+        Type.Literal("hello"),
+      ]),
+      optionalStatus: Type.Optional(Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ]))
+    })
+    `;
+    expectEqualIgnoreFormatting(
+      collect(JSON.parse(dummySchema)),
+      expectedTypebox
+    );
+  });
+  test("enum schema", async () => {
+    const dummySchema = `
+    {
+      "title": "Status",
+      "enum": ["unknown", "accepted", "denied"]
+    }
+    `;
+    const expectedTypebox = `
+    Type.Optional(
+      Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ])
+    );
     `;
     expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
