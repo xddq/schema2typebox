@@ -63,9 +63,9 @@ export const addCommentThatCodeIsGenerated = {
  * you use to generate this file instead. The default file is called
  * "schema.json", perhaps have a look there! :]
  */
-${!!additionalHeader && `
+${!!additionalHeader ? `
 ${additionalHeader}
-`}
+` : ''}
 ${code}`;
   },
 };
