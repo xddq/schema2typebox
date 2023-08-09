@@ -75,18 +75,18 @@ Creating TypeBox code from JSON schemas.
 // Which becomes..
 //
 
-export enum FavoriteAnimalEnum {
-  DOG = "dog",
-  CAT = "cat",
-  SLOTH = "sloth",
-}
-
 export type Person = Static<typeof Person>;
 export const Person = Type.Object({
   name: Type.String({ minLength: 20 }),
   age: Type.Number({ minimum: 18, maximum: 90 }),
   hobbies: Type.Optional(Type.Array(Type.String(), { minItems: 1 })),
-  favoriteAnimal: Type.Optional(Type.Enum(FavoriteAnimalEnum)),
+  favoriteAnimal: Type.Optional(
+    Type.Union([
+      Type.Literal("dog"),
+      Type.Literal("cat"),
+      Type.Literal("sloth"),
+    ])
+  ),
 });
 
 //
@@ -136,19 +136,19 @@ export const Person = Type.Object({
 // Will result in this:
 //
 
-export enum StatusEnum {
-  UNKNOWN = "unknown",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
-}
-
 export type Contract = Static<typeof Contract>;
 export const Contract = Type.Object({
   person: Type.Object({
     name: Type.String({ maxLength: 100 }),
     age: Type.Number({ minimum: 18 }),
   }),
-  status: Type.Optional(Type.Enum(StatusEnum)),
+  status: Type.Optional(
+      Type.Union([
+        Type.Literal("unknown"),
+        Type.Literal("accepted"),
+        Type.Literal("denied"),
+      ])
+   ),
 });
 
 //
@@ -195,9 +195,11 @@ whats already implemented and what is missing.
 - [x] Type.Array() via "array" instance type
 - [x] Type.Object() via "object" instance type
 - [x] Type.Literal() via "const" property
-- [x] Type.Union() via "anyOf" property
+- [x] Type.Union() via "anyOf" or "enum" property
+  - schema2typebox generates union types instead of enums. If you have a problem
+    with this behaviour and valid arguments for using enums please create an
+    issue and it may be considered again.
 - [x] Type.Intersect() via "allOf" property
-- [x] Type.Enum() via "enum" property
 - [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
     order to be able to align to oneOf json schema semantics and still be able
@@ -210,6 +212,15 @@ whats already implemented and what is missing.
       Defaulting to "T" if title is not defined.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
+
+#### Open Tasks
+
+See [here](https://github.com/xddq/schema2typebox/pull/23) and followup PRs.
+
+- [ ] Type.Array() with "array<enum>" instance type
+- [ ] Nullable Literal types, eg: `type: ['string', 'null']`
+- [ ] "Unknown" object types
+- [ ] Disambiguation of overlapping property names in nested schemas
 
 ## DEV/CONTRIBUTOR NOTES
 

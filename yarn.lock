@@ -350,7 +350,7 @@ __metadata:
   resolution: "@shiftsmartinc/schema2typebox@workspace:."
   dependencies:
     "@apidevtools/json-schema-ref-parser": 9.0.9
-    "@sinclair/typebox": 0.29.0
+    "@sinclair/typebox": 0.30.2
     "@tsconfig/node18": 2.0.0
     "@types/minimist": 1.2.2
     "@types/node": 18.16.8
@@ -376,10 +376,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@sinclair/typebox@npm:0.29.0":
-  version: 0.29.0
-  resolution: "@sinclair/typebox@npm:0.29.0"
-  checksum: eefe2217c7e18b4f5c0ba4a345f371fdcd1092faf1905a7cf9c758aebbae73500bec16c68beab39a735cba1f0a758963997a4780adefb7ce67934b87f80ef747
+"@sinclair/typebox@npm:0.30.2":
+  version: 0.30.2
+  resolution: "@sinclair/typebox@npm:0.30.2"
+  checksum: ddb5368b6a11b953edd511d62e4b575c46bafabcc7de815f64be7f34dbfc63649ef1651c0687af952ac6a9b3aba03d2f91ec0dd9ec7d8a1ca24e35b4d6e60ac9
   languageName: node
   linkType: hard
 

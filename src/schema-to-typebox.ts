@@ -1,12 +1,14 @@
 import fs from "node:fs";
-import { zip } from "fp-ts/Array";
 import $Refparser from "@apidevtools/json-schema-ref-parser";
 import { capitalize } from "./utils";
 
 /** Generates TypeBox code from JSON schema */
-export const schema2typebox = async (jsonSchema: string, opts?: { enumMode?: EnumModeOption, packageName?: PackageName }) => {
-  if(opts?.enumMode) enumMode = opts.enumMode;
-  if(opts?.packageName) packageName = opts.packageName;
+export const schema2typebox = async (
+  jsonSchema: string,
+  opts?: { enumMode?: EnumModeOption; packageName?: PackageName }
+) => {
+  if (opts?.enumMode) enumMode = opts.enumMode;
+  if (opts?.packageName) packageName = opts.packageName;
 
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchemaObj = await $Refparser.dereference(schemaObj);
@@ -18,7 +20,15 @@ export const schema2typebox = async (jsonSchema: string, opts?: { enumMode?: Enu
 
   return `${generateRequiredImports()}
 
-${customTypes}${enumCode}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
+${customTypes}${typeForObj}\nexport const ${valueName} = ${typeBoxType}`;
+};
+
+const generateTypeForName = (name: string) => {
+  if (!name?.length) {
+    throw new Error(`Can't generate type for empty string. Got input: ${name}`);
+  }
+  const typeName = capitalize(name);
+  return `export type ${typeName} = Static<typeof ${name}>`;
 };
 
 /**
@@ -111,43 +121,6 @@ const isNotSchemaObj = (
   return schemaObj["not"] !== undefined;
 };
 
-const generateTypeForName = (name: string) => {
-  if (!name?.length) {
-    throw new Error(`Can't generate type for empty string. Got input: ${name}`);
-  }
-  const typeName = capitalize(name);
-  return `export type ${typeName} = Static<typeof ${name}>`;
-};
-const createUnionName = (propertyName: string) => {
-  if (!propertyName?.length) {
-    throw new Error("Can't create union name with empty string.");
-  }
-  return `${capitalize(propertyName)}Union`;
-};
-const createEnumName = (propertyName: string) => {
-  if (!propertyName?.length) {
-    throw new Error("Can't create enum name with empty string.");
-  }
-  return `${capitalize(propertyName)}Enum`;
-};
-
-/**
- * Contains Typescript code for the enums that are created based on the JSON
- * schema.
- * NOTE: perhaps make this a map or something else if needed.
- **/
-let enumCode = "";
-
-/**
- * Workaround used for resetting enum code in test runs. Currently it would
- * otherwise not get reset in test runs. Thats what we get for using globally
- * mutable state :]. Probably adapt later, perhaps pass enumCode inside
- * collect() and adapt all collect() calls.
- */
-export const resetEnumCode = () => {
-  enumCode = "";
-};
-
 /**
  * Adds custom types to the typebox registry in order to validate them and use
  * the typecompiler against them. Used to e.g. implement 'oneOf' which does
@@ -174,19 +147,19 @@ export const resetCustomTypes = () => {
  * around valid key names, many developers prefer to use Union Types. This config
  * will give the developer the option to choose between the two options.
  */
-export type EnumModeOption = "enum" | "union" | "preferEnum" | "preferUnion"
-let enumMode: EnumModeOption  = "union";
+export type EnumModeOption = "enum" | "union" | "preferEnum" | "preferUnion";
+let enumMode: EnumModeOption = "union";
 
 export const setEnumMode = (mode: typeof enumMode) => {
   enumMode = mode;
 };
 
-let packageName = '@sinclair/typebox';
+let packageName = "@sinclair/typebox";
 export const setPackageName = (typeboxPackageName: PackageName) => {
   packageName = typeboxPackageName;
-}
+};
 
-export type PackageName = '@sinclair/typebox' | '@feathersjs/typebox' | string;
+export type PackageName = "@sinclair/typebox" | "@feathersjs/typebox" | string;
 type ImportValue = string;
 const requiredImports = new Map<PackageName, Set<ImportValue>>();
 export const resetRequiredImports = () => {
@@ -204,8 +177,7 @@ export const resetRequiredImports = () => {
 export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
-  propertyName?: string,
-  itemPropertyName?: string
+  propertyName?: string
 ): string => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
@@ -230,53 +202,28 @@ export const collect = (
   }
 
   if (isEnumSchemaObj(schemaObj)) {
-    if (propertyName === undefined && !itemPropertyName) {
-      throw new Error("cant create enum without propertyName or path");
-    }
-    const enumValues = schemaObj.enum;
-    const enumKeys = enumValues.map((currItem) =>
-      String(currItem).toUpperCase()
-    );
-    const pairs = zip(enumKeys, enumValues);
-
-    const enumName = createEnumName(propertyName || itemPropertyName || "");
-    // create typescript enum
-    const enumInTypescript =
-      pairs.reduce<string>((prev, [enumKey, enumValue]) => {
-        const correctEnumValue =
-          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-        const correctEnumKey =
-          enumKey === "" ? "EMPTY_STRING" : enumKey.replace(/[-]/g, "_");
-        return `${prev}${correctEnumKey} = ${correctEnumValue},\n`;
-      }, `export enum ${enumName} {\n`) + "}";
-    const unionName = createUnionName(propertyName || itemPropertyName || "");
-    const unionInTypescript =
-      enumValues.reduce((prev, enumValue) => {
-        const correctEnumValue =
-          typeof enumValue === "string" ? `"${enumValue}"` : enumValue;
-
-        return `${prev}Type.Literal(${correctEnumValue}),\n`;
-      }, `export const ${unionName} = Type.Union([\n`) + "])";
-
-    enumCode = [
-      enumCode,
-      /enum/i.test(enumMode) && enumInTypescript,
-      /union/i.test(enumMode) && unionInTypescript,
-      "\n\n",
-    ]
-      .filter((x) => !!x)
-      .join("");
-
-    let result = /union/i.test(enumMode) ? unionName : `Type.Enum(${enumName})`;
+    let result =
+      schemaObj.enum
+        .map((enumValue) => {
+          return typeof enumValue === "string"
+            ? `Type.Literal("${enumValue}")`
+            : `Type.Literal(${enumValue})`;
+        })
+        .reduce((prev, curr) => {
+          if (prev === "Type.Union([") {
+            return `${prev} ${curr}`;
+          }
+          return `${prev}, ${curr}`;
+        }, "Type.Union([") + "])";
 
     if (!isRequiredAttribute) {
       result = `Type.Optional(${result})`;
     }
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
 
-    return result + "\n";
+    if (propertyName === undefined) {
+      return result;
+    }
+    return `${propertyName}: ${result}` + "\n";
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {
@@ -429,14 +376,12 @@ export const collect = (
       );
     }
 
-    const itemPropertyName = `${propertyName}Item`;
     let result = "";
     if (Object.keys(schemaOptions).length > 0) {
       result = `Type.Array(${collect(
         itemsSchemaObj,
         undefined,
-        undefined,
-        itemPropertyName
+        undefined
       )}, (${JSON.stringify(schemaOptions)}))`;
     } else {
       result = `Type.Array(${collect(itemsSchemaObj)})`;
@@ -463,7 +408,7 @@ export const collect = (
 };
 
 // TODO: think about how we could chain "functions" to properly construct the
-// strings?
+// strings? Probably use fp-ts flow
 // const addOptional = (
 //   requiredAttributes: string[],
 //   propertyName: string | undefined,
