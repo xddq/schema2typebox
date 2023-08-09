@@ -1,6 +1,6 @@
 {
   "name": "@shiftsmartinc/schema2typebox",
-  "version": "1.5.0",
+  "version": "1.5.1-beta.1",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
   "source": "dist/src/index.js",
