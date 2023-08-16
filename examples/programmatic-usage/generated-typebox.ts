@@ -18,6 +18,6 @@ export const Person = Type.Object({
       Type.Literal("dog"),
       Type.Literal("cat"),
       Type.Literal("sloth"),
-    ])
+    ]),
   ),
 });

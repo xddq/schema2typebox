@@ -25,7 +25,7 @@ export const runCli = async () => {
 
   const inputFileAsString = readFileSync(
     process.cwd() + `/${args.input ?? "schema.json"}`,
-    "utf-8"
+    "utf-8",
   );
   const typeboxCode = await schema2typebox({
     input: inputFileAsString,

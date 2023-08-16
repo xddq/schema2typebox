@@ -73,8 +73,6 @@ const createExportedTypeForName = (exportedName: string) => {
   return `export type ${typeName} = Static<typeof ${exportedName}>`;
 };
 
-// TODO: think about how we could chain "functions" to properly construct the
-// strings? Probably use fp-ts flow
 /**
  * Modifies code to be used as value or as key value pair. Curried so we can
  * compose different of these 'modification functions' which apply to most
@@ -115,6 +113,30 @@ const addKeyToValue = (propertyName: string | undefined) => {
 const addOptionalModifier = (isRequired: boolean) => {
   return (code: Code): Code => {
     return isRequired ? code : `Type.Optional(${code})`;
+  };
+};
+
+/**
+ * Adds schema options to the code based on the given schemaOptions param. Curried so we can
+ * compose different of these 'modification functions' which apply to most
+ * schemas, regardless of their type.
+ *
+ * Examples
+ *
+ * addSchemaOptions({minimum: 5})('Type.Number()')
+ * return "Type.Number({minimum: 5})"
+ *
+ * addSchemaOptions(undefined)('Type.Number()')
+ * return "Type.Number()"
+ *
+ */
+const addSchemaOptions = (schemaOptions: Record<string, any>) => {
+  // TODO: fix addSchemaOptions function.
+  return (code: Code): Code => {
+    if (schemaOptions === undefined) {
+      return code;
+    }
+    return `${code.slice(0, code.length)}, ${JSON.stringify(schemaOptions)})`;
   };
 };
 
@@ -238,16 +260,10 @@ export const collect = (
     const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
       collect(currItem),
     );
-    let result = "";
-    if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Union([${typeboxForAnyOfObjects}],${JSON.stringify(
-        schemaOptions,
-      )})`;
-    } else {
-      result = `Type.Union([${typeboxForAnyOfObjects}])`;
-    }
-
-    return appendNewLine(addKeyToValue(propertyName)(result));
+    const result = `Type.Union([${typeboxForAnyOfObjects}])`;
+    return appendNewLine(
+      addKeyToValue(propertyName)(addSchemaOptions(schemaOptions)(result)),
+    );
   }
 
   if (isAllOfSchemaObj(schemaObj)) {
