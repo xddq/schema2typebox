@@ -73,6 +73,55 @@ const createExportedTypeForName = (exportedName: string) => {
   return `export type ${typeName} = Static<typeof ${exportedName}>`;
 };
 
+// TODO: think about how we could chain "functions" to properly construct the
+// strings? Probably use fp-ts flow
+/**
+ * Modifies code to be used as value or as key value pair. Curried so we can
+ * compose different of these 'modification functions' which apply to most
+ * schemas, regardless of their type.
+ *
+ * Examples
+ *
+ * addKeyToValue(undefined)('Type.Literal("Haskell")')
+ * return "Type.Literal("Haskell")"
+ *
+ * addKeyToValue(firstName)('Type.Literal("Haskell")')
+ * return "firstName: Type.Literal("Haskell")"
+ *
+ */
+const addKeyToValue = (propertyName: string | undefined) => {
+  return (code: Code): Code => {
+    if (propertyName === undefined) {
+      return code;
+    }
+    return `${propertyName}: ${code}`;
+  };
+};
+
+/**
+ * Adds an optional modifier to the code based on the given isRequired param. Curried so we can
+ * compose different of these 'modification functions' which apply to most
+ * schemas, regardless of their type.
+ *
+ * Examples
+ *
+ * addOptionalModifier(true)('Type.Number()')
+ * return "Type.Number()"
+ *
+ * addOptionalModifier(undefined)('Type.Number()')
+ * return "Type.Optional(Type.Number())"
+ *
+ */
+const addOptionalModifier = (isRequired: boolean) => {
+  return (code: Code): Code => {
+    return isRequired ? code : `Type.Optional(${code})`;
+  };
+};
+
+const appendNewLine = (code: Code) => {
+  return code + "\n";
+};
+
 /**
  * "SimpleType" here basically means any type that is directly mapable to a
  * typebox type without any recursion (everything besides "array" and "object"
@@ -164,7 +213,7 @@ export const collect = (
   );
 
   if (isEnumSchemaObj(schemaObj)) {
-    let result =
+    const result =
       schemaObj.enum
         .map((enumValue) => {
           return typeof enumValue === "string"
@@ -178,14 +227,11 @@ export const collect = (
           return `${prev}, ${curr}`;
         }, "Type.Union([") + "])";
 
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
-
-    if (propertyName === undefined) {
-      return result;
-    }
-    return `${propertyName}: ${result}` + "\n";
+    return appendNewLine(
+      addKeyToValue(propertyName)(
+        addOptionalModifier(isRequiredAttribute)(result),
+      ),
+    );
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {
@@ -201,10 +247,7 @@ export const collect = (
       result = `Type.Union([${typeboxForAnyOfObjects}])`;
     }
 
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-    return result + "\n";
+    return appendNewLine(addKeyToValue(propertyName)(result));
   }
 
   if (isAllOfSchemaObj(schemaObj)) {
@@ -220,10 +263,7 @@ export const collect = (
       result = `Type.Intersect([${typeboxForAllOfObjects}])`;
     }
 
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-    return result + "\n";
+    return appendNewLine(addKeyToValue(propertyName)(result));
   }
 
   if (isOneOfSchemaObj(schemaObj)) {
@@ -239,10 +279,7 @@ export const collect = (
       result = `OneOf([${typeboxForOneOfObjects}])`;
     }
 
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-    return result + "\n";
+    return appendNewLine(addKeyToValue(propertyName)(result));
   }
 
   if (isNotSchemaObj(schemaObj)) {
@@ -256,10 +293,7 @@ export const collect = (
       result = `Type.Not(${typeboxForNotObjects})`;
     }
 
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-    return result + "\n";
+    return appendNewLine(addKeyToValue(propertyName)(result));
   }
 
   const type = getType(schemaObj);
@@ -272,10 +306,8 @@ export const collect = (
         return collect(property, requiredAttributesOfObject, propertyName);
       },
     );
-    // propertyName will only be undefined for the "top level" schemaObj
-    return propertyName === undefined
-      ? `Type.Object({\n${typeboxForProperties}})`
-      : `${propertyName}: Type.Object({\n${typeboxForProperties}})`;
+    const result = `Type.Object({\n${typeboxForProperties}})`;
+    return appendNewLine(addKeyToValue(propertyName)(result));
   }
 
   if (
@@ -299,20 +331,20 @@ export const collect = (
     }
 
     if (isTypeLiteral) {
-      const resultingType = mapTypeLiteral(
+      const result = mapTypeLiteral(
         schemaOptions["const"],
         type,
         schemaOptions,
       );
-      return isRequiredAttribute
-        ? `${propertyName}: ${resultingType}\n`
-        : `${propertyName}: Type.Optional(${resultingType})\n`;
+      return appendNewLine(
+        `${propertyName}: ${addOptionalModifier(isRequiredAttribute)(result)}`,
+      );
     }
 
-    const resultingType = mapSimpleType(type, schemaOptions);
-    return isRequiredAttribute
-      ? `${propertyName}: ${resultingType}\n`
-      : `${propertyName}: Type.Optional(${resultingType})\n`;
+    const result = mapSimpleType(type, schemaOptions);
+    return appendNewLine(
+      `${propertyName}: ${addOptionalModifier(isRequiredAttribute)(result)}`,
+    );
   }
 
   if (type === "array") {
@@ -332,30 +364,15 @@ export const collect = (
     } else {
       result = `Type.Array(${collect(itemsSchemaObj)})`;
     }
-    if (!isRequiredAttribute) {
-      result = `Type.Optional(${result})`;
-    }
-    if (propertyName !== undefined) {
-      result = `${propertyName}: ${result}`;
-    }
-    return result + "\n";
+    return appendNewLine(
+      addKeyToValue(propertyName)(
+        addOptionalModifier(isRequiredAttribute)(result),
+      ),
+    );
   }
 
   throw new Error(`Can't collect type '${type}' yet.`);
 };
-
-// TODO: think about how we could chain "functions" to properly construct the
-// strings? Probably use fp-ts flow
-// const addOptional = (
-//   requiredAttributes: string[],
-//   propertyName: string | undefined,
-//   rest: string
-// ) => {
-//   if (propertyName === undefined || requiredAttributes.includes(propertyName)) {
-//     return rest;
-//   }
-//   return `Type.Optional(${rest})`;
-// };
 
 type SchemaOptionName = string;
 type SchemaOptionValue = any;
