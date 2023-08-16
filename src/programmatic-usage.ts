@@ -10,37 +10,39 @@ export type Schema2TypeboxOptions = {
 };
 
 /**
- * Use this function for programmatic usage of schema2typebox. The options are typed
- * and commented.
+ * Use this function for programmatic usage of schema2typebox. The options are
+ * typed and commented.
  *
  * @returns The generated code as string
  *
  * @throws Error
  **/
-// TODO: perhaps check if we can stream the generation(for fun and practice)
 export const schema2typebox = async ({
   input,
 }: Schema2TypeboxOptions): Promise<string> => {
   const generatedTypeboxCode = await Schema2Typebox(input);
 
-  // TODO: create a "pipeline" for processing
   // post-processing
   // 1. format code
   const explorer = cosmiconfig("prettier");
   const searchResult = await explorer.search();
   const prettierConfig =
     searchResult === null ? {} : (searchResult.config as prettier.Options);
-  const formattedResult = prettier.format(generatedTypeboxCode, {
+  const formattedResult = await prettier.format(generatedTypeboxCode, {
     parser: "typescript",
     ...prettierConfig,
+    // used to get rid of unused imports
+    plugins: ["prettier-plugin-organize-imports"],
   });
+  // 2. add comment that code is auto generated
   const result = addCommentThatCodeIsGenerated.run(formattedResult);
   return result;
 };
 
 /**
  * Declaring this as an object with a function in order to make it better
- * testable with mocks. Allows for tracking the call count.
+ * testable with mocks with the current/new nodejs test runner.
+ * Allows for tracking the call count.
  */
 export const addCommentThatCodeIsGenerated = {
   run: (code: string) => {

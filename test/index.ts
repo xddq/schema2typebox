@@ -1,46 +1,46 @@
-import { afterEach, describe, test } from "node:test";
+import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import * as prettier from "prettier";
 import shell from "shelljs";
+import { zip } from "fp-ts/Array";
 
-import { collect, resetCustomTypes } from "../src/schema-to-typebox";
+import { collect } from "../src/schema-to-typebox";
 import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
 } from "../src/programmatic-usage";
-import { zip } from "fp-ts/Array";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 const buildOsIndependentPath = (foldersOrFiles: string[]) => {
   return foldersOrFiles.join(path.sep);
 };
 
-const formatWithPrettier = (input: string): string => {
-  return prettier.format(input, { parser: "typescript" });
+const formatWithPrettier = async (input: string): Promise<string> => {
+  return await prettier.format(input, { parser: "typescript" });
 };
 
 /**
  * Formats given input with prettier and returns the result. This is used for
  * testing to be able to compare generated types with expected types without
  * having to take care of formatting.
+ *
  * @throws Error
  **/
-export const expectEqualIgnoreFormatting = (
+export const expectEqualIgnoreFormatting = async (
   input1: string,
-  input2: string
-): void => {
-  assert.equal(formatWithPrettier(input1), formatWithPrettier(input2));
+  input2: string,
+): Promise<void> => {
+  assert.equal(
+    await formatWithPrettier(input1),
+    await formatWithPrettier(input2),
+  );
 };
 
 // NOTE: Rather test the collect() function whenever we can instead
 // of schema2typebox.
-describe("programmatic usage API", () => {
-  // TODO: remove this once global state enumCode and customCode were removed
-  afterEach(() => {
-    resetCustomTypes();
-  });
+describe("programmatic usage API", async () => {
   test("generated typebox names are based on title attribute", async () => {
     const dummySchema = `
     {
@@ -62,9 +62,9 @@ describe("programmatic usage API", () => {
       name: Type.String(),
     });
     `);
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   test("object with $ref pointing to external files in relative path", async () => {
@@ -130,15 +130,15 @@ describe("programmatic usage API", () => {
     `);
 
     const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
+      buildOsIndependentPath([__dirname, "..", "..", currItem]),
     );
     zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined),
     );
 
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox
+      expectedTypebox,
     );
 
     // cleanup generated files
@@ -198,16 +198,16 @@ describe("programmatic usage API", () => {
     `);
 
     const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
+      buildOsIndependentPath([__dirname, "..", "..", currItem]),
     );
     zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
       ([fileName, data]) =>
-        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined),
     );
 
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       await schema2typebox({ input: JSON.stringify(dummySchema) }),
-      expectedTypebox
+      expectedTypebox,
     );
 
     // cleanup generated files
@@ -215,7 +215,7 @@ describe("programmatic usage API", () => {
     assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
   });
   // NOTE: This test might break if github adapts their links to raw github user
-  // content. The branch "feature/fix-refs-using-refparser" will not be deleted.
+  // content.
   test("object with $ref to remote files", async () => {
     const dummySchema = {
       anyOf: [
@@ -244,9 +244,9 @@ describe("programmatic usage API", () => {
       ]);
     `);
 
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       await schema2typebox({ input: JSON.stringify(dummySchema) }),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   test("object with oneOf generates custom typebox TypeRegistry code", async () => {
@@ -300,9 +300,9 @@ describe("programmatic usage API", () => {
         a: OneOf([Type.String(), Type.Number()]),
       });
     `);
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox
+      expectedTypebox,
     );
   });
 });
@@ -314,11 +314,10 @@ describe("programmatic usage API", () => {
  *
  * For testing against schemas containing $refs please add these tests to the
  * schema2typebox programmatic usage section instead. This is required since
- * collect() expects an already dereferenced JSON schema and therefore testing with $refs
- * would make no sense.
+ * collect() expects an already dereferenced(schema without $refs) JSON schema.
  */
-describe("schema2typebox internal - collect()", () => {
-  test("object with required string property", () => {
+describe("schema2typebox internal - collect()", async () => {
+  test("object with required string property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -336,12 +335,12 @@ describe("schema2typebox internal - collect()", () => {
       name: Type.String(),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with optional string property", () => {
+  test("object with optional string property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -357,12 +356,12 @@ describe("schema2typebox internal - collect()", () => {
       name: Type.Optional(Type.String()),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with string that has schemaOptions", () => {
+  test("object with string that has schemaOptions", async () => {
     // src for properties
     // 1. https://datatracker.ietf.org/doc/html/draft-wright-json-schema-validation-00#section-5
     // (careful, this is 2020 spec src):
@@ -393,12 +392,12 @@ describe("schema2typebox internal - collect()", () => {
       ),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with required number property", () => {
+  test("object with required number property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -417,12 +416,12 @@ describe("schema2typebox internal - collect()", () => {
       age: Type.Number()
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with null property", () => {
+  test("object with null property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -441,12 +440,12 @@ describe("schema2typebox internal - collect()", () => {
       age: Type.Null()
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with boolean property", () => {
+  test("object with boolean property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -465,12 +464,12 @@ describe("schema2typebox internal - collect()", () => {
       funny: Type.Boolean()
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with array property and simple type (string)", () => {
+  test("object with array property and simple type (string)", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -493,13 +492,13 @@ describe("schema2typebox internal - collect()", () => {
       hobbies: Type.Array(Type.String(), { minItems: 1 }),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   // TODO: test object with array property and object type
-  test("object with object property", () => {
+  test("object with object property", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -533,12 +532,12 @@ describe("schema2typebox internal - collect()", () => {
       })
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with const", () => {
+  test("object with const", async () => {
     const dummySchema = `
       {
     "type": "object",
@@ -615,12 +614,12 @@ describe("schema2typebox internal - collect()", () => {
       e: Type.Optional(Type.Array(Type.Literal("hi"))),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with anyOf", () => {
+  test("object with anyOf", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -679,12 +678,12 @@ describe("schema2typebox internal - collect()", () => {
           Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",}),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with oneOf", () => {
+  test("object with oneOf", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -708,12 +707,12 @@ describe("schema2typebox internal - collect()", () => {
       a: OneOf([Type.String(), Type.Number()]),
     });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with allOf", () => {
+  test("object with allOf", async () => {
     const dummySchema = `
       {
       "type": "object",
@@ -766,12 +765,12 @@ describe("schema2typebox internal - collect()", () => {
       b: Type.Intersect([Type.String(), Type.Number()]),
       c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types"})});
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
-  test("object with not", () => {
+  test("object with not", async () => {
     const dummySchema = `
     {
       "type": "object",
@@ -784,9 +783,9 @@ describe("schema2typebox internal - collect()", () => {
         x: Type.Not(Type.Number()),
       });
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   test("object with enum (all keys string)", async () => {
@@ -816,9 +815,9 @@ describe("schema2typebox internal - collect()", () => {
       ])
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
@@ -859,9 +858,9 @@ describe("schema2typebox internal - collect()", () => {
       ]))
     })
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
   test("enum schema", async () => {
@@ -880,16 +879,16 @@ describe("schema2typebox internal - collect()", () => {
       ])
     );
     `;
-    expectEqualIgnoreFormatting(
+    await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox
+      expectedTypebox,
     );
   });
 });
 
 // NOTE: these are the most "high level" tests. Create them sparsely. Focus on
 // cli usage aspects rather then implementation of the business logic below it.
-// describe("cli usage", () => {
+// describe("cli usage", async () => {
 // TODO: how can we test this?
 // test("pipes to stdout if -h or --help is given", async () => {
 //   Ideas:
@@ -897,7 +896,7 @@ describe("schema2typebox internal - collect()", () => {
 //   output?
 //     - can we mock process.stdout? does not work with mock.method since
 //     process.stdout is not a function.
-//   const getHelpTextMock = mock.method(getHelpText, "run", () => {});
+//   const getHelpTextMock = mock.method(getHelpText, "run", async () => {});
 //   await runCli();
 //   assert.equal(getHelpTextMock.mock.callCount(), 10);
 // });
