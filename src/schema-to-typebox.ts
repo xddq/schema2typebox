@@ -1,4 +1,11 @@
 import $Refparser from "@apidevtools/json-schema-ref-parser";
+import {
+  isAllOfSchemaObj,
+  isAnyOfSchemaObj,
+  isEnumSchemaObj,
+  isNotSchemaObj,
+  isOneOfSchemaObj,
+} from "./schema-matchers";
 
 /**
  * List of valid JSON schema values for the "type" attribute.
@@ -132,37 +139,6 @@ const mapTypeLiteral = (
   return result;
 };
 
-type AnyOfSchemaObj = Record<string, any> & { anyOf: Record<string, any>[] };
-const isAnyOfSchemaObj = (
-  schemaObj: Record<string, any>,
-): schemaObj is AnyOfSchemaObj => {
-  return schemaObj["anyOf"] !== undefined;
-};
-type AllOfSchemaObj = Record<string, any> & { allOf: Record<string, any>[] };
-const isAllOfSchemaObj = (
-  schemaObj: Record<string, any>,
-): schemaObj is AllOfSchemaObj => {
-  return schemaObj["allOf"] !== undefined;
-};
-type EnumSchemaObj = Record<string, any> & { enum: any[] };
-const isEnumSchemaObj = (
-  schemaObj: Record<string, any>,
-): schemaObj is EnumSchemaObj => {
-  return schemaObj["enum"] !== undefined;
-};
-type OneOfSchemaObj = Record<string, any> & { oneOf: Record<string, any>[] };
-const isOneOfSchemaObj = (
-  schemaObj: Record<string, any>,
-): schemaObj is OneOfSchemaObj => {
-  return schemaObj["oneOf"] !== undefined;
-};
-type NotSchemaObj = Record<string, any> & { not: Record<string, any>[] };
-const isNotSchemaObj = (
-  schemaObj: Record<string, any>,
-): schemaObj is NotSchemaObj => {
-  return schemaObj["not"] !== undefined;
-};
-
 /**
  * Takes the root schemaObject and recursively collects the corresponding types
  * for it. Returns the matching typebox code representing the schemaObject.
@@ -186,7 +162,6 @@ export const collect = (
   const isRequiredAttribute = requiredAttributes.includes(
     propertyName ?? "__NO_MATCH__",
   );
-  const isArrayItem = propertyName === undefined;
 
   if (isEnumSchemaObj(schemaObj)) {
     let result =
@@ -250,6 +225,7 @@ export const collect = (
     }
     return result + "\n";
   }
+
   if (isOneOfSchemaObj(schemaObj)) {
     const typeboxForOneOfObjects = schemaObj.oneOf.map((currItem) =>
       collect(currItem),
@@ -288,9 +264,7 @@ export const collect = (
 
   const type = getType(schemaObj);
   if (type === "object") {
-    // console.log("type was object");
     const propertiesOfObj = getProperties(schemaObj);
-    // TODO: replace "as string[]" here
     const requiredAttributesOfObject = (schemaObj["required"] ??
       []) as string[];
     const typeboxForProperties = propertiesOfObj.map(
@@ -302,15 +276,16 @@ export const collect = (
     return propertyName === undefined
       ? `Type.Object({\n${typeboxForProperties}})`
       : `${propertyName}: Type.Object({\n${typeboxForProperties}})`;
-  } else if (
+  }
+
+  if (
     type === "string" ||
     type === "number" ||
     type === "null" ||
     type === "boolean"
   ) {
-    // console.log("type was string or number or null or boolean");
-
     const isTypeLiteral = schemaOptions["const"] !== undefined;
+    const isArrayItem = propertyName === undefined;
     if (isArrayItem) {
       if (isTypeLiteral) {
         const resultingType = mapTypeLiteral(
@@ -338,8 +313,9 @@ export const collect = (
     return isRequiredAttribute
       ? `${propertyName}: ${resultingType}\n`
       : `${propertyName}: Type.Optional(${resultingType})\n`;
-  } else if (type === "array") {
-    // console.log("type was array");
+  }
+
+  if (type === "array") {
     // assumes that instance of type "array" has the "items" key.
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {
@@ -365,7 +341,7 @@ export const collect = (
     return result + "\n";
   }
 
-  throw new Error(`cant collect ${type} yet`);
+  throw new Error(`Can't collect type '${type}' yet.`);
 };
 
 // TODO: think about how we could chain "functions" to properly construct the
