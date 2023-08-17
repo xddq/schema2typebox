@@ -196,13 +196,12 @@ const mapTypeLiteral = (
   schemaOptions: Record<string, any>
 ) => {
   delete schemaOptions["const"];
-  const modificationPipeline = addSchemaOptions(schemaOptions);
   if (type === "null") {
-    return modificationPipeline("Type.Literal(null)");
+    return "Type.Literal(null)";
   } else if (type === "string") {
-    return modificationPipeline(`Type.Literal("${value}")`);
+    return `Type.Literal("${value}")`;
   }
-  return modificationPipeline(`Type.Literal(${value})`);
+  return `Type.Literal(${value})`;
 };
 
 /**
@@ -331,7 +330,7 @@ export const collect = (
           type,
           schemaOptions
         );
-        return resultingType;
+        return addSchemaOptions(schemaOptions)(resultingType);
       }
       return mapSimpleType(type, schemaOptions);
     }
@@ -344,6 +343,7 @@ export const collect = (
       );
       return pipe(
         result,
+        addSchemaOptions(schemaOptions),
         addOptionalModifier(isRequiredAttribute),
         addKeyToValue(propertyName),
         appendNewLine
