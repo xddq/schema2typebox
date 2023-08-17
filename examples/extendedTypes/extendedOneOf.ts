@@ -18,7 +18,7 @@ TypeRegistry.Set("ExtendedOneOf", (schema: any, value) => {
     1 ===
     schema.oneOf.reduce(
       (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
-      0,
+      0
     )
   );
 });
@@ -28,7 +28,7 @@ TypeRegistry.Set("ExtendedOneOf", (schema: any, value) => {
 // --------------------------------------------------------------------
 const OneOf = <T extends TSchema[]>(
   oneOf: [...T],
-  options: SchemaOptions = {},
+  options: SchemaOptions = {}
 ) =>
   Type.Unsafe<Static<TUnion<T>>>({
     ...options,

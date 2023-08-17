@@ -1,6 +1,6 @@
-import { readFileSync, createWriteStream } from "node:fs";
-import { Readable } from "node:stream";
 import minimist from "minimist";
+import { createWriteStream, readFileSync } from "node:fs";
+import { Readable } from "node:stream";
 
 import packageJson from "../../package.json";
 import { schema2typebox } from "../programmatic-usage";
@@ -25,7 +25,7 @@ export const runCli = async () => {
 
   const inputFileAsString = readFileSync(
     process.cwd() + `/${args.input ?? "schema.json"}`,
-    "utf-8",
+    "utf-8"
   );
   const typeboxCode = await schema2typebox({
     input: inputFileAsString,

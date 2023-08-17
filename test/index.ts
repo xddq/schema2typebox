@@ -1,16 +1,16 @@
-import { describe, test } from "node:test";
+import { zip } from "fp-ts/Array";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { describe, test } from "node:test";
 import * as prettier from "prettier";
 import shell from "shelljs";
-import { zip } from "fp-ts/Array";
 
-import { collect } from "../src/schema-to-typebox";
 import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
 } from "../src/programmatic-usage";
+import { collect } from "../src/schema-to-typebox";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 const buildOsIndependentPath = (foldersOrFiles: string[]) => {
@@ -30,11 +30,11 @@ const formatWithPrettier = async (input: string): Promise<string> => {
  **/
 export const expectEqualIgnoreFormatting = async (
   input1: string,
-  input2: string,
+  input2: string
 ): Promise<void> => {
   assert.equal(
     await formatWithPrettier(input1),
-    await formatWithPrettier(input2),
+    await formatWithPrettier(input2)
   );
 };
 
@@ -64,7 +64,7 @@ describe("programmatic usage API", async () => {
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with $ref pointing to external files in relative path", async () => {
@@ -130,15 +130,15 @@ describe("programmatic usage API", async () => {
     `);
 
     const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem]),
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
     );
     zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined),
+      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
     );
 
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox,
+      expectedTypebox
     );
 
     // cleanup generated files
@@ -198,16 +198,16 @@ describe("programmatic usage API", async () => {
     `);
 
     const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem]),
+      buildOsIndependentPath([__dirname, "..", "..", currItem])
     );
     zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
       ([fileName, data]) =>
-        fs.writeFileSync(fileName, JSON.stringify(data), undefined),
+        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
     );
 
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: JSON.stringify(dummySchema) }),
-      expectedTypebox,
+      expectedTypebox
     );
 
     // cleanup generated files
@@ -246,7 +246,7 @@ describe("programmatic usage API", async () => {
 
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: JSON.stringify(dummySchema) }),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with oneOf generates custom typebox TypeRegistry code", async () => {
@@ -302,7 +302,7 @@ describe("programmatic usage API", async () => {
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
-      expectedTypebox,
+      expectedTypebox
     );
   });
 });
@@ -337,7 +337,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with optional string property", async () => {
@@ -358,7 +358,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with string that has schemaOptions", async () => {
@@ -394,7 +394,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with required number property", async () => {
@@ -418,7 +418,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with null property", async () => {
@@ -442,7 +442,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with boolean property", async () => {
@@ -466,7 +466,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with array property and simple type (string)", async () => {
@@ -494,7 +494,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   // TODO: test object with array property and object type
@@ -534,7 +534,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with const", async () => {
@@ -616,7 +616,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with anyOf", async () => {
@@ -680,7 +680,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with oneOf", async () => {
@@ -709,7 +709,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with allOf", async () => {
@@ -767,7 +767,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with not", async () => {
@@ -785,7 +785,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with enum (all keys string)", async () => {
@@ -817,7 +817,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("object with enum (mixed types for keys) and optional enum with string keys", async () => {
@@ -860,7 +860,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
   test("enum schema", async () => {
@@ -881,7 +881,7 @@ describe("schema2typebox internal - collect()", async () => {
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
-      expectedTypebox,
+      expectedTypebox
     );
   });
 });

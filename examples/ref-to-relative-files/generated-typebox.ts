@@ -19,6 +19,6 @@ export const Contract = Type.Object({
       Type.Literal("unknown"),
       Type.Literal("accepted"),
       Type.Literal("denied"),
-    ]),
+    ])
   ),
 });
