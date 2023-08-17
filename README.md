@@ -210,17 +210,12 @@ whats already implemented and what is missing.
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
 - [x] Name of generated value and type based on existing "title" attribute.
       Defaulting to "T" if title is not defined.
+- [ ] (low prio) Type.Union() via a list of types given by the 'type' instance type (e.g.
+      type ["string","null"]
+  - For now just use 'anyOf' keyword instead. It gives you more flexibility over
+    the contrains of the given types anyway.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
-
-#### Open Tasks
-
-See [here](https://github.com/xddq/schema2typebox/pull/23) and followup PRs.
-
-- [ ] Type.Array() with "array<enum>" instance type
-- [ ] Nullable Literal types, eg: `type: ['string', 'null']`
-- [ ] "Unknown" object types
-- [ ] Disambiguation of overlapping property names in nested schemas
 
 ## DEV/CONTRIBUTOR NOTES
 
