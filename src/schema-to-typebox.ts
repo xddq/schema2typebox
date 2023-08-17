@@ -216,7 +216,7 @@ export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
   propertyName?: string
-): string => {
+): Code => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
       prev[optionName] = optionValue;
