@@ -1,4 +1,5 @@
 import $Refparser from "@apidevtools/json-schema-ref-parser";
+import { pipe } from "fp-ts/lib/function";
 import {
   isAllOfSchemaObj,
   isAnyOfSchemaObj,
@@ -68,7 +69,7 @@ const createExportedTypeForName = (exportedName: string) => {
     throw new Error("Can't create exported type for a name with length 0.");
   }
   const typeName = `${exportedName.charAt(0).toUpperCase()}${exportedName.slice(
-    1,
+    1
   )}`;
   return `export type ${typeName} = Static<typeof ${exportedName}>`;
 };
@@ -131,13 +132,22 @@ const addOptionalModifier = (isRequired: boolean) => {
  *
  */
 const addSchemaOptions = (schemaOptions: Record<string, any>) => {
-  // TODO: fix addSchemaOptions function.
   return (code: Code): Code => {
-    if (schemaOptions === undefined) {
+    if (Object.keys(schemaOptions).length === 0) {
       return code;
     }
-    return `${code.slice(0, code.length)}, ${JSON.stringify(schemaOptions)})`;
+    const closingParensCount = getClosingParensCount(code);
+    return `${code.slice(0, code.length - closingParensCount)}${")".repeat(
+      closingParensCount - 1
+    )} , ${JSON.stringify(schemaOptions)})`;
   };
+};
+
+const getClosingParensCount = (code: Code, count: number = 0): number => {
+  if (code.endsWith(")")) {
+    return getClosingParensCount(code.slice(0, code.length - 1), count + 1);
+  }
+  return count;
 };
 
 const appendNewLine = (code: Code) => {
@@ -153,15 +163,15 @@ const appendNewLine = (code: Code) => {
  */
 const mapSimpleType = (
   type: SIMPLE_TYPE_VALUE,
-  schemaOptions: Record<string, any>,
+  schemaOptions: Record<string, any>
 ) => {
   const schemaOptionsString =
     Object.keys(schemaOptions).length > 0 ? JSON.stringify(schemaOptions) : "";
   if (!SIMPLE_TYPE_VALUES.includes(type)) {
     throw new Error(
       `Trying to map an unexpected type. Type was: ${type}. Expected possible values of type: ${JSON.stringify(
-        SIMPLE_TYPE_VALUES,
-      )}`,
+        SIMPLE_TYPE_VALUES
+      )}`
     );
   }
   switch (type) {
@@ -175,7 +185,7 @@ const mapSimpleType = (
       return `Type.Null(${schemaOptionsString})`;
     default:
       throw new Error(
-        `Type fell through switch case when mapping it. Type was: '${type}'`,
+        `Type fell through switch case when mapping it. Type was: '${type}'`
       );
   }
 };
@@ -183,31 +193,16 @@ const mapSimpleType = (
 const mapTypeLiteral = (
   value: any,
   type: SIMPLE_TYPE_VALUE,
-  schemaOptions: Record<string, any>,
+  schemaOptions: Record<string, any>
 ) => {
   delete schemaOptions["const"];
-  let result = "";
-  const hasSchemaOptions = Object.keys(schemaOptions).length > 0;
+  const modificationPipeline = addSchemaOptions(schemaOptions);
   if (type === "null") {
-    if (hasSchemaOptions) {
-      result = `Type.Literal(null, ${JSON.stringify(schemaOptions)})`;
-    } else {
-      result = `Type.Literal(null)`;
-    }
+    return modificationPipeline("Type.Literal(null)");
   } else if (type === "string") {
-    if (hasSchemaOptions) {
-      result = `Type.Literal("${value}", ${JSON.stringify(schemaOptions)})`;
-    } else {
-      result = `Type.Literal("${value}")`;
-    }
-  } else {
-    if (hasSchemaOptions) {
-      result = `Type.Literal(${value}, ${JSON.stringify(schemaOptions)})`;
-    } else {
-      result = `Type.Literal(${value})`;
-    }
+    return modificationPipeline(`Type.Literal("${value}")`);
   }
-  return result;
+  return modificationPipeline(`Type.Literal(${value})`);
 };
 
 /**
@@ -221,17 +216,17 @@ const mapTypeLiteral = (
 export const collect = (
   schemaObj: Record<string, any>,
   requiredAttributes: string[] = [],
-  propertyName?: string,
+  propertyName?: string
 ): string => {
   const schemaOptions = getSchemaOptions(schemaObj).reduce<Record<string, any>>(
     (prev, [optionName, optionValue]) => {
       prev[optionName] = optionValue;
       return prev;
     },
-    {},
+    {}
   );
   const isRequiredAttribute = requiredAttributes.includes(
-    propertyName ?? "__NO_MATCH__",
+    propertyName ?? "__NO_MATCH__"
   );
 
   if (isEnumSchemaObj(schemaObj)) {
@@ -249,67 +244,62 @@ export const collect = (
           return `${prev}, ${curr}`;
         }, "Type.Union([") + "])";
 
-    return appendNewLine(
-      addKeyToValue(propertyName)(
-        addOptionalModifier(isRequiredAttribute)(result),
-      ),
+    return pipe(
+      result,
+      addOptionalModifier(isRequiredAttribute),
+      addKeyToValue(propertyName),
+      appendNewLine
     );
   }
 
   if (isAnyOfSchemaObj(schemaObj)) {
     const typeboxForAnyOfObjects = schemaObj.anyOf.map((currItem) =>
-      collect(currItem),
+      collect(currItem)
     );
     const result = `Type.Union([${typeboxForAnyOfObjects}])`;
-    return appendNewLine(
-      addKeyToValue(propertyName)(addSchemaOptions(schemaOptions)(result)),
+    return pipe(
+      result,
+      addSchemaOptions(schemaOptions),
+      addKeyToValue(propertyName),
+      appendNewLine
     );
   }
 
   if (isAllOfSchemaObj(schemaObj)) {
     const typeboxForAllOfObjects = schemaObj.allOf.map((currItem) =>
-      collect(currItem),
+      collect(currItem)
     );
-    let result = "";
-    if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Intersect([${typeboxForAllOfObjects}],${JSON.stringify(
-        schemaOptions,
-      )})`;
-    } else {
-      result = `Type.Intersect([${typeboxForAllOfObjects}])`;
-    }
-
-    return appendNewLine(addKeyToValue(propertyName)(result));
+    const result = `Type.Intersect([${typeboxForAllOfObjects}])`;
+    return pipe(
+      result,
+      addSchemaOptions(schemaOptions),
+      addKeyToValue(propertyName),
+      appendNewLine
+    );
   }
 
   if (isOneOfSchemaObj(schemaObj)) {
     const typeboxForOneOfObjects = schemaObj.oneOf.map((currItem) =>
-      collect(currItem),
+      collect(currItem)
     );
-    let result = "";
-    if (Object.keys(schemaOptions).length > 0) {
-      result = `OneOf([${typeboxForOneOfObjects}],${JSON.stringify(
-        schemaOptions,
-      )})`;
-    } else {
-      result = `OneOf([${typeboxForOneOfObjects}])`;
-    }
-
-    return appendNewLine(addKeyToValue(propertyName)(result));
+    const result = `OneOf([${typeboxForOneOfObjects}])`;
+    return pipe(
+      result,
+      addSchemaOptions(schemaOptions),
+      addKeyToValue(propertyName),
+      appendNewLine
+    );
   }
 
   if (isNotSchemaObj(schemaObj)) {
     const typeboxForNotObjects = collect(schemaObj.not);
-    let result = "";
-    if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Not(${typeboxForNotObjects},${JSON.stringify(
-        schemaOptions,
-      )})`;
-    } else {
-      result = `Type.Not(${typeboxForNotObjects})`;
-    }
-
-    return appendNewLine(addKeyToValue(propertyName)(result));
+    const result = `Type.Not(${typeboxForNotObjects})`;
+    return pipe(
+      result,
+      addSchemaOptions(schemaOptions),
+      addKeyToValue(propertyName),
+      appendNewLine
+    );
   }
 
   const type = getType(schemaObj);
@@ -320,10 +310,10 @@ export const collect = (
     const typeboxForProperties = propertiesOfObj.map(
       ([propertyName, property]) => {
         return collect(property, requiredAttributesOfObject, propertyName);
-      },
+      }
     );
     const result = `Type.Object({\n${typeboxForProperties}})`;
-    return appendNewLine(addKeyToValue(propertyName)(result));
+    return pipe(result, addKeyToValue(propertyName), appendNewLine);
   }
 
   if (
@@ -339,7 +329,7 @@ export const collect = (
         const resultingType = mapTypeLiteral(
           schemaOptions["const"],
           type,
-          schemaOptions,
+          schemaOptions
         );
         return resultingType;
       }
@@ -350,16 +340,22 @@ export const collect = (
       const result = mapTypeLiteral(
         schemaOptions["const"],
         type,
-        schemaOptions,
+        schemaOptions
       );
-      return appendNewLine(
-        `${propertyName}: ${addOptionalModifier(isRequiredAttribute)(result)}`,
+      return pipe(
+        result,
+        addOptionalModifier(isRequiredAttribute),
+        addKeyToValue(propertyName),
+        appendNewLine
       );
     }
 
     const result = mapSimpleType(type, schemaOptions);
-    return appendNewLine(
-      `${propertyName}: ${addOptionalModifier(isRequiredAttribute)(result)}`,
+    return pipe(
+      result,
+      addOptionalModifier(isRequiredAttribute),
+      addKeyToValue(propertyName),
+      appendNewLine
     );
   }
 
@@ -368,26 +364,23 @@ export const collect = (
     const itemsSchemaObj = schemaObj["items"];
     if (itemsSchemaObj === undefined) {
       throw new Error(
-        "expected instance of type 'array' to contain 'items' object. Got: undefined",
+        "Expected instance of type 'array' to contain 'items' object. Got: undefined"
       );
     }
 
-    let result = "";
-    if (Object.keys(schemaOptions).length > 0) {
-      result = `Type.Array(${collect(itemsSchemaObj)}, (${JSON.stringify(
-        schemaOptions,
-      )}))`;
-    } else {
-      result = `Type.Array(${collect(itemsSchemaObj)})`;
-    }
-    return appendNewLine(
-      addKeyToValue(propertyName)(
-        addOptionalModifier(isRequiredAttribute)(result),
-      ),
+    const result = `Type.Array(${collect(itemsSchemaObj)})`;
+    return pipe(
+      result,
+      addSchemaOptions(schemaOptions),
+      addOptionalModifier(isRequiredAttribute),
+      addKeyToValue(propertyName),
+      appendNewLine
     );
   }
 
-  throw new Error(`Can't collect type '${type}' yet.`);
+  throw new Error(
+    `Can't collect type '${type}' yet. Please create an issue with your schema and error in www.github.com/xddq/schema2typebox`
+  );
 };
 
 type SchemaOptionName = string;
@@ -418,7 +411,7 @@ type SchemaOptionValue = any;
  * ```
  */
 const getSchemaOptions = (
-  schemaObj: Record<string, any>,
+  schemaObj: Record<string, any>
 ): (readonly [SchemaOptionName, SchemaOptionValue])[] => {
   const properties = Object.keys(schemaObj);
   const schemaOptionProperties = properties.filter((currItem) => {
@@ -463,12 +456,12 @@ type PropertiesOfProperty = Record<string, any>;
  * ```
  */
 const getProperties = (
-  schema: Record<string, any>,
+  schema: Record<string, any>
 ): (readonly [PropertyName, PropertiesOfProperty])[] => {
   const properties = schema["properties"];
   if (properties === undefined) {
     throw new Error(
-      "JSON schema was expected to have 'properties' attribute/property. Got: undefined",
+      "JSON schema was expected to have 'properties' attribute/property. Got: undefined"
     );
   }
   const propertyNames = Object.keys(properties);
@@ -495,7 +488,7 @@ const getType = (schemaObj: Record<string, any>): VALID_TYPE_VALUE => {
     throw new Error(
       `JSON schema had invalid value for 'type' attribute. Got: ${type}
       Schemaobject was: ${JSON.stringify(schemaObj)}
-      Supported types are: ${JSON.stringify(VALID_TYPE_VALUES)}`,
+      Supported types are: ${JSON.stringify(VALID_TYPE_VALUES)}`
     );
   }
 
