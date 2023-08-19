@@ -1,0 +1,13 @@
+{
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "favoriteAnimal": {
+      "enum": ["dog", [1, 2, 3], { "a": 1 }, 1, true, null, "cat", "sloth"]
+    }
+  },
+  "required": ["name"]
+}

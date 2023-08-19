@@ -1,5 +1,3 @@
-import { cosmiconfig } from "cosmiconfig";
-import * as prettier from "prettier";
 import { schema2typebox as Schema2Typebox } from "./schema-to-typebox";
 
 export type Schema2TypeboxOptions = {
@@ -24,19 +22,20 @@ export const schema2typebox = async ({
 
   // post-processing
   // 1. format code
-  const explorer = cosmiconfig("prettier");
-  const searchResult = await explorer.search();
-  const prettierConfig =
-    searchResult === null ? {} : (searchResult.config as prettier.Options);
-  const formattedResult = await prettier.format(generatedTypeboxCode, {
-    parser: "typescript",
-    ...prettierConfig,
-    // used to get rid of unused imports
-    plugins: ["prettier-plugin-organize-imports"],
-  });
+  // const explorer = cosmiconfig("prettier");
+  // const searchResult = await explorer.search();
+  // const prettierConfig =
+  //   searchResult === null ? {} : (searchResult.config as prettier.Options);
+  // const formattedResult = await prettier.format(generatedTypeboxCode, {
+  //   parser: "typescript",
+  //   ...prettierConfig,
+  //   // used to get rid of unused imports
+  //   plugins: ["prettier-plugin-organize-imports"],
+  // });
   // 2. add comment that code is auto generated
-  const result = addCommentThatCodeIsGenerated.run(formattedResult);
-  return result;
+  // const result = addCommentThatCodeIsGenerated.run(formattedResult);
+  // return result;
+  return generatedTypeboxCode;
 };
 
 /**

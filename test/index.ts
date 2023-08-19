@@ -58,9 +58,7 @@ describe("programmatic usage API", async () => {
     import { Static, Type } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
-    export const Contract = Type.Object({
-      name: Type.String(),
-    });
+    export const Contract = Type.Object({name: Type.String()});
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
@@ -296,9 +294,7 @@ describe("programmatic usage API", async () => {
       ) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
 
       export type T = Static<typeof T>;
-      export const T = Type.Object({
-        a: OneOf([Type.String(), Type.Number()]),
-      });
+      export const T = Type.Object({a: OneOf([Type.String(), Type.Number()])});
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
@@ -331,9 +327,7 @@ describe("schema2typebox internal - collect()", async () => {
       ]
     }`;
     const expectedTypebox = `
-    Type.Object({
-      name: Type.String(),
-    });
+    Type.Object({name: Type.String()});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -352,9 +346,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      name: Type.Optional(Type.String()),
-    });
+    Type.Object({name: Type.Optional(Type.String())});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -412,9 +404,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      age: Type.Number()
-    })
+    Type.Object({age: Type.Number()})
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -436,9 +426,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      age: Type.Null()
-    })
+    Type.Object({age: Type.Null()})
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -460,9 +448,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      funny: Type.Boolean()
-    })
+    Type.Object({funny: Type.Boolean()})
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -488,9 +474,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      hobbies: Type.Array(Type.String(), { minItems: 1 }),
-    });
+    Type.Object({hobbies: Type.Array(Type.String(), { minItems: 1 })});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -525,12 +509,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      address: Type.Object({
-      street: Type.String(),
-      city: Type.String()
-      })
-    })
+    Type.Object({ address: Type.Object({ street: Type.String(), city: Type.String()})})
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -671,12 +650,9 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      a: Type.Union([Type.Literal(1), Type.Literal(2)]),
-      b: Type.Union([Type.String(), Type.Number(), Type.Null()]),
-      c: Type.Union([Type.String({ maxLength: 20 }),
-          Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",}),
-    });
+    Type.Object({a: Type.Union([Type.Literal(1), Type.Literal(2)]),
+      b: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
+      c: Type.Union([Type.String({ maxLength: 20 }), Type.Literal(1, { description: "can only be 1" }),], { description: "a union type",})});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -703,9 +679,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      a: OneOf([Type.String(), Type.Number()]),
-    });
+    Type.Object({a: OneOf([Type.String(), Type.Number()])});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -760,9 +734,8 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Object({
-      a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
-      b: Type.Intersect([Type.String(), Type.Number()]),
+    Type.Object({a: Type.Intersect([Type.Literal(1), Type.Literal(2)]),
+      b: Type.Optional(Type.Intersect([Type.String(), Type.Number()])),
       c: Type.Intersect([Type.String({ description: "important" }), Type.Number({ minimum: 1 })], {description: "intersection of two types"})});
     `;
     await expectEqualIgnoreFormatting(
@@ -779,9 +752,7 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-      Type.Object({
-        x: Type.Not(Type.Number()),
-      });
+      Type.Object({x: Type.Not(Type.Number())});
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
@@ -871,13 +842,11 @@ describe("schema2typebox internal - collect()", async () => {
     }
     `;
     const expectedTypebox = `
-    Type.Optional(
       Type.Union([
         Type.Literal("unknown"),
         Type.Literal("accepted"),
         Type.Literal("denied"),
-      ])
-    );
+      ]);
     `;
     await expectEqualIgnoreFormatting(
       collect(JSON.parse(dummySchema)),
