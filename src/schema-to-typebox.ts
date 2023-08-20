@@ -191,15 +191,17 @@ export const isEnumSchema = (
   return schema["enum"] !== undefined;
 };
 
+type AnyOfSchema = JSONSchema7 & { anyOf: JSONSchema7Definition[] };
 export const isAnyOfSchema = (
   schema: Record<string, any>
-): schema is JSONSchema7 & { anyOf: JSONSchema7Definition[] } => {
+): schema is AnyOfSchema => {
   return schema["anyOf"] !== undefined;
 };
 
+type AllOfSchema = JSONSchema7 & { allOf: JSONSchema7Definition[] };
 export const isAllOfSchema = (
   schema: Record<string, any>
-): schema is JSONSchema7 & { allOf: JSONSchema7Definition[] } => {
+): schema is AllOfSchema => {
   return schema["allOf"] !== undefined;
 };
 
@@ -233,6 +235,7 @@ export const isConstSchema = (
 };
 
 const parseConst = (schema: ConstSchema): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
   // TODO: case where const is array..
   if (Array.isArray(schema.const)) {
     return "TODO: const with array";
@@ -241,7 +244,14 @@ const parseConst = (schema: ConstSchema): Code => {
   if (typeof schema.const === "object") {
     return "TODO: const with object";
   }
-  return `Type.Literal(${schema.const})`;
+  if (typeof schema.const === "string") {
+    return schemaOptions === undefined
+      ? `Type.Literal("${schema.const}")`
+      : `Type.Literal("${schema.const}", ${schemaOptions})`;
+  }
+  return schemaOptions === undefined
+    ? `Type.Literal(${schema.const})`
+    : `Type.Literal(${schema.const}, ${schemaOptions})`;
 };
 
 export const isSchemaWithMultipleTypes = (
@@ -279,25 +289,31 @@ export const parseType = (type: JSONSchema7Type): Code => {
   }
 };
 
-export const parseAnyOf = (anyOf: JSONSchema7Definition[]): Code => {
-  const code = anyOf.reduce<string>((acc, schema) => {
+export const parseAnyOf = (schema: AnyOfSchema): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
+  const code = schema.anyOf.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
   }, "");
-  return `Type.Union([${code}])`;
+  return schemaOptions === undefined
+    ? `Type.Union([${code}])`
+    : `Type.Union([${code}], ${schemaOptions})`;
 };
 
-export const parseAllOf = (allOf: JSONSchema7Definition[]): Code => {
-  const code = allOf.reduce<string>((acc, schema) => {
+export const parseAllOf = (schema: AllOfSchema): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
+  const code = schema.allOf.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
   }, "");
-  return `Type.Intersect([${code}])`;
+  return schemaOptions === undefined
+    ? `Type.Intersect([${code}])`
+    : `Type.Intersect([${code}], ${schemaOptions})`;
 };
 
 export const parseOneOf = (oneOf: JSONSchema7Definition[]): Code => {
   const code = oneOf.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
   }, "");
-  return `Type.OneOf([${code}])`;
+  return `OneOf([${code}])`;
 };
 
 export const parseNot = (not: JSONSchema7Definition): Code => {
@@ -324,7 +340,7 @@ export const parseArray = (schema: ArraySchema): Code => {
       : `Type.Array(Type.Union(${code}),${schemaOptions})`;
   }
   return schemaOptions === undefined
-    ? "Type.Array()"
+    ? `Type.Array(${collect(schema.items)})`
     : `Type.Array(${collect(schema.items)},${schemaOptions})`;
 };
 
@@ -381,9 +397,9 @@ export const collect = (schemaObj: JSONSchema7Definition): Code => {
   } else if (isEnumSchema(schema)) {
     return parseEnum(schema.enum);
   } else if (isAnyOfSchema(schema)) {
-    return parseAnyOf(schema.anyOf);
+    return parseAnyOf(schema);
   } else if (isAllOfSchema(schema)) {
-    return parseAllOf(schema.allOf);
+    return parseAllOf(schema);
   } else if (isOneOfSchema(schema)) {
     return parseOneOf(schema.oneOf);
   } else if (isNotSchema(schema)) {
