@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
-import * as prettier from "prettier";
 import shell from "shelljs";
 
 import {
@@ -11,31 +10,11 @@ import {
   schema2typebox,
 } from "../src/programmatic-usage";
 import { collect } from "../src/schema-to-typebox";
+import { expectEqualIgnoreFormatting } from "./test-utils";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 const buildOsIndependentPath = (foldersOrFiles: string[]) => {
   return foldersOrFiles.join(path.sep);
-};
-
-const formatWithPrettier = async (input: string): Promise<string> => {
-  return await prettier.format(input, { parser: "typescript" });
-};
-
-/**
- * Formats given input with prettier and returns the result. This is used for
- * testing to be able to compare generated types with expected types without
- * having to take care of formatting.
- *
- * @throws Error
- **/
-export const expectEqualIgnoreFormatting = async (
-  input1: string,
-  input2: string
-): Promise<void> => {
-  assert.equal(
-    await formatWithPrettier(input1),
-    await formatWithPrettier(input2)
-  );
 };
 
 // NOTE: Rather test the collect() function whenever we can instead

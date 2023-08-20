@@ -170,7 +170,7 @@ export const parseEnum = (schema: EnumSchema) => {
   return `Type.Union([${code}])`;
 };
 
-const parseConst = (schema: ConstSchema): Code => {
+export const parseConst = (schema: ConstSchema): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   if (Array.isArray(schema.const)) {
     const code = schema.const.reduce<string>((acc, schema) => {

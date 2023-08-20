@@ -38,9 +38,7 @@
           "--test-reporter",
           "spec",
           "--test-name-pattern",
-          "collect()",
-          "--test-name-pattern",
-          "object with array"
+          "parseObject unit tests"
         ],
         "cwd": "${workspaceRoot}"
       }

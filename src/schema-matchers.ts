@@ -34,7 +34,7 @@ export const isOneOfSchema = (schema: JSONSchema7): schema is OneOfSchema => {
   return schema["oneOf"] !== undefined;
 };
 
-export type NotSchema = JSONSchema7 & { not: JSONSchema7Definition[] };
+export type NotSchema = JSONSchema7 & { not: JSONSchema7Definition };
 export const isNotSchema = (schema: JSONSchema7): schema is NotSchema => {
   return schema["not"] !== undefined;
 };
