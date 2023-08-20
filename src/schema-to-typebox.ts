@@ -136,6 +136,23 @@ const addOptionalModifier = (isRequired: boolean) => {
 //   return count;
 // };
 
+// const applySchemaOptions = (code: Code, schemaOptions: Record<string, any>) => {
+//   if (Object.keys(schemaOptions).length === 0) {
+//     return code;
+//   }
+//   const deletedCharsCount = getClosingParensCount(code, 0);
+//   return `${code.slice(0, code.length - 1)}, ${JSON.stringify(
+//     schemaOptions
+//   )}${")".repeat(deletedCharsCount)}`;
+// };
+//
+// const getClosingParensCount = (code: Code, count: number = 0): number => {
+//   if (code.endsWith(")")) {
+//     return getClosingParensCount(code.slice(0, code.length - 1), count + 1);
+//   }
+//   return count;
+// };
+
 export const parseObject = (
   properties: JSONSchema7["properties"],
   requiredProperties: JSONSchema7["required"]
@@ -198,6 +215,16 @@ export const isNotSchema = (
   return schema["not"] !== undefined;
 };
 
+type ArraySchema = JSONSchema7 & {
+  type: "array";
+  items: JSONSchema7Definition | JSONSchema7Definition[];
+};
+export const isArraySchema = (
+  schema: Record<string, any>
+): schema is ArraySchema => {
+  return schema.type === "array" && schema.items !== undefined;
+};
+
 export const isSchemaWithMultipleTypes = (
   schema: Record<string, any>
 ): schema is JSONSchema7 & { type: JSONSchema7TypeName[] } => {
@@ -258,6 +285,30 @@ export const parseNot = (not: JSONSchema7Definition): Code => {
   return `Type.Not(${collect(not)})`;
 };
 
+export const parseArray = (schema: ArraySchema): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
+  if (Array.isArray(schema.items)) {
+    // TODO: create test case for it. e.g.
+    /**
+     * { "type": "array",
+     * "items": [
+     * { "type": "string" },
+     * { "type": "object", "properties": { "name": { "type": "string" }, "age": { "type": "integer" } } }
+     * ]
+     * }
+     **/
+    const code = schema.items.reduce<string>((acc, schema) => {
+      return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
+    }, "");
+    return schemaOptions === undefined
+      ? `Type.Array(Type.Union(${code}))`
+      : `Type.Array(Type.Union(${code}),${schemaOptions})`;
+  }
+  return schemaOptions === undefined
+    ? "Type.Array()"
+    : `Type.Array(${collect(schema.items)},${schemaOptions})`;
+};
+
 export const parseWithMultipleTypes = (type: JSONSchema7TypeName[]): Code => {
   const code = type.reduce<string>((acc, typeName) => {
     return acc + `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName)}`;
@@ -266,16 +317,26 @@ export const parseWithMultipleTypes = (type: JSONSchema7TypeName[]): Code => {
 };
 
 export const parseTypeName = (
-  type: Omit<JSONSchema7TypeName, "array" | "object">
+  type: Omit<JSONSchema7TypeName, "array" | "object">,
+  schema: JSONSchema7 = {}
 ): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
   if (type === "number" || type === "integer") {
-    return "Type.Number()";
+    return schemaOptions === undefined
+      ? "Type.Number()"
+      : `Type.Number(${schemaOptions})`;
   } else if (type === "string") {
-    return "Type.String()";
+    return schemaOptions === undefined
+      ? "Type.String()"
+      : `Type.String(${schemaOptions})`;
   } else if (type === "boolean") {
-    return "Type.Boolean()";
+    return schemaOptions === undefined
+      ? "Type.Boolean()"
+      : `Type.Boolean(${schemaOptions})`;
   } else if (type === "null") {
-    return "Type.Null()";
+    return schemaOptions === undefined
+      ? "Type.Null()"
+      : `Type.Null(${schemaOptions})`;
   }
   throw new Error(`Should never happen..? parseType got type: ${type}`);
 };
@@ -296,13 +357,7 @@ export const collect = (schemaObj: JSONSchema7Definition): Code => {
   // TODO: add boolean schema support
   if (isBoolean(schema) || isBoolean(schemaObj)) {
     return JSON.stringify(schemaObj);
-  }
-  const schemaOptions = parseSchemaOptions(schema);
-  console.log("schema options", schemaOptions);
-  // const addOptions = addSchemaOptions(parseSchemaOptions(schema));
-  // TODO: add schemaOptions (e.g. description) somehow (clean way)
-
-  if (isObjectSchema(schema)) {
+  } else if (isObjectSchema(schema)) {
     return parseObject(schema.properties, schema.required);
   } else if (isEnumSchema(schema)) {
     return parseEnum(schema.enum);
@@ -314,16 +369,16 @@ export const collect = (schemaObj: JSONSchema7Definition): Code => {
     return parseOneOf(schema.oneOf);
   } else if (isNotSchema(schema)) {
     return parseNot(schema.not);
-  } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
-    return parseTypeName(schema.type);
+  } else if (isArraySchema(schema)) {
+    return parseArray(schema);
   } else if (isSchemaWithMultipleTypes(schema)) {
     return parseWithMultipleTypes(schema.type);
-  }
-
-  return "dummy";
+  } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
+    return parseTypeName(schema.type, schema);
+  } else return "dummy";
 };
 
-const parseSchemaOptions = (schema: JSONSchema7): Record<string, unknown> => {
+const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
   const properties = Object.entries(schema).filter(
     ([key, _value]) =>
       key !== "type" &&
@@ -333,12 +388,20 @@ const parseSchemaOptions = (schema: JSONSchema7): Record<string, unknown> => {
       key !== "oneOf" &&
       key !== "not" &&
       key !== "properties" &&
-      key !== "required"
+      key !== "required" &&
+      key !== "const"
   );
-  return properties.reduce<Record<string, unknown>>((acc, [key, value]) => {
-    acc[key] = value;
-    return acc;
-  }, {});
+  if (properties.length === 0) {
+    return undefined;
+  }
+  const result = properties.reduce<Record<string, unknown>>(
+    (acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    },
+    {}
+  );
+  return JSON.stringify(result);
 };
 
 /**
