@@ -198,6 +198,8 @@ whats already implemented and what is missing.
   - schema2typebox generates union types instead of enums. If you have a problem
     with this behaviour and valid arguments for using enums please create an
     issue and it may be considered again.
+- [x] Type.Union() via a list of types given by the 'type' instance type (e.g.
+      type ["string","null"]
 - [x] Type.Intersect() via "allOf" property
 - [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
@@ -205,14 +207,10 @@ whats already implemented and what is missing.
     to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
 - [x] Type.Not() via "not" property
-- [x] schemaOptions
+- [x] Type.Unknown() for objects without properties
+- [x] Full support for schema options (e.g. minLength: 1, description: "test
+      entity").
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
-- [x] Name of generated value and type based on existing "title" attribute.
-      Defaulting to "T" if title is not defined.
-- [ ] (low prio) Type.Union() via a list of types given by the 'type' instance type (e.g.
-      type ["string","null"]
-  - For now just use 'anyOf' keyword instead. It gives you more flexibility over
-    the contrains of the given types anyway.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
 
