@@ -221,11 +221,9 @@ whats already implemented and what is missing.
   work.
   - Please always create tests for new features that are implemented. This will
     decrease mental overhead for reviewing and developing in the long run.
-- See specification for JSON schema draft-06
-  [here](https://json-schema.org/specification-links.html#draft-6)
-- Link to [meta schema](http://json-schema.org/draft-06/schema). Meta schema
-  means that a JSON schema is created in order to validate that a given schema
-  adheres to a given JSON schema draft.
+- See specification for JSON schema draft-07
+  [here](https://json-schema.org/specification-links.html#draft-7). The meta
+  schema is also stored inside this repo under ./meta-schema-draft-07.json.
 
 ## cli usage
 
