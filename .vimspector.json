@@ -13,10 +13,8 @@
         "protocol": "auto",
         "stopOnEntry": false,
         "console": "integratedTerminal",
-        "program": "${workspaceRoot}/src/index.ts",
         "outFiles": ["${workspaceRoot}/dist/**/*.js"],
-        "env": { "TS_NODE_BASEURL": "./dist" },
-        "runtimeArgs": ["-r", "tsconfig-paths/register"],
+        "program": "${workspaceRoot}/src/cli/index.ts",
         "cwd": "${workspaceRoot}"
       }
     },
