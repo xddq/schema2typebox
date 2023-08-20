@@ -54,9 +54,7 @@ export const ${exportedName} = ${typeBoxType}`;
  * Takes the root schema and recursively collects the corresponding types
  * for it. Returns the matching typebox code representing the schema.
  *
- * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
- * @param propertyName The name of the attribute/property currently being collected.
- * @throws Error
+ * @throws Error if an unexpected schema (one with no matching parser) was given
  */
 export const collect = (schema: JSONSchema7Definition): Code => {
   // TODO: boolean schema support..?
@@ -83,9 +81,12 @@ export const collect = (schema: JSONSchema7Definition): Code => {
       return parseConst(schema);
     }
     return parseTypeName(schema.type, schema);
-  } else {
-    return "TODO";
   }
+  throw new Error(
+    `Unsupported schema. Did not match any type of the parsers. Schema was: ${JSON.stringify(
+      schema
+    )}`
+  );
 };
 
 /**
