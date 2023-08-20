@@ -42,9 +42,9 @@ export const collect = (schema: JSONSchema7Definition): Code => {
   if (isBoolean(schema)) {
     return JSON.stringify(schema);
   } else if (isObjectSchema(schema)) {
-    return parseObject(schema.properties, schema.required);
+    return parseObject(schema);
   } else if (isEnumSchema(schema)) {
-    return parseEnum(schema.enum);
+    return parseEnum(schema);
   } else if (isAnyOfSchema(schema)) {
     return parseAnyOf(schema);
   } else if (isAllOfSchema(schema)) {
@@ -52,7 +52,7 @@ export const collect = (schema: JSONSchema7Definition): Code => {
   } else if (isOneOfSchema(schema)) {
     return parseOneOf(schema);
   } else if (isNotSchema(schema)) {
-    return parseNot(schema.not);
+    return parseNot(schema);
   } else if (isArraySchema(schema)) {
     return parseArray(schema);
   } else if (isSchemaWithMultipleTypes(schema)) {
@@ -62,7 +62,7 @@ export const collect = (schema: JSONSchema7Definition): Code => {
       return parseConst(schema);
     }
     return parseTypeName(schema.type, schema);
-  } else return "dummy";
+  } else return "TODO";
 };
 
 /**
@@ -118,10 +118,54 @@ const addOptionalModifier = (
     : `Type.Optional(${code})`;
 };
 
-export const parseObject = (
-  properties: JSONSchema7["properties"],
-  requiredProperties: JSONSchema7["required"]
-) => {
+type ObjectSchema = JSONSchema7 & { type: "object" };
+export const isObjectSchema = (schema: JSONSchema7): schema is ObjectSchema => {
+  return schema["type"] !== undefined && schema["type"] === "object";
+};
+
+type EnumSchema = JSONSchema7 & { enum: JSONSchema7Type[] };
+export const isEnumSchema = (schema: JSONSchema7): schema is EnumSchema => {
+  return schema["enum"] !== undefined;
+};
+
+type AnyOfSchema = JSONSchema7 & { anyOf: JSONSchema7Definition[] };
+export const isAnyOfSchema = (schema: JSONSchema7): schema is AnyOfSchema => {
+  return schema["anyOf"] !== undefined;
+};
+
+type AllOfSchema = JSONSchema7 & { allOf: JSONSchema7Definition[] };
+export const isAllOfSchema = (schema: JSONSchema7): schema is AllOfSchema => {
+  return schema["allOf"] !== undefined;
+};
+
+type OneOfSchema = JSONSchema7 & { oneOf: JSONSchema7Definition[] };
+export const isOneOfSchema = (
+  schema: JSONSchema7
+): schema is JSONSchema7 & { oneOf: JSONSchema7Definition[] } => {
+  return schema["oneOf"] !== undefined;
+};
+
+type NotSchema = JSONSchema7 & { not: JSONSchema7Definition[] };
+export const isNotSchema = (schema: JSONSchema7): schema is NotSchema => {
+  return schema["not"] !== undefined;
+};
+
+type ArraySchema = JSONSchema7 & {
+  type: "array";
+  items: JSONSchema7Definition | JSONSchema7Definition[];
+};
+export const isArraySchema = (schema: JSONSchema7): schema is ArraySchema => {
+  return schema.type === "array" && schema.items !== undefined;
+};
+
+type ConstSchema = JSONSchema7 & { const: JSONSchema7Type };
+export const isConstSchema = (schema: JSONSchema7): schema is ConstSchema => {
+  return schema.const !== undefined;
+};
+
+export const parseObject = (schema: ObjectSchema) => {
+  const properties = schema.properties;
+  const requiredProperties = schema.required;
   if (properties === undefined) {
     return `Type.Unknown()`;
   }
@@ -139,67 +183,11 @@ export const parseObject = (
   return `Type.Object({${code}})`;
 };
 
-export const parseEnum = (values: JSONSchema7Type[]) => {
-  const code = values.reduce<string>((acc, schema) => {
+export const parseEnum = (schema: EnumSchema) => {
+  const code = schema.enum.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ","} ${parseType(schema)}`;
   }, "");
   return `Type.Union([${code}])`;
-};
-
-export const isObjectSchema = (
-  schema: Record<string, any>
-): schema is JSONSchema7 & { type: "object" } => {
-  return schema["type"] !== undefined && schema["type"] === "object";
-};
-
-export const isEnumSchema = (
-  schema: Record<string, any>
-): schema is JSONSchema7 & { enum: JSONSchema7Type[] } => {
-  return schema["enum"] !== undefined;
-};
-
-type AnyOfSchema = JSONSchema7 & { anyOf: JSONSchema7Definition[] };
-export const isAnyOfSchema = (
-  schema: Record<string, any>
-): schema is AnyOfSchema => {
-  return schema["anyOf"] !== undefined;
-};
-
-type AllOfSchema = JSONSchema7 & { allOf: JSONSchema7Definition[] };
-export const isAllOfSchema = (
-  schema: Record<string, any>
-): schema is AllOfSchema => {
-  return schema["allOf"] !== undefined;
-};
-
-type OneOfSchema = JSONSchema7 & { oneOf: JSONSchema7Definition[] };
-export const isOneOfSchema = (
-  schema: Record<string, any>
-): schema is JSONSchema7 & { oneOf: JSONSchema7Definition[] } => {
-  return schema["oneOf"] !== undefined;
-};
-
-export const isNotSchema = (
-  schema: Record<string, any>
-): schema is JSONSchema7 & { not: JSONSchema7Definition[] } => {
-  return schema["not"] !== undefined;
-};
-
-type ArraySchema = JSONSchema7 & {
-  type: "array";
-  items: JSONSchema7Definition | JSONSchema7Definition[];
-};
-export const isArraySchema = (
-  schema: Record<string, any>
-): schema is ArraySchema => {
-  return schema.type === "array" && schema.items !== undefined;
-};
-
-type ConstSchema = JSONSchema7 & { const: JSONSchema7Type };
-export const isConstSchema = (
-  schema: Record<string, any>
-): schema is ConstSchema => {
-  return schema.const !== undefined;
 };
 
 const parseConst = (schema: ConstSchema): Code => {
@@ -291,8 +279,8 @@ export const parseOneOf = (schema: OneOfSchema): Code => {
     : `OneOf([${code}], ${schemaOptions})`;
 };
 
-export const parseNot = (not: JSONSchema7Definition): Code => {
-  return `Type.Not(${collect(not)})`;
+export const parseNot = (schema: NotSchema): Code => {
+  return `Type.Not(${collect(schema.not)})`;
 };
 
 export const parseArray = (schema: ArraySchema): Code => {
