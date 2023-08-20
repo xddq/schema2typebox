@@ -8,6 +8,27 @@ import {
   JSONSchema7Type,
   JSONSchema7TypeName,
 } from "json-schema";
+import {
+  AllOfSchema,
+  AnyOfSchema,
+  ArraySchema,
+  ConstSchema,
+  EnumSchema,
+  MultipleTypesSchema,
+  NotSchema,
+  ObjectSchema,
+  OneOfSchema,
+  isAllOfSchema,
+  isAnyOfSchema,
+  isArraySchema,
+  isConstSchema,
+  isEnumSchema,
+  isNotSchema,
+  isNullType,
+  isObjectSchema,
+  isOneOfSchema,
+  isSchemaWithMultipleTypes,
+} from "./schema-matchers";
 
 type Code = string;
 
@@ -122,51 +143,6 @@ const addOptionalModifier = (
     : `Type.Optional(${code})`;
 };
 
-type ObjectSchema = JSONSchema7 & { type: "object" };
-export const isObjectSchema = (schema: JSONSchema7): schema is ObjectSchema => {
-  return schema["type"] !== undefined && schema["type"] === "object";
-};
-
-type EnumSchema = JSONSchema7 & { enum: JSONSchema7Type[] };
-export const isEnumSchema = (schema: JSONSchema7): schema is EnumSchema => {
-  return schema["enum"] !== undefined;
-};
-
-type AnyOfSchema = JSONSchema7 & { anyOf: JSONSchema7Definition[] };
-export const isAnyOfSchema = (schema: JSONSchema7): schema is AnyOfSchema => {
-  return schema["anyOf"] !== undefined;
-};
-
-type AllOfSchema = JSONSchema7 & { allOf: JSONSchema7Definition[] };
-export const isAllOfSchema = (schema: JSONSchema7): schema is AllOfSchema => {
-  return schema["allOf"] !== undefined;
-};
-
-type OneOfSchema = JSONSchema7 & { oneOf: JSONSchema7Definition[] };
-export const isOneOfSchema = (
-  schema: JSONSchema7
-): schema is JSONSchema7 & { oneOf: JSONSchema7Definition[] } => {
-  return schema["oneOf"] !== undefined;
-};
-
-type NotSchema = JSONSchema7 & { not: JSONSchema7Definition[] };
-export const isNotSchema = (schema: JSONSchema7): schema is NotSchema => {
-  return schema["not"] !== undefined;
-};
-
-type ArraySchema = JSONSchema7 & {
-  type: "array";
-  items: JSONSchema7Definition | JSONSchema7Definition[];
-};
-export const isArraySchema = (schema: JSONSchema7): schema is ArraySchema => {
-  return schema.type === "array" && schema.items !== undefined;
-};
-
-type ConstSchema = JSONSchema7 & { const: JSONSchema7Type };
-export const isConstSchema = (schema: JSONSchema7): schema is ConstSchema => {
-  return schema.const !== undefined;
-};
-
 export const parseObject = (schema: ObjectSchema) => {
   const properties = schema.properties;
   const requiredProperties = schema.required;
@@ -216,25 +192,6 @@ const parseConst = (schema: ConstSchema): Code => {
   return schemaOptions === undefined
     ? `Type.Literal(${schema.const})`
     : `Type.Literal(${schema.const}, ${schemaOptions})`;
-};
-
-export type MultipleTypesSchema = JSONSchema7 & { type: JSONSchema7TypeName[] };
-export const isSchemaWithMultipleTypes = (
-  schema: JSONSchema7
-): schema is MultipleTypesSchema => {
-  return Array.isArray(schema.type);
-};
-
-export const isStringType = (
-  type: JSONSchema7Type
-): type is JSONSchema7Type & string => {
-  return typeof type === "string";
-};
-
-export const isNullType = (
-  type: JSONSchema7Type
-): type is JSONSchema7Type & null => {
-  return type === null;
 };
 
 export const parseType = (type: JSONSchema7Type): Code => {
