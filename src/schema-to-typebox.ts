@@ -225,6 +225,25 @@ export const isArraySchema = (
   return schema.type === "array" && schema.items !== undefined;
 };
 
+type ConstSchema = JSONSchema7 & { const: JSONSchema7Type };
+export const isConstSchema = (
+  schema: Record<string, any>
+): schema is ConstSchema => {
+  return schema.const !== undefined;
+};
+
+const parseConst = (schema: ConstSchema): Code => {
+  // TODO: case where const is array..
+  if (Array.isArray(schema.const)) {
+    return "TODO: const with array";
+  }
+  // TODO: case where cosnt is object..?
+  if (typeof schema.const === "object") {
+    return "TODO: const with object";
+  }
+  return `Type.Literal(${schema.const})`;
+};
+
 export const isSchemaWithMultipleTypes = (
   schema: Record<string, any>
 ): schema is JSONSchema7 & { type: JSONSchema7TypeName[] } => {
@@ -374,6 +393,9 @@ export const collect = (schemaObj: JSONSchema7Definition): Code => {
   } else if (isSchemaWithMultipleTypes(schema)) {
     return parseWithMultipleTypes(schema.type);
   } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
+    if (isConstSchema(schema)) {
+      return parseConst(schema);
+    }
     return parseTypeName(schema.type, schema);
   } else return "dummy";
 };
