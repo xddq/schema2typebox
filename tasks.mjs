@@ -5,9 +5,9 @@
  * more easily guarantuee a similar interface across operating systems (linux,
  * macos, windows).
  */
-import shell from "shelljs";
 import path from "node:path";
 import nodemon from "nodemon";
+import shell from "shelljs";
 
 /**
  * Builds project. Typescript -> Javascript
@@ -107,7 +107,7 @@ export const clean = () => {
  * @param {Array<string>} [additionalArguments]
  */
 export const format = (additionalArguments) => {
-  const pathToPrettier = ["node_modules", "prettier", "bin-prettier"].join(
+  const pathToPrettier = ["node_modules", "prettier", "bin-prettier.js"].join(
     path.sep
   );
   const { code } = shell.exec(

@@ -1,1 +1,1 @@
-export { schema2typebox, Schema2TypeboxOptions } from "./programmatic-usage";
+export { Schema2TypeboxOptions, schema2typebox } from "./programmatic-usage";

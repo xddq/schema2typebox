@@ -164,24 +164,23 @@ You can also check the test cases, every feature is tested.
 
 ### Schema Support
 
-The package is focused on supporting JSON schema draft-06 files, since this is
+The package is focused on supporting JSON schema draft-07 files, since this is
 the target TypeBox officially supports. _These types are fully compatible with
-the JSON Schema Draft 6 specification._ (from typebox repo).
+the JSON Schema Draft 7 specification._ (from typebox repo 20.08.2023).
 
 However, since the amount of breaking changes is quite small between most JSON
-schema specs, support for other specs may "just work" or be implemented at a
-later stage. Feel free to open a discussion or issue when you find problems.
-Happy about contributions if you want to help out.
+schema specs, support for other specs should "just work". Feel free to open a
+discussion or issue when you find problems. Happy about contributions if you
+want to help out.
 
 - [x] draft-04
-- [x] draft-06 (main goal of this package, see Feature List for the state)
-- [x] draft-07
+- [x] draft-06
+- [x] draft-07 (main goal of this package, see Feature List for the state)
 - [x] draft-2019-09
-- should be working with the _current feature set_
+  - should be working with the _current feature set_
 - [ ] draft-2020-12
-  - Probably not working due to new keywords or semantic changes for previous
-    keywords. Happy about issues with your JSON schema, expected TypeBox code
-    and the currently generated TypeBox code.
+  - use with caution. Not expected to fully work. See
+    [here](https://github.com/sinclairzx81/typebox/issues/490)
 
 ### Feature List
 
@@ -199,6 +198,8 @@ whats already implemented and what is missing.
   - schema2typebox generates union types instead of enums. If you have a problem
     with this behaviour and valid arguments for using enums please create an
     issue and it may be considered again.
+- [x] Type.Union() via a list of types given by the 'type' instance type (e.g.
+      type ["string","null"]
 - [x] Type.Intersect() via "allOf" property
 - [x] OneOf() via "oneOf" property
   - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
@@ -206,21 +207,12 @@ whats already implemented and what is missing.
     to use the typebox compiler. [More
     info](https://github.com/xddq/schema2typebox/issues/16).
 - [x] Type.Not() via "not" property
-- [x] schemaOptions
+- [x] Type.Unknown() for objects without properties
+- [x] Full support for schema options (e.g. minLength: 1, description: "test
+      entity").
 - [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
-- [x] Name of generated value and type based on existing "title" attribute.
-      Defaulting to "T" if title is not defined.
 - [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
       maximalItems and additionalItems false
-
-#### Open Tasks
-
-See [here](https://github.com/xddq/schema2typebox/pull/23) and followup PRs.
-
-- [ ] Type.Array() with "array<enum>" instance type
-- [ ] Nullable Literal types, eg: `type: ['string', 'null']`
-- [ ] "Unknown" object types
-- [ ] Disambiguation of overlapping property names in nested schemas
 
 ## DEV/CONTRIBUTOR NOTES
 
@@ -229,11 +221,9 @@ See [here](https://github.com/xddq/schema2typebox/pull/23) and followup PRs.
   work.
   - Please always create tests for new features that are implemented. This will
     decrease mental overhead for reviewing and developing in the long run.
-- See specification for JSON schema draft-06
-  [here](https://json-schema.org/specification-links.html#draft-6)
-- Link to [meta schema](http://json-schema.org/draft-06/schema). Meta schema
-  means that a JSON schema is created in order to validate that a given schema
-  adheres to a given JSON schema draft.
+- See specification for JSON schema draft-07
+  [here](https://json-schema.org/specification-links.html#draft-7). The meta
+  schema is also stored inside this repo under ./meta-schema-draft-07.json.
 
 ## cli usage
 

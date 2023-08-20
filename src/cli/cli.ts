@@ -1,6 +1,6 @@
-import { readFileSync, createWriteStream } from "node:fs";
-import { Readable } from "node:stream";
 import minimist from "minimist";
+import { createWriteStream, readFileSync } from "node:fs";
+import { Readable } from "node:stream";
 
 import packageJson from "../../package.json";
 import { schema2typebox } from "../programmatic-usage";
