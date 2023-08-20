@@ -30,6 +30,42 @@ export const ${exportedName} = ${typeBoxType}`;
 };
 
 /**
+ * Takes the root schema and recursively collects the corresponding types
+ * for it. Returns the matching typebox code representing the schema.
+ *
+ * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
+ * @param propertyName The name of the attribute/property currently being collected.
+ * @throws Error
+ */
+export const collect = (schema: JSONSchema7Definition): Code => {
+  // TODO: boolean schema support..?
+  if (isBoolean(schema)) {
+    return JSON.stringify(schema);
+  } else if (isObjectSchema(schema)) {
+    return parseObject(schema.properties, schema.required);
+  } else if (isEnumSchema(schema)) {
+    return parseEnum(schema.enum);
+  } else if (isAnyOfSchema(schema)) {
+    return parseAnyOf(schema);
+  } else if (isAllOfSchema(schema)) {
+    return parseAllOf(schema);
+  } else if (isOneOfSchema(schema)) {
+    return parseOneOf(schema);
+  } else if (isNotSchema(schema)) {
+    return parseNot(schema.not);
+  } else if (isArraySchema(schema)) {
+    return parseArray(schema);
+  } else if (isSchemaWithMultipleTypes(schema)) {
+    return parseWithMultipleTypes(schema.type);
+  } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
+    if (isConstSchema(schema)) {
+      return parseConst(schema);
+    }
+    return parseTypeName(schema.type, schema);
+  } else return "dummy";
+};
+
+/**
  * Creates the imports required to build the typebox code.
  * Unused imports (e.g. if we don't need to create a TypeRegistry for OneOf
  * types) are stripped in a postprocessing step.
@@ -49,6 +85,17 @@ const createExportNameForSchema = (schema: JSONSchema7Definition) => {
 };
 
 /**
+ * Creates custom typebox code to support the JSON schema keyword 'oneOf'. Based
+ * on the suggestion here: https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
+ */
+export const createOneOfTypeboxSupportCode = (): Code => {
+  return [
+    "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
+    "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })",
+  ].reduce((acc, curr) => acc + curr + "\n\n", "");
+};
+
+/**
  * @throws Error
  */
 const createExportedTypeForName = (exportedName: string) => {
@@ -61,97 +108,15 @@ const createExportedTypeForName = (exportedName: string) => {
   return `export type ${typeName} = Static<typeof ${exportedName}>`;
 };
 
-/**
- * Modifies code to be used as value or as key value pair. Curried so we can
- * compose different of these 'modification functions' which apply to most
- * schemas, regardless of their type.
- *
- * Examples
- *
- * addKeyToValue(undefined)('Type.Literal("Haskell")')
- * return "Type.Literal("Haskell")"
- *
- * addKeyToValue(firstName)('Type.Literal("Haskell")')
- * return "firstName: Type.Literal("Haskell")"
- *
- */
-// const addKeyToValue = (propertyName: string | undefined) => {
-//   return (code: Code): Code => {
-//     if (propertyName === undefined) {
-//       return code;
-//     }
-//     return `${propertyName}: ${code}`;
-//   };
-// };
-
-/**
- * Adds an optional modifier to the code based on the given isRequired param. Curried so we can
- * compose different of these 'modification functions' which apply to most
- * schemas, regardless of their type.
- *
- * Examples
- *
- * addOptionalModifier(true)('Type.Number()')
- * return "Type.Number()"
- *
- * addOptionalModifier(undefined)('Type.Number()')
- * return "Type.Optional(Type.Number())"
- *
- */
-const addOptionalModifier = (isRequired: boolean) => {
-  return (code: Code): Code => {
-    return isRequired ? code : `Type.Optional(${code})`;
-  };
+const addOptionalModifier = (
+  code: Code,
+  propertyName: string,
+  requiredProperties: JSONSchema7["required"]
+) => {
+  return requiredProperties?.includes(propertyName)
+    ? code
+    : `Type.Optional(${code})`;
 };
-
-/**
- * Adds schema options to the code based on the given schemaOptions param. Curried so we can
- * compose different of these 'modification functions' which apply to most
- * schemas, regardless of their type.
- *
- * Examples
- *
- * addSchemaOptions({minimum: 5})('Type.Number()')
- * return "Type.Number({minimum: 5})"
- *
- * addSchemaOptions(undefined)('Type.Number()')
- * return "Type.Number()"
- *
- */
-// const addSchemaOptions = (schemaOptions: Record<string, any>) => {
-//   return (code: Code): Code => {
-//     if (Object.keys(schemaOptions).length === 0) {
-//       return code;
-//     }
-//     return `${code.slice(0, code.length - 1)}${")"} , ${JSON.stringify(
-//       schemaOptions
-//     )})`;
-//   };
-// };
-//
-// const getClosingParensCount = (code: Code, count: number = 0): number => {
-//   if (code.endsWith(")")) {
-//     return getClosingParensCount(code.slice(0, code.length - 1), count + 1);
-//   }
-//   return count;
-// };
-
-// const applySchemaOptions = (code: Code, schemaOptions: Record<string, any>) => {
-//   if (Object.keys(schemaOptions).length === 0) {
-//     return code;
-//   }
-//   const deletedCharsCount = getClosingParensCount(code, 0);
-//   return `${code.slice(0, code.length - 1)}, ${JSON.stringify(
-//     schemaOptions
-//   )}${")".repeat(deletedCharsCount)}`;
-// };
-//
-// const getClosingParensCount = (code: Code, count: number = 0): number => {
-//   if (code.endsWith(")")) {
-//     return getClosingParensCount(code.slice(0, code.length - 1), count + 1);
-//   }
-//   return count;
-// };
 
 export const parseObject = (
   properties: JSONSchema7["properties"],
@@ -165,8 +130,10 @@ export const parseObject = (
     return (
       acc +
       `${acc === "" ? "" : ",\n"}${propertyName}: ${addOptionalModifier(
-        requiredProperties?.includes(propertyName) ?? false
-      )(collect(schema))}`
+        collect(schema),
+        propertyName,
+        requiredProperties
+      )}`
     );
   }, "");
   return `Type.Object({${code}})`;
@@ -205,6 +172,7 @@ export const isAllOfSchema = (
   return schema["allOf"] !== undefined;
 };
 
+type OneOfSchema = JSONSchema7 & { oneOf: JSONSchema7Definition[] };
 export const isOneOfSchema = (
   schema: Record<string, any>
 ): schema is JSONSchema7 & { oneOf: JSONSchema7Definition[] } => {
@@ -236,13 +204,17 @@ export const isConstSchema = (
 
 const parseConst = (schema: ConstSchema): Code => {
   const schemaOptions = parseSchemaOptions(schema);
-  // TODO: case where const is array..
   if (Array.isArray(schema.const)) {
-    return "TODO: const with array";
+    const code = schema.const.reduce<string>((acc, schema) => {
+      return acc + `${acc === "" ? "" : ",\n"} ${parseType(schema)}`;
+    }, "");
+    return schemaOptions === undefined
+      ? `Type.Union([${code}])`
+      : `Type.Union([${code}], ${schemaOptions})`;
   }
-  // TODO: case where cosnt is object..?
+  // TODO: case where const is object..?
   if (typeof schema.const === "object") {
-    return "TODO: const with object";
+    return "Type.Todo(const with object)";
   }
   if (typeof schema.const === "string") {
     return schemaOptions === undefined
@@ -309,11 +281,14 @@ export const parseAllOf = (schema: AllOfSchema): Code => {
     : `Type.Intersect([${code}], ${schemaOptions})`;
 };
 
-export const parseOneOf = (oneOf: JSONSchema7Definition[]): Code => {
-  const code = oneOf.reduce<string>((acc, schema) => {
+export const parseOneOf = (schema: OneOfSchema): Code => {
+  const schemaOptions = parseSchemaOptions(schema);
+  const code = schema.oneOf.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
   }, "");
-  return `OneOf([${code}])`;
+  return schemaOptions === undefined
+    ? `OneOf([${code}])`
+    : `OneOf([${code}], ${schemaOptions})`;
 };
 
 export const parseNot = (not: JSONSchema7Definition): Code => {
@@ -323,15 +298,6 @@ export const parseNot = (not: JSONSchema7Definition): Code => {
 export const parseArray = (schema: ArraySchema): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   if (Array.isArray(schema.items)) {
-    // TODO: create test case for it. e.g.
-    /**
-     * { "type": "array",
-     * "items": [
-     * { "type": "string" },
-     * { "type": "object", "properties": { "name": { "type": "string" }, "age": { "type": "integer" } } }
-     * ]
-     * }
-     **/
     const code = schema.items.reduce<string>((acc, schema) => {
       return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
     }, "");
@@ -376,46 +342,6 @@ export const parseTypeName = (
   throw new Error(`Should never happen..? parseType got type: ${type}`);
 };
 
-// export const parseTypeNames = (type: JSONSchema7TypeName): Code => {};
-
-/**
- * Takes the root schemaObject and recursively collects the corresponding types
- * for it. Returns the matching typebox code representing the schemaObject.
- *
- * @param requiredAttributes The required attributes/properties of the given schema object. Recursively passed down for each given object.
- * @param propertyName The name of the attribute/property currently being collected.
- * @throws Error
- */
-export const collect = (schemaObj: JSONSchema7Definition): Code => {
-  const schema = schemaObj;
-
-  // TODO: add boolean schema support
-  if (isBoolean(schema) || isBoolean(schemaObj)) {
-    return JSON.stringify(schemaObj);
-  } else if (isObjectSchema(schema)) {
-    return parseObject(schema.properties, schema.required);
-  } else if (isEnumSchema(schema)) {
-    return parseEnum(schema.enum);
-  } else if (isAnyOfSchema(schema)) {
-    return parseAnyOf(schema);
-  } else if (isAllOfSchema(schema)) {
-    return parseAllOf(schema);
-  } else if (isOneOfSchema(schema)) {
-    return parseOneOf(schema.oneOf);
-  } else if (isNotSchema(schema)) {
-    return parseNot(schema.not);
-  } else if (isArraySchema(schema)) {
-    return parseArray(schema);
-  } else if (isSchemaWithMultipleTypes(schema)) {
-    return parseWithMultipleTypes(schema.type);
-  } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
-    if (isConstSchema(schema)) {
-      return parseConst(schema);
-    }
-    return parseTypeName(schema.type, schema);
-  } else return "dummy";
-};
-
 const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
   const properties = Object.entries(schema).filter(
     ([key, _value]) =>
@@ -440,15 +366,4 @@ const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
     {}
   );
   return JSON.stringify(result);
-};
-
-/**
- * Creates custom typebox code to support the JSON schema keyword 'oneOf'. Based
- * on the suggestion here: https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
- */
-export const createOneOfTypeboxSupportCode = (): Code => {
-  return [
-    "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
-    "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })",
-  ].reduce((acc, curr) => acc + curr + "\n\n", "");
 };
