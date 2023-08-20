@@ -56,13 +56,15 @@ export const collect = (schema: JSONSchema7Definition): Code => {
   } else if (isArraySchema(schema)) {
     return parseArray(schema);
   } else if (isSchemaWithMultipleTypes(schema)) {
-    return parseWithMultipleTypes(schema.type);
+    return parseWithMultipleTypes(schema);
   } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
     if (isConstSchema(schema)) {
       return parseConst(schema);
     }
     return parseTypeName(schema.type, schema);
-  } else return "TODO";
+  } else {
+    return "TODO";
+  }
 };
 
 /**
@@ -92,7 +94,9 @@ export const createOneOfTypeboxSupportCode = (): Code => {
   return [
     "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
     "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })",
-  ].reduce((acc, curr) => acc + curr + "\n\n", "");
+  ].reduce((acc, curr) => {
+    return acc + curr + "\n\n";
+  }, "");
 };
 
 /**
@@ -214,9 +218,10 @@ const parseConst = (schema: ConstSchema): Code => {
     : `Type.Literal(${schema.const}, ${schemaOptions})`;
 };
 
+export type MultipleTypesSchema = JSONSchema7 & { type: JSONSchema7TypeName[] };
 export const isSchemaWithMultipleTypes = (
-  schema: Record<string, any>
-): schema is JSONSchema7 & { type: JSONSchema7TypeName[] } => {
+  schema: JSONSchema7
+): schema is MultipleTypesSchema => {
   return Array.isArray(schema.type);
 };
 
@@ -298,8 +303,8 @@ export const parseArray = (schema: ArraySchema): Code => {
     : `Type.Array(${collect(schema.items)},${schemaOptions})`;
 };
 
-export const parseWithMultipleTypes = (type: JSONSchema7TypeName[]): Code => {
-  const code = type.reduce<string>((acc, typeName) => {
+export const parseWithMultipleTypes = (schema: MultipleTypesSchema): Code => {
+  const code = schema.type.reduce<string>((acc, typeName) => {
     return acc + `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName)}`;
   }, "");
   return `Type.Union([${code}])`;
@@ -331,8 +336,8 @@ export const parseTypeName = (
 };
 
 const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
-  const properties = Object.entries(schema).filter(
-    ([key, _value]) =>
+  const properties = Object.entries(schema).filter(([key, _value]) => {
+    return (
       key !== "type" &&
       key !== "items" &&
       key !== "allOf" &&
@@ -342,7 +347,8 @@ const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
       key !== "properties" &&
       key !== "required" &&
       key !== "const"
-  );
+    );
+  });
   if (properties.length === 0) {
     return undefined;
   }

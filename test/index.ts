@@ -127,11 +127,13 @@ describe("programmatic usage API", async () => {
       });
     `);
 
-    const inputPaths = ["person.json", "status.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
-    );
+    const inputPaths = ["person.json", "status.json"].flatMap((currItem) => {
+      return buildOsIndependentPath([__dirname, "..", "..", currItem]);
+    });
     zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
-      ([fileName, data]) => fs.writeFileSync(fileName, data, undefined)
+      ([fileName, data]) => {
+        return fs.writeFileSync(fileName, data, undefined);
+      }
     );
 
     await expectEqualIgnoreFormatting(
@@ -195,12 +197,13 @@ describe("programmatic usage API", async () => {
       ]);
     `);
 
-    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) =>
-      buildOsIndependentPath([__dirname, "..", "..", currItem])
-    );
+    const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) => {
+      return buildOsIndependentPath([__dirname, "..", "..", currItem]);
+    });
     zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
-      ([fileName, data]) =>
-        fs.writeFileSync(fileName, JSON.stringify(data), undefined)
+      ([fileName, data]) => {
+        return fs.writeFileSync(fileName, JSON.stringify(data), undefined);
+      }
     );
 
     await expectEqualIgnoreFormatting(
@@ -379,7 +382,7 @@ describe("schema2typebox internal - collect()", async () => {
           description: "full name of the person",
           minLength: 1,
           maxLength: 100,
-          pattern: "^[a-zA-Z]+(\s)+[a-zA-Z]+$",
+          pattern: "^[a-zA-Z]+(s)+[a-zA-Z]+$",
         })
       ),
     });
