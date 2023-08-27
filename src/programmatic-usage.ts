@@ -28,11 +28,9 @@ export const schema2typebox = async ({
   const searchResult = await explorer.search();
   const prettierConfig =
     searchResult === null ? {} : (searchResult.config as prettier.Options);
-  const formattedResult = await prettier.format(generatedTypeboxCode, {
+  const formattedResult = prettier.format(generatedTypeboxCode, {
     parser: "typescript",
     ...prettierConfig,
-    // used to get rid of unused imports
-    plugins: ["prettier-plugin-organize-imports"],
   });
   // 2. add comment that code is auto generated
   const result = addCommentThatCodeIsGenerated.run(formattedResult);
