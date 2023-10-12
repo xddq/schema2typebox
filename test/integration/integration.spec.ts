@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
-import { buildOsIndependentPath } from "test/test-utils";
 import { schema2typebox } from "../../src/index";
+import { buildOsIndependentPath } from "../test-utils";
 
 describe("integration tests - testing against real world schemas", () => {
   test("schema.org - dayOfWeek", async () => {
