@@ -1,7 +1,6 @@
 import { zip } from "fp-ts/Array";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import path from "node:path";
 import { describe, test } from "node:test";
 import shell from "shelljs";
 
@@ -9,12 +8,12 @@ import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
 } from "../src/programmatic-usage";
-import { expectEqualIgnoreFormatting } from "./test-utils";
+import {
+  buildOsIndependentPath,
+  expectEqualIgnoreFormatting,
+} from "./test-utils";
 
 const SHELLJS_RETURN_CODE_OK = 0;
-const buildOsIndependentPath = (foldersOrFiles: string[]) => {
-  return foldersOrFiles.join(path.sep);
-};
 
 describe("programmatic usage - when running the programmatic usage", async () => {
   test("generated typebox names are based on title attribute", async () => {

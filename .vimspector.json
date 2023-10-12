@@ -1,46 +1,22 @@
 {
   "configurations": {
     "run": {
-      "adapter": "vscode-node",
+      "adapter": "js-debug",
       "breakpoints": {
         "exception": {
           "all": "N",
           "uncaught": "Y"
         }
       },
+      "filetypes": ["javascript", "typescript"],
       "configuration": {
-        "request": "launch",
-        "protocol": "auto",
+        "request": "attach",
         "stopOnEntry": false,
         "console": "integratedTerminal",
-        "outFiles": ["${workspaceRoot}/dist/**/*.js"],
+        "outFiles": ["${workspaceRoot}/dist/src/**/*.js"],
         "program": "${workspaceRoot}/src/cli/index.ts",
-        "cwd": "${workspaceRoot}"
-      }
-    },
-    "test by file": {
-      "adapter": "vscode-node",
-      "breakpoints": {
-        "exception": {
-          "all": "N",
-          "uncaught": "Y"
-        }
-      },
-      "configuration": {
-        "request": "launch",
-        "protocol": "auto",
-        "stopOnEntry": false,
-        "console": "integratedTerminal",
-        "outFiles": ["${workspaceRoot}/dist/**/*.js"],
-        "program": "${workspaceRoot}/test/index.ts",
-        "runtimeArgs": [
-          "--test",
-          "--test-reporter",
-          "spec",
-          "--test-name-pattern",
-          "parseObject unit tests"
-        ],
-        "cwd": "${workspaceRoot}"
+        "cwd": "${workspaceRoot}",
+        "type": "pwa-node"
       }
     }
   }
