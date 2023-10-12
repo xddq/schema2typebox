@@ -76,10 +76,9 @@ export const collect = (schema: JSONSchema7Definition): Code => {
     return parseArray(schema);
   } else if (isSchemaWithMultipleTypes(schema)) {
     return parseWithMultipleTypes(schema);
+  } else if (isConstSchema(schema)) {
+    return parseConst(schema);
   } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
-    if (isConstSchema(schema)) {
-      return parseConst(schema);
-    }
     return parseTypeName(schema.type, schema);
   }
   throw new Error(
