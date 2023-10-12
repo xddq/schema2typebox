@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import * as prettier from "prettier";
 
 const formatWithPrettier = async (input: string): Promise<string> => {
@@ -20,4 +21,8 @@ export const expectEqualIgnoreFormatting = async (
     await formatWithPrettier(input1),
     await formatWithPrettier(input2)
   );
+};
+
+export const buildOsIndependentPath = (foldersOrFiles: string[]) => {
+  return foldersOrFiles.join(path.sep);
 };
