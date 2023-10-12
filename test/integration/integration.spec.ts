@@ -1,8 +1,10 @@
-import { expect } from "chai";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { schema2typebox } from "../../src/index";
-import { buildOsIndependentPath } from "../test-utils";
+import {
+  buildOsIndependentPath,
+  expectEqualIgnoreFormatting,
+} from "../test-utils";
 
 describe("integration tests - testing against real world schemas", () => {
   test("schema.org - dayOfWeek", async () => {
@@ -21,6 +23,6 @@ describe("integration tests - testing against real world schemas", () => {
       ]),
       "utf-8"
     );
-    expect(result).to.equal(expectedResult);
+    expectEqualIgnoreFormatting(result, expectedResult);
   });
 });
