@@ -33,7 +33,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
     import { Static, Type } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
-    export const Contract = Type.Object({name: Type.String()});
+    export const Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),
@@ -100,7 +100,8 @@ describe("programmatic usage - when running the programmatic usage", async () =>
             Type.Literal("denied"),
           ])
         ),
-      });
+      },
+      { $id: "Contract" });
     `);
 
       const inputPaths = ["person.json", "status.json"].flatMap((currItem) => {
@@ -170,7 +171,8 @@ describe("programmatic usage - when running the programmatic usage", async () =>
           type: Type.Literal("dog"),
           name: Type.String({ maxLength: 100 }),
         }),
-      ]);
+      ],
+      { $id: "T" });
     `);
 
       const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) => {
@@ -209,16 +211,19 @@ describe("programmatic usage - when running the programmatic usage", async () =>
       import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
-      export const T = Type.Union([
-        Type.Object({
-          type: Type.Literal("cat"),
-          name: Type.String({ maxLength: 100 }),
-        }),
-        Type.Object({
-          type: Type.Literal("dog"),
-          name: Type.String({ maxLength: 100 }),
-        }),
-      ]);
+      export const T = Type.Union(
+        [
+          Type.Object({
+            type: Type.Literal("cat"),
+            name: Type.String({ maxLength: 100 }),
+          }),
+          Type.Object({
+            type: Type.Literal("dog"),
+            name: Type.String({ maxLength: 100 }),
+          }),
+        ],
+        { $id: "T" }
+      );
     `);
 
       await expectEqualIgnoreFormatting(
@@ -275,7 +280,10 @@ describe("programmatic usage - when running the programmatic usage", async () =>
       ) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: "ExtendedOneOf", oneOf });
 
       export type T = Static<typeof T>;
-      export const T = Type.Object({a: OneOf([Type.String(), Type.Number()])});
+      export const T = Type.Object(
+        { a: OneOf([Type.String(), Type.Number()]) },
+        { $id: "T" }
+      );
     `);
     await expectEqualIgnoreFormatting(
       await schema2typebox({ input: dummySchema }),

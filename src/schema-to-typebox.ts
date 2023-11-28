@@ -39,8 +39,16 @@ export const schema2typebox = async (jsonSchema: string) => {
     schemaObj
   )) as JSONSchema7Definition;
 
-  const typeBoxType = collect(dereferencedSchema);
   const exportedName = createExportNameForSchema(dereferencedSchema);
+  // Ensuring that generated typebox code will contain an '$id' field.
+  // see: https://github.com/xddq/schema2typebox/issues/32
+  if (
+    typeof dereferencedSchema !== "boolean" &&
+    dereferencedSchema.$id === undefined
+  ) {
+    dereferencedSchema.$id = exportedName;
+  }
+  const typeBoxType = collect(dereferencedSchema);
   const exportedType = createExportedTypeForName(exportedName);
 
   return `${createImportStatements()}
@@ -144,6 +152,7 @@ const addOptionalModifier = (
 };
 
 export const parseObject = (schema: ObjectSchema) => {
+  const schemaOptions = parseSchemaOptions(schema);
   const properties = schema.properties;
   const requiredProperties = schema.required;
   if (properties === undefined) {
@@ -160,14 +169,19 @@ export const parseObject = (schema: ObjectSchema) => {
       )}`
     );
   }, "");
-  return `Type.Object({${code}})`;
+  return schemaOptions === undefined
+    ? `Type.Object({${code}})`
+    : `Type.Object({${code}}, ${schemaOptions})`;
 };
 
 export const parseEnum = (schema: EnumSchema) => {
+  const schemaOptions = parseSchemaOptions(schema);
   const code = schema.enum.reduce<string>((acc, schema) => {
     return acc + `${acc === "" ? "" : ","} ${parseType(schema)}`;
   }, "");
-  return `Type.Union([${code}])`;
+  return schemaOptions === undefined
+    ? `Type.Union([${code}])`
+    : `Type.Union([${code}], ${schemaOptions})`;
 };
 
 export const parseConst = (schema: ConstSchema): Code => {
@@ -242,7 +256,10 @@ export const parseOneOf = (schema: OneOfSchema): Code => {
 };
 
 export const parseNot = (schema: NotSchema): Code => {
-  return `Type.Not(${collect(schema.not)})`;
+  const schemaOptions = parseSchemaOptions(schema);
+  return schemaOptions === undefined
+    ? `Type.Not(${collect(schema.not)})`
+    : `Type.Not(${collect(schema.not)}, ${schemaOptions})`;
 };
 
 export const parseArray = (schema: ArraySchema): Code => {
@@ -295,6 +312,9 @@ export const parseTypeName = (
 const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
   const properties = Object.entries(schema).filter(([key, _value]) => {
     return (
+      // NOTE: To be fair, not sure if we should filter out the title. If this
+      // makes problems one day, think about not filtering it.
+      key !== "title" &&
       key !== "type" &&
       key !== "items" &&
       key !== "allOf" &&
@@ -303,7 +323,8 @@ const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
       key !== "not" &&
       key !== "properties" &&
       key !== "required" &&
-      key !== "const"
+      key !== "const" &&
+      key !== "enum"
     );
   });
   if (properties.length === 0) {
