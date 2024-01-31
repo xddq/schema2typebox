@@ -23,6 +23,6 @@ describe("integration tests - testing against real world schemas", () => {
       ]),
       "utf-8"
     );
-    expectEqualIgnoreFormatting(result, expectedResult);
+    await expectEqualIgnoreFormatting(result, expectedResult);
   });
 });

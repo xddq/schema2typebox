@@ -29,7 +29,9 @@ export const test = () => {
   build();
   // runs tests based on the test runner execution model
   // src: https://nodejs.org/api/test.html#test-runner-execution-model"
-  const { code } = shell.exec(`node --test --test-reporter spec`);
+  const { code } = shell.exec(
+    `node --enable-source-maps --test --test-reporter spec`
+  );
   handleNonZeroReturnCode(code);
 };
 

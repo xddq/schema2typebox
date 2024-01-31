@@ -53,6 +53,24 @@ describe("parser unit tests", () => {
       const expectedResult = `Type.Object({a: Type.Optional(Type.Number()),\n b: Type.String()})`;
       await expectEqualIgnoreFormatting(result, expectedResult);
     });
+    it("creates code with schemaOptions", async () => {
+      const dummySchema: ObjectSchema = {
+        $id: "AnyStringHere",
+        type: "object",
+        properties: {
+          a: {
+            type: "number",
+          },
+          b: {
+            type: "string",
+          },
+        },
+        required: ["b"],
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `Type.Object({a: Type.Optional(Type.Number()),\n b: Type.String()}, { $id: "AnyStringHere" })`;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
   });
 
   describe("parseEnum() - when parsing an enum schema", () => {
@@ -63,6 +81,16 @@ describe("parser unit tests", () => {
       };
       const result = parseEnum(dummySchema);
       expect(result).to.contain("Type.Union");
+    });
+    it("creates code with schemaOptions", () => {
+      const dummySchema: EnumSchema = {
+        $id: "AnyStringHere",
+        title: "Status",
+        enum: ["unknown", 1, null],
+      };
+      const result = parseEnum(dummySchema);
+      expect(result).to.contain("Type.Union");
+      expect(result).to.contain('{"$id":"AnyStringHere"}');
     });
   });
 
@@ -96,6 +124,22 @@ describe("parser unit tests", () => {
       expect(result).to.contain("Type.String()");
       expect(result).to.contain("Type.Number()");
     });
+    it("creates code with schemaOptions", () => {
+      const dummySchema: AnyOfSchema = {
+        $id: "AnyStringHere",
+        anyOf: [
+          {
+            type: "string",
+          },
+          {
+            type: "number",
+          },
+        ],
+      };
+      const result = parseAnyOf(dummySchema);
+      expect(result).to.contain("Type.Union");
+      expect(result).to.contain('{"$id":"AnyStringHere"}');
+    });
   });
 
   describe("parseAllOf() - when parsing an allOf schema", () => {
@@ -124,6 +168,18 @@ describe("parser unit tests", () => {
       const result = parseAllOf(schema);
       expect(result).to.contain(`Type.String()`);
       expect(result).to.contain(`Type.Number()`);
+    });
+    it("creates code with schemaOptions", () => {
+      const schema: AllOfSchema = {
+        $id: "AnyStringHere",
+        allOf: [
+          {
+            type: "string",
+          },
+        ],
+      };
+      const result = parseAllOf(schema);
+      expect(result).to.contain('{"$id":"AnyStringHere"}');
     });
   });
 
@@ -154,6 +210,18 @@ describe("parser unit tests", () => {
       expect(result).to.contain(`Type.String()`);
       expect(result).to.contain(`Type.Number()`);
     });
+    it("creates code with schemaOptions", () => {
+      const schema: OneOfSchema = {
+        $id: "AnyStringHere",
+        oneOf: [
+          {
+            type: "string",
+          },
+        ],
+      };
+      const result = parseOneOf(schema);
+      expect(result).to.contain('{"$id":"AnyStringHere"}');
+    });
   });
 
   describe("parseNot() - when parsing a not schema", () => {
@@ -165,6 +233,16 @@ describe("parser unit tests", () => {
       };
       const result = parseNot(schema);
       expect(result).to.contain(`Type.Not`);
+    });
+    it("creates code with schemaOptions", () => {
+      const schema: NotSchema = {
+        $id: "AnyStringHere",
+        not: {
+          type: "number",
+        },
+      };
+      const result = parseNot(schema);
+      expect(result).to.contain('{"$id":"AnyStringHere"}');
     });
   });
 
