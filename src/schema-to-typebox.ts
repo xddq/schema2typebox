@@ -151,6 +151,11 @@ const addOptionalModifier = (
     : `Type.Optional(${code})`;
 };
 
+const propertyNameLiteral = (name: string): string => {
+  const asciiLiteral = /^[A-Za-z_$][\w$]*/;
+  return asciiLiteral.test(name) ? name : `"${name.replaceAll('"', '\\"')}"`;
+}
+
 export const parseObject = (schema: ObjectSchema) => {
   const schemaOptions = parseSchemaOptions(schema);
   const properties = schema.properties;
@@ -162,7 +167,7 @@ export const parseObject = (schema: ObjectSchema) => {
   const code = attributes.reduce<string>((acc, [propertyName, schema]) => {
     return (
       acc +
-      `${acc === "" ? "" : ",\n"}${propertyName}: ${addOptionalModifier(
+      `${acc === "" ? "" : ",\n"}${propertyNameLiteral(propertyName)}: ${addOptionalModifier(
         collect(schema),
         propertyName,
         requiredProperties

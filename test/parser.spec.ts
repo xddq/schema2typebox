@@ -53,6 +53,32 @@ describe("parser unit tests", () => {
       const expectedResult = `Type.Object({a: Type.Optional(Type.Number()),\n b: Type.String()})`;
       await expectEqualIgnoreFormatting(result, expectedResult);
     });
+    it("quotes property names when required", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        properties: {
+          "@prop": {
+            type: "string",
+          },
+          "6": {
+            type: "boolean",
+          },
+          unquoted: {
+            type: "number",
+          },
+          __underscores: {
+            type: "string",
+          },
+          " spaces are \"weirdly\" valid ": {
+            type: "number"
+          },
+        },
+        required: ["@prop", "6", "unquoted", "__underscores", " spaces are \"weirdly\" valid "],
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `Type.Object({"6": Type.Boolean(),\n "@prop": Type.String(),\n unquoted: Type.Number(),\n __underscores: Type.String(),\n " spaces are \\"weirdly\\" valid ": Type.Number()})`;
+      await expectEqualIgnoreFormatting(result, expectedResult);
+    });
     it("creates code with schemaOptions", async () => {
       const dummySchema: ObjectSchema = {
         $id: "AnyStringHere",
