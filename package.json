@@ -25,7 +25,7 @@
     "test": "node tasks.mjs test",
     "watch-node": "node tasks.mjs watch-node",
     "watch-ts": "node tasks.mjs watch-ts",
-    "publish": "yarn build && npm publish"
+    "release": "yarn build && npm publish"
   },
   "repository": {
     "type": "git",
