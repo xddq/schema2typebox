@@ -166,6 +166,20 @@ export const parseObject = (schema: ObjectSchema) => {
   const properties = schema.properties;
   const requiredProperties = schema.required;
   if (properties === undefined) {
+    if (schema.patternProperties) {
+      const records: string[] = [];
+      for (const value of Object.values(schema.patternProperties)) {
+        if (typeof value === "object") {
+          records.push(`Type.Record(Type.String(), ${collect(value)})`);
+        }
+      }
+      if (records.length === 1) {
+        return `${records[0]}`;
+      } else if (records.length > 1) {
+        return `Type.Union([${records.join(", ")}])`;
+      }
+    }
+
     return `Type.Unknown()`;
   }
   const attributes = Object.entries(properties);

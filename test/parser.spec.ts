@@ -103,6 +103,34 @@ describe("parser unit tests", () => {
       const expectedResult = `Type.Object({a: Type.Optional(Type.Number()),\n b: Type.String()}, { $id: "AnyStringHere" })`;
       await expectEqualIgnoreFormatting(expectedResult, result);
     });
+    it("create a record type if patternProperties is present (array)", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        patternProperties: {
+          "^(.*)$": {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `Type.Record(Type.String(), Type.Array(Type.String()))`;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
+    it("create an union with record types if patternProperties with multiple keys is present", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        patternProperties: {
+          "^S_": { type: "string" },
+          "^I_": { type: "integer" },
+        },
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `Type.Union([Type.Record(Type.String(), Type.String()), Type.Record(Type.String(), Type.Number())])`;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
   });
 
   describe("parseEnum() - when parsing an enum schema", () => {
