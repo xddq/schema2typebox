@@ -165,23 +165,33 @@ export const parseObject = (schema: ObjectSchema) => {
   const schemaOptions = parseSchemaOptions(schema);
   const properties = schema.properties;
   const requiredProperties = schema.required;
-  if (properties === undefined) {
-    if (schema.patternProperties) {
-      const records: string[] = [];
-      for (const value of Object.values(schema.patternProperties)) {
-        if (typeof value === "object") {
-          records.push(`Type.Record(Type.String(), ${collect(value)})`);
-        }
-      }
-      if (records.length === 1) {
-        return `${records[0]}`;
-      } else if (records.length > 1) {
-        return `Type.Union([${records.join(", ")}])`;
+
+  let record: string | undefined = undefined;
+  if (schema.patternProperties) {
+    const records: string[] = [];
+
+    for (const [key, value] of Object.entries(schema.patternProperties)) {
+      if (typeof value === "object") {
+        records.push(
+          schemaOptions === undefined
+            ? `Type.Record(Type.String({pattern:"${key}"}), ${collect(value)})`
+            : `Type.Record(Type.String({pattern:"${key}"}), ${collect(
+                value
+              )}, ${schemaOptions})`
+        );
       }
     }
-
-    return `Type.Unknown()`;
+    if (records.length === 1) {
+      record = `${records[0]}`;
+    } else if (records.length > 1) {
+      record = `Type.Union([${records.join(", ")}])`;
+    }
   }
+
+  if (properties === undefined) {
+    return record ? record : `Type.Unknown()`;
+  }
+
   const attributes = Object.entries(properties);
   const code = attributes
     .map(([propertyName, schema]) => {
@@ -194,9 +204,12 @@ export const parseObject = (schema: ObjectSchema) => {
       )}`;
     })
     .join(",\n");
+
   return schemaOptions === undefined
-    ? `Type.Object({${code}})`
-    : `Type.Object({${code}}, ${schemaOptions})`;
+    ? `Type.Object({${code} ${record ? `, ...${record}` : ""}})`
+    : `Type.Object({${code} ${
+        record ? `, ...${record}` : ""
+      }}, ${schemaOptions})`;
 };
 
 export const parseEnum = (schema: EnumSchema) => {
@@ -349,7 +362,8 @@ const parseSchemaOptions = (schema: JSONSchema7): Code | undefined => {
       key !== "properties" &&
       key !== "required" &&
       key !== "const" &&
-      key !== "enum"
+      key !== "enum" &&
+      key !== "patternProperties"
     );
   });
   if (properties.length === 0) {
