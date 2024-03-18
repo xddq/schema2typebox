@@ -61,7 +61,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
     exports.module.Contract = Contract;
     `);
     await expectEqualIgnoreFormatting(
-      await schema2typebox({ input: dummySchema, outputType: "JS" }),
+      await schema2typebox({ input: dummySchema, outputType: "CJS" }),
       expectedTypebox
     );
   });

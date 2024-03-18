@@ -32,8 +32,10 @@ import {
 
 type Code = string;
 
+export type SupportedFiletypes = "CJS" | "TS" | "ESM";
+
 /** Generates TypeBox code from a given JSON schema */
-export const schema2typebox = async (jsonSchema: string) => {
+export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes) => {
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchema = (await $Refparser.dereference(
     schemaObj
@@ -49,13 +51,14 @@ export const schema2typebox = async (jsonSchema: string) => {
     dereferencedSchema.$id = exportedName;
   }
   const typeBoxType = collect(dereferencedSchema);
-  const exportedType = createExportedTypeForName(exportedName);
+  const exportedType = createExportedTypeForName(exportedName, outputType !== "TS");
 
   return `${createImportStatements()}
 
 ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
 ${exportedType}
-export const ${exportedName} = ${typeBoxType}`;
+const ${exportedName} = ${typeBoxType};
+export ${exportedName};`;
 };
 
 /**
@@ -119,7 +122,12 @@ const createExportNameForSchema = (schema: JSONSchema7Definition) => {
  * Creates custom typebox code to support the JSON schema keyword 'oneOf'. Based
  * on the suggestion here: https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
  */
-export const createOneOfTypeboxSupportCode = (): Code => {
+export const createOneOfTypeboxSupportCode = (useJsDoc = false): Code => {
+  let alt = [
+    "TypeRegistry.Set('ExtendedOneOf', (schema, value) => 1 === schema.oneOf.reduce((acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
+    `
+    `,
+  ]
   return [
     "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
     "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })",
@@ -127,18 +135,36 @@ export const createOneOfTypeboxSupportCode = (): Code => {
     return acc + curr + "\n\n";
   }, "");
 };
+import { Type, TypeRegistry, TSchema, type SchemaOptions, Kind } from "@sinclair/typebox";
+/**
+ * @template {import("@sinclair/typebox").TSchema[]} T
+ * @param {[...T]} oneOf
+ * @param {import("@sinclair/typebox").SchemaOptions | undefined} options
+ */
+function OneOf(oneOf, options = {}) { 
+  return /** @type {import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>} */ (Type.Unsafe)({ ...options, [Kind]: 'ExtendedOneOf', oneOf }) 
+};
+TypeRegistry.Set('ExtendedOneOf', (schema, value) => 1 === schema.oneOf.reduce((acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 0))
+
+const OneOf2 = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => { 
+  return Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })
+};
 
 /**
  * @throws Error
  */
-const createExportedTypeForName = (exportedName: string) => {
+const createExportedTypeForName = (exportedName: string, useJsDoc = false) => {
   if (exportedName.length === 0) {
     throw new Error("Can't create exported type for a name with length 0.");
   }
   const typeName = `${exportedName.charAt(0).toUpperCase()}${exportedName.slice(
     1
   )}`;
-  return `export type ${typeName} = Static<typeof ${exportedName}>`;
+  if (useJsDoc) {
+    return `/** @typedef {import('@sinclair/typebox').Static<typeof ${exportedName}>} ${exportedName}Type */`;
+  } else {
+    return `export type ${typeName} = Static<typeof ${exportedName}>`;
+  }
 };
 
 const addOptionalModifier = (

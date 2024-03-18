@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
+    "allowJs": true,
     "outDir": "dist",
     "sourceMap": true,
     "baseUrl": ".",
