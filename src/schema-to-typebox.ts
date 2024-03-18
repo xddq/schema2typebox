@@ -52,13 +52,21 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
   }
   const typeBoxType = collect(dereferencedSchema);
   const exportedType = createExportedTypeForName(exportedName, outputType !== "TS");
+  if (outputType === "TS") {
+    return `${createImportStatements()}
 
-  return `${createImportStatements()}
+    ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
+    ${exportedType}
+    export const ${exportedName} = ${typeBoxType};`;
+  } else {
+    return `${createImportStatements()}
 
-${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
-${exportedType}
-const ${exportedName} = ${typeBoxType};
-export ${exportedName};`;
+    ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
+    ${exportedType}
+    const _${exportedName} = ${typeBoxType};
+    export const ${exportedName} = _${exportedName};`;
+  }
+
 };
 
 /**
@@ -123,31 +131,39 @@ const createExportNameForSchema = (schema: JSONSchema7Definition) => {
  * on the suggestion here: https://github.com/xddq/schema2typebox/issues/16#issuecomment-1603731886
  */
 export const createOneOfTypeboxSupportCode = (useJsDoc = false): Code => {
-  let alt = [
-    "TypeRegistry.Set('ExtendedOneOf', (schema, value) => 1 === schema.oneOf.reduce((acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
-    `
-    `,
-  ]
-  return [
+  let oneOfCode = [
     "TypeRegistry.Set('ExtendedOneOf', (schema: any, value) => 1 === schema.oneOf.reduce((acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0), 0))",
     "const OneOf = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })",
-  ].reduce((acc, curr) => {
+  ];
+  if (useJsDoc) {
+    oneOfCode = [
+    `/**
+* @typedef {import("@sinclair/typebox").TSchema} JSTSchema
+* @typedef {import("@sinclair/typebox").SchemaOptions} JSSchemaOptions
+*/
+TypeRegistry.Set('ExtendedOneOf', 
+  /** @type {(schema: unknown & {oneOf: JSTSchema[]}, value: unknown) => boolean} */
+  (schema, value) => {
+    return 1 === schema.oneOf.reduce(
+      /** @type {(acc: number, schema: JSTSchema) => number} */
+      (acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 
+    0);
+});`,
+    `/**
+* @template {JSTSchema[]} T
+* @param {[...T]} oneOf
+* @param {JSSchemaOptions} options
+* @returns {ReturnType<typeof Type.Unsafe<import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>>>}
+*/
+function OneOf(oneOf, options = {}) {
+    // credit: https://github.com/microsoft/TypeScript/issues/27387#issuecomment-1223795056
+    return /** @type {typeof Type.Unsafe<import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>>} */ (Type.Unsafe)({ ...options, [Kind]: 'ExtendedOneOf', oneOf });
+};`,
+  ]
+}
+  return oneOfCode.reduce((acc, curr) => {
     return acc + curr + "\n\n";
   }, "");
-};
-import { Type, TypeRegistry, TSchema, type SchemaOptions, Kind } from "@sinclair/typebox";
-/**
- * @template {import("@sinclair/typebox").TSchema[]} T
- * @param {[...T]} oneOf
- * @param {import("@sinclair/typebox").SchemaOptions | undefined} options
- */
-function OneOf(oneOf, options = {}) { 
-  return /** @type {import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>} */ (Type.Unsafe)({ ...options, [Kind]: 'ExtendedOneOf', oneOf }) 
-};
-TypeRegistry.Set('ExtendedOneOf', (schema, value) => 1 === schema.oneOf.reduce((acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 0))
-
-const OneOf2 = <T extends TSchema[]>(oneOf: [...T], options: SchemaOptions = {}) => { 
-  return Type.Unsafe<Static<TUnion<T>>>({ ...options, [Kind]: 'ExtendedOneOf', oneOf })
 };
 
 /**
@@ -161,7 +177,7 @@ const createExportedTypeForName = (exportedName: string, useJsDoc = false) => {
     1
   )}`;
   if (useJsDoc) {
-    return `/** @typedef {import('@sinclair/typebox').Static<typeof ${exportedName}>} ${exportedName}Type */`;
+    return `/** @typedef {import("@sinclair/typebox").Static<typeof _${exportedName}>} ${exportedName}Type */`;
   } else {
     return `export type ${typeName} = Static<typeof ${exportedName}>`;
   }

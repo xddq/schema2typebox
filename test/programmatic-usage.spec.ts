@@ -40,7 +40,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
       expectedTypebox
     );
   });
-  test("can swap to JS + JSDocs output based on filetype", async () => {
+  test("can swap to JS + JSDocs output based on filetype: ESM", async () => {
     const dummySchema = `
     {
       "title": "Contract",
@@ -54,14 +54,14 @@ describe("programmatic usage - when running the programmatic usage", async () =>
     }
     `;
     const expectedTypebox = addCommentThatCodeIsGenerated.run(`
-    const { Type } = require("@sinclair/typebox");
+    import { Type } from "@sinclair/typebox";
     
-    /** @typedef {import("@sinclair/typebox").Static<typeof Contract>} ContractType */
-    const Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
-    exports.module.Contract = Contract;
+    /** @typedef {import("@sinclair/typebox").Static<typeof _Contract>} ContractType */
+    const _Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
+    export const Contract = _Contract;
     `);
     await expectEqualIgnoreFormatting(
-      await schema2typebox({ input: dummySchema, outputType: "CJS" }),
+      await schema2typebox({ input: dummySchema, outputType: "ESM" }),
       expectedTypebox
     );
   });
