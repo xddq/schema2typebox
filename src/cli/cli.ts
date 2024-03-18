@@ -23,12 +23,17 @@ export const runCli = async () => {
     return process.stdout.write(getHelpText.run());
   }
 
+  const outputJs = !args["output-stdout"] && 
+    typeof args.output === 'string' && 
+    args.output.endsWith("js");
+
   const inputFileAsString = readFileSync(
     process.cwd() + `/${args.input ?? "schema.json"}`,
     "utf-8"
   );
   const typeboxCode = await schema2typebox({
     input: inputFileAsString,
+    outputType: outputJs ? "JS" : "TS",
   });
 
   const generatedCodeStream = Readable.from(typeboxCode.split(/(\r\n|\r|\n)/));
