@@ -35,7 +35,7 @@ type Code = string;
 export type SupportedFiletypes = "CJS" | "TS" | "ESM";
 
 /** Generates TypeBox code from a given JSON schema */
-export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes) => {
+export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes = "TS") => {
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchema = (await $Refparser.dereference(
     schemaObj
@@ -52,13 +52,15 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
   }
   const typeBoxType = collect(dereferencedSchema);
   const exportedType = createExportedTypeForName(exportedName, outputType !== "TS");
-  if (outputType === "TS") {
+  switch (outputType) {
+  case "TS": {
     return `${createImportStatements()}
 
     ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
     ${exportedType}
     export const ${exportedName} = ${typeBoxType};`;
-  } else {
+  } 
+  case "ESM": {
     return `${createImportStatements()}
 
     ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
@@ -66,7 +68,18 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
     const _${exportedName} = ${typeBoxType};
     export const ${exportedName} = _${exportedName};`;
   }
+  case "CJS": {
+    return `${createImportStatements(true)}
 
+    ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
+    ${exportedType}
+    const _${exportedName} = ${typeBoxType};
+    module.exports.${exportedName} = _${exportedName};`;
+  }
+  default: {
+    throw new Error("Unhandled file output type: " + "TS");
+  }
+}
 };
 
 /**
@@ -112,11 +125,18 @@ export const collect = (schema: JSONSchema7Definition): Code => {
  * Unused imports (e.g. if we don't need to create a TypeRegistry for OneOf
  * types) are stripped in a postprocessing step.
  */
-const createImportStatements = () => {
-  return [
+const createImportStatements = (useCommonJs = false) => {
+  let importArray = [
     'import {Kind, SchemaOptions, Static, TSchema, TUnion, Type, TypeRegistry} from "@sinclair/typebox"',
     'import { Value } from "@sinclair/typebox/value";',
-  ].join("\n");
+  ];
+  if (useCommonJs) {
+    importArray = [
+      'const {Kind, SchemaOptions, Static, TSchema, TUnion, Type, TypeRegistry} = require("@sinclair/typebox");',
+      'const { Value } = require("@sinclair/typebox/value");',
+    ]
+  }
+  return importArray.join("\n");
 };
 
 const createExportNameForSchema = (schema: JSONSchema7Definition) => {
