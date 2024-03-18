@@ -219,8 +219,8 @@ whats already implemented and what is missing.
 - If you have an idea or want to help implement something, feel free to do so.
   Please always start by creating a discussion post to avoid any unnecessary
   work.
-  - Please always create tests for new features that are implemented. This will
-    decrease mental overhead for reviewing and developing in the long run.
+- Please always create tests for new features that are implemented. This will
+  decrease mental overhead for reviewing and developing in the long run.
 - See specification for JSON schema draft-07
   [here](https://json-schema.org/specification-links.html#draft-7). The meta
   schema is also stored inside this repo under ./meta-schema-draft-07.json.
@@ -256,6 +256,10 @@ The following text is the output that will be displayed when you issue
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
        instead. Has precedence over -o/--output.
+    
+    --output-type
+       Sets the output language, defaults to Typescript.
+       Options are: "CJS"; "ESM"; and "TS"; where "TS" is the default.
 
 ```
 
