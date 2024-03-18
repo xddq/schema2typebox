@@ -29,10 +29,14 @@ import {
   isOneOfSchema,
   isSchemaWithMultipleTypes,
 } from "./schema-matchers";
+import { inspect } from "util";
 
 type Code = string;
 
 export type SupportedFiletypes = "CJS" | "TS" | "ESM";
+
+/** A helper function to ensure enum cases are fully exhaustive. */
+const exhaustiveCheck = (n: never) => { throw new Error("This error should never occur - unhandled type " + inspect(n)); };
 
 /** Generates TypeBox code from a given JSON schema */
 export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes = "TS") => {
@@ -77,7 +81,7 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
     module.exports.${exportedName} = _${exportedName};`;
   }
   default: {
-    throw new Error("Unhandled file output type: " + "TS");
+    exhaustiveCheck(outputType);
   }
 }
 };
