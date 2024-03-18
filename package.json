@@ -74,5 +74,8 @@
     "nodemon": "2.0.22",
     "shelljs": "0.8.5"
   },
-  "packageManager": "yarn@3.5.1"
+  "packageManager": "yarn@3.5.1",
+  "volta": {
+    "node": "18.19.1"
+  }
 }
