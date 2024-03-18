@@ -15,7 +15,7 @@ TypeRegistry.Set('ExtendedOneOf',
  * @template {import("@sinclair/typebox").TSchema[]} T
  * @param {[...T]} oneOf
  * @param {import("@sinclair/typebox").SchemaOptions} options
- * @returns {ReturnType<typeof Type.Unsafe<import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>>}
+ * @returns {ReturnType<typeof Type.Unsafe<import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>>>}
  */
 function OneOf(oneOf, options = {}) {
     // credit: https://github.com/microsoft/TypeScript/issues/27387#issuecomment-1223795056
