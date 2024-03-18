@@ -10,7 +10,7 @@ export const runCli = async () => {
     alias: {
       input: "i",
       output: "o",
-      outputType: "t",
+      outputType: "ot",
       help: "h",
     },
     default: {
