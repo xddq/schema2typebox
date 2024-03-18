@@ -35,11 +35,14 @@ type Code = string;
 
 export type SupportedFiletypes = "CJS" | "TS" | "ESM";
 
-/** A helper function to ensure enum cases are fully exhaustive. */
+/** 
+ * A helper function to ensure enum cases are fully exhaustive. 
+ * @throws {Error}
+ */
 const exhaustiveCheck = (n: never) => { throw new Error("This error should never occur - unhandled type " + inspect(n)); };
 
 /** Generates TypeBox code from a given JSON schema */
-export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes = "TS") => {
+export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes) => {
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchema = (await $Refparser.dereference(
     schemaObj
@@ -82,6 +85,7 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
   }
   default: {
     exhaustiveCheck(outputType);
+    return 'unreachable';
   }
 }
 };
