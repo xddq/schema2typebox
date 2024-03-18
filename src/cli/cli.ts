@@ -10,11 +10,13 @@ export const runCli = async () => {
     alias: {
       input: "i",
       output: "o",
+      outputType: "t",
       help: "h",
     },
     default: {
       input: "schema.json",
       output: "generated-typebox.ts",
+      outputType: "TS",
     },
   });
 
@@ -23,9 +25,13 @@ export const runCli = async () => {
     return process.stdout.write(getHelpText.run());
   }
 
-  const outputJs = !args["output-stdout"] && 
-    typeof args.output === 'string' && 
-    args.output.endsWith("js");
+  const outputCjs = args.outputType === "CJS" || 
+    (typeof args.output === 'string' && 
+    args.output.endsWith(".cjs"));
+
+  const outputEsm = args.outputType === "ESM" || 
+    (typeof args.output === 'string' && 
+    (args.output.endsWith(".js") || args.output.endsWith(".mjs")));
 
   const inputFileAsString = readFileSync(
     process.cwd() + `/${args.input ?? "schema.json"}`,
@@ -33,7 +39,7 @@ export const runCli = async () => {
   );
   const typeboxCode = await schema2typebox({
     input: inputFileAsString,
-    outputType: outputJs ? "JS" : "TS",
+    outputType: outputCjs ? "CJS" : (outputEsm ? "ESM" : "TS"),
   });
 
   const generatedCodeStream = Readable.from(typeboxCode.split(/(\r\n|\r|\n)/));
@@ -77,6 +83,10 @@ export const getHelpText = {
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
        instead. Has precedence over -o/--output.
+
+    --output-type
+       Sets the output language, defaults to Typescript.
+       Options are: "CJS"; "ESM"; and "TS"; where "TS" is the default.
    `;
   },
 };
