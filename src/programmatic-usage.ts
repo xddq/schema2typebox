@@ -7,6 +7,10 @@ export type Schema2TypeboxOptions = {
    * The given JSON schema as utf-8 encoded string.
    */
   input: string;
+  /**
+   * The type of code to output, defaults to typescript.
+   */
+  outputType?: "JS" | "TS";
 };
 
 /**

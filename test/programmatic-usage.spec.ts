@@ -40,6 +40,31 @@ describe("programmatic usage - when running the programmatic usage", async () =>
       expectedTypebox
     );
   });
+  test("can swap to JS + JSDocs output based on filetype", async () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+    `;
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const { Type } = require("@sinclair/typebox");
+    
+    /** @typedef {import("@sinclair/typebox").Static<typeof Contract>} ContractType */
+    const Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
+    exports.module.Contract = Contract;
+    `);
+    await expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema, outputType: "JS" }),
+      expectedTypebox
+    );
+  });
   describe("when working with files containing $refs (sanity check of refparser library)", () => {
     test("object with $ref pointing to external files in relative path", async () => {
       const dummySchema = `
