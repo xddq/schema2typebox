@@ -256,7 +256,7 @@ The following text is the output that will be displayed when you issue
     --output-stdout
        Does not generate an output file and prints the generated code to stdout
        instead. Has precedence over -o/--output.
-    
+
     --output-type
        Sets the output language, defaults to Typescript.
        Options are: "CJS"; "ESM"; and "TS"; where "TS" is the default.

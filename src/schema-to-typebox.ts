@@ -8,6 +8,7 @@ import {
   JSONSchema7Type,
   JSONSchema7TypeName,
 } from "json-schema";
+import { inspect } from "util";
 import {
   AllOfSchema,
   AnyOfSchema,
@@ -29,20 +30,26 @@ import {
   isOneOfSchema,
   isSchemaWithMultipleTypes,
 } from "./schema-matchers";
-import { inspect } from "util";
 
 type Code = string;
 
 export type SupportedFiletypes = "CJS" | "TS" | "ESM";
 
-/** 
- * A helper function to ensure enum cases are fully exhaustive. 
+/**
+ * A helper function to ensure enum cases are fully exhaustive.
  * @throws {Error}
  */
-const exhaustiveCheck = (n: never) => { throw new Error("This error should never occur - unhandled type " + inspect(n)); };
+const exhaustiveCheck = (n: never) => {
+  throw new Error(
+    "This error should never occur - unhandled type " + inspect(n)
+  );
+};
 
 /** Generates TypeBox code from a given JSON schema */
-export const schema2typebox = async (jsonSchema: string, outputType: SupportedFiletypes) => {
+export const schema2typebox = async (
+  jsonSchema: string,
+  outputType: SupportedFiletypes
+) => {
   const schemaObj = JSON.parse(jsonSchema);
   const dereferencedSchema = (await $Refparser.dereference(
     schemaObj
@@ -58,36 +65,39 @@ export const schema2typebox = async (jsonSchema: string, outputType: SupportedFi
     dereferencedSchema.$id = exportedName;
   }
   const typeBoxType = collect(dereferencedSchema);
-  const exportedType = createExportedTypeForName(exportedName, outputType !== "TS");
+  const exportedType = createExportedTypeForName(
+    exportedName,
+    outputType !== "TS"
+  );
   switch (outputType) {
-  case "TS": {
-    return `${createImportStatements()}
+    case "TS": {
+      return `${createImportStatements()}
 
     ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
     ${exportedType}
     export const ${exportedName} = ${typeBoxType};`;
-  } 
-  case "ESM": {
-    return `${createImportStatements()}
+    }
+    case "ESM": {
+      return `${createImportStatements()}
 
     ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
     ${exportedType}
     const _${exportedName} = ${typeBoxType};
     export const ${exportedName} = _${exportedName};`;
-  }
-  case "CJS": {
-    return `${createImportStatements(true)}
+    }
+    case "CJS": {
+      return `${createImportStatements(true)}
 
     ${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
     ${exportedType}
     const _${exportedName} = ${typeBoxType};
     module.exports.${exportedName} = _${exportedName};`;
+    }
+    default: {
+      exhaustiveCheck(outputType);
+      return "unreachable";
+    }
   }
-  default: {
-    exhaustiveCheck(outputType);
-    return 'unreachable';
-  }
-}
 };
 
 /**
@@ -142,7 +152,7 @@ const createImportStatements = (useCommonJs = false) => {
     importArray = [
       'const {Kind, SchemaOptions, Static, TSchema, TUnion, Type, TypeRegistry} = require("@sinclair/typebox");',
       'const { Value } = require("@sinclair/typebox/value");',
-    ]
+    ];
   }
   return importArray.join("\n");
 };
@@ -165,7 +175,7 @@ export const createOneOfTypeboxSupportCode = (useJsDoc = false): Code => {
   ];
   if (useJsDoc) {
     oneOfCode = [
-    `/**
+      `/**
 * @typedef {import("@sinclair/typebox").TSchema} JSTSchema
 * @typedef {import("@sinclair/typebox").SchemaOptions} JSSchemaOptions
 */
@@ -177,7 +187,7 @@ TypeRegistry.Set('ExtendedOneOf',
       (acc, schema) => acc + (Value.Check(schema, value) ? 1 : 0), 
     0);
 });`,
-    `/**
+      `/**
 * @template {JSTSchema[]} T
 * @param {[...T]} oneOf
 * @param {JSSchemaOptions} options
@@ -187,8 +197,8 @@ function OneOf(oneOf, options = {}) {
     // credit: https://github.com/microsoft/TypeScript/issues/27387#issuecomment-1223795056
     return /** @type {typeof Type.Unsafe<import("@sinclair/typebox").Static<import("@sinclair/typebox").TUnion<T>>>} */ (Type.Unsafe)({ ...options, [Kind]: 'ExtendedOneOf', oneOf });
 };`,
-  ]
-}
+    ];
+  }
   return oneOfCode.reduce((acc, curr) => {
     return acc + curr + "\n\n";
   }, "");

@@ -25,13 +25,14 @@ export const runCli = async () => {
     return process.stdout.write(getHelpText.run());
   }
 
-  const outputCjs = args.outputType === "CJS" || 
-    (typeof args.output === 'string' && 
-    args.output.endsWith(".cjs"));
+  const outputCjs =
+    args.outputType === "CJS" ||
+    (typeof args.output === "string" && args.output.endsWith(".cjs"));
 
-  const outputEsm = args.outputType === "ESM" || 
-    (typeof args.output === 'string' && 
-    (args.output.endsWith(".js") || args.output.endsWith(".mjs")));
+  const outputEsm =
+    args.outputType === "ESM" ||
+    (typeof args.output === "string" &&
+      (args.output.endsWith(".js") || args.output.endsWith(".mjs")));
 
   const inputFileAsString = readFileSync(
     process.cwd() + `/${args.input ?? "schema.json"}`,
@@ -39,7 +40,7 @@ export const runCli = async () => {
   );
   const typeboxCode = await schema2typebox({
     input: inputFileAsString,
-    outputType: outputCjs ? "CJS" : (outputEsm ? "ESM" : "TS"),
+    outputType: outputCjs ? "CJS" : outputEsm ? "ESM" : "TS",
   });
 
   const generatedCodeStream = Readable.from(typeboxCode.split(/(\r\n|\r|\n)/));

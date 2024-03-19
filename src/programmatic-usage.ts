@@ -1,6 +1,9 @@
 import { cosmiconfig } from "cosmiconfig";
 import * as prettier from "prettier";
-import { schema2typebox as Schema2Typebox, type SupportedFiletypes } from "./schema-to-typebox";
+import {
+  schema2typebox as Schema2Typebox,
+  type SupportedFiletypes,
+} from "./schema-to-typebox";
 
 export type Schema2TypeboxOptions = {
   /**
@@ -23,7 +26,7 @@ export type Schema2TypeboxOptions = {
  **/
 export const schema2typebox = async ({
   input,
-  outputType
+  outputType,
 }: Schema2TypeboxOptions): Promise<string> => {
   const generatedTypeboxCode = await Schema2Typebox(input, outputType ?? "TS");
 
