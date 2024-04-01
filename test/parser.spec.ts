@@ -328,6 +328,28 @@ describe("parser unit tests", () => {
         expect(result).to.contain(JSON.stringify({ minimum: 1 }));
       });
     });
+
+    describe('when "items" is undefined', () => {
+      it("returns Type.Array and Type.Any", () => {
+        const schema: ArraySchema = {
+          type: "array",
+        };
+        const result = parseArray(schema);
+        expect(result).to.contain(`Type.Array`);
+        expect(result).to.contain(`Type.Any`);
+      });
+
+      it("creates schemaOptions", () => {
+        const schema: ArraySchema = {
+          type: "array",
+          description: "test description",
+        };
+        const result = parseArray(schema);
+        expect(result).to.contain(
+          JSON.stringify({ description: "test description" })
+        );
+      });
+    });
   });
 
   describe("parseWithMultipleTypes() - when parsing a schema where 'types' is a list", () => {

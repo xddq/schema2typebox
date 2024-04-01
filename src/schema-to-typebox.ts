@@ -283,9 +283,10 @@ export const parseArray = (schema: ArraySchema): Code => {
       ? `Type.Array(Type.Union(${code}))`
       : `Type.Array(Type.Union(${code}),${schemaOptions})`;
   }
+  const itemsType = schema.items ? collect(schema.items) : "Type.Any()";
   return schemaOptions === undefined
-    ? `Type.Array(${collect(schema.items)})`
-    : `Type.Array(${collect(schema.items)},${schemaOptions})`;
+    ? `Type.Array(${itemsType})`
+    : `Type.Array(${itemsType},${schemaOptions})`;
 };
 
 export const parseWithMultipleTypes = (schema: MultipleTypesSchema): Code => {
