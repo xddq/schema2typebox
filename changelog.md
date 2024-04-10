@@ -1,3 +1,7 @@
+# 1.7.2
+
+- allow array schemas that don't specify a type for the array items. [src](https://github.com/xddq/schema2typebox/pull/42)
+
 # 1.7.1
 
 - fix typebox code generation for JSON schemas which use property names like
