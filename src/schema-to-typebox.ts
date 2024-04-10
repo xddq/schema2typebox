@@ -283,7 +283,7 @@ export const parseArray = (schema: ArraySchema): Code => {
       ? `Type.Array(Type.Union(${code}))`
       : `Type.Array(Type.Union(${code}),${schemaOptions})`;
   }
-  const itemsType = schema.items ? collect(schema.items) : "Type.Any()";
+  const itemsType = schema.items ? collect(schema.items) : "Type.Unknown()";
   return schemaOptions === undefined
     ? `Type.Array(${itemsType})`
     : `Type.Array(${itemsType},${schemaOptions})`;

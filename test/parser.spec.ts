@@ -330,13 +330,13 @@ describe("parser unit tests", () => {
     });
 
     describe('when "items" is undefined', () => {
-      it("returns Type.Array and Type.Any", () => {
+      it("returns Type.Array and Type.Unknown", () => {
         const schema: ArraySchema = {
           type: "array",
         };
         const result = parseArray(schema);
         expect(result).to.contain(`Type.Array`);
-        expect(result).to.contain(`Type.Any`);
+        expect(result).to.contain(`Type.Unknown`);
       });
 
       it("creates schemaOptions", () => {
