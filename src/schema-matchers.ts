@@ -41,10 +41,10 @@ export const isNotSchema = (schema: JSONSchema7): schema is NotSchema => {
 
 export type ArraySchema = JSONSchema7 & {
   type: "array";
-  items: JSONSchema7Definition | JSONSchema7Definition[];
+  items?: JSONSchema7Definition | JSONSchema7Definition[];
 };
 export const isArraySchema = (schema: JSONSchema7): schema is ArraySchema => {
-  return schema.type === "array" && schema.items !== undefined;
+  return schema.type === "array";
 };
 
 export type ConstSchema = JSONSchema7 & { const: JSONSchema7Type };
