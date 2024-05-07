@@ -1,3 +1,23 @@
+# 1.7.3
+
+- support unions containing objects and/or arrays
+
+  ```json
+  { 
+    "type": "object",
+    "properties":  {
+      "nullableObject": {
+        "type": ["object", "null"],
+        "properties": {}
+      },
+      "nullableArray": {
+        "type": ["array", "null"],
+        "items": {}
+      }
+    }
+  }
+  ```
+  
 # 1.7.2
 
 - allow array schemas that don't specify a type for the array items. [src](https://github.com/xddq/schema2typebox/pull/42)
