@@ -2,6 +2,11 @@
 
 - support unions containing objects and/or arrays [src](https://github.com/xddq/schema2typebox/pull/48)
 
+# 1.7.3
+
+- always quote properties to avoid futher issues with regex missing out on
+  uncommon naming schemes. [src](https://github.com/xddq/schema2typebox/pull/47)
+
 # 1.7.2
 
 - allow array schemas that don't specify a type for the array items. [src](https://github.com/xddq/schema2typebox/pull/42)
