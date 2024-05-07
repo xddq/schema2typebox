@@ -151,16 +151,6 @@ const addOptionalModifier = (
     : `Type.Optional(${code})`;
 };
 
-/**
- * Fixes issue for JSON schemas with attributes like (without the quotes) "@test",
- * "123", or "some with spaces". see: https://github.com/xddq/schema2typebox/pull/36
- * Returns the property name wrapped in quotes whenever quotes are required.
- */
-export const quotePropertyNameWhenRequired = (propertyName: string) => {
-  const quotingIsNotRequired = /^[A-Za-z_]*$/.test(propertyName);
-  return quotingIsNotRequired ? propertyName : `"${propertyName}"`;
-};
-
 export const parseObject = (schema: ObjectSchema) => {
   const schemaOptions = parseSchemaOptions(schema);
   const properties = schema.properties;
@@ -169,11 +159,15 @@ export const parseObject = (schema: ObjectSchema) => {
     return `Type.Unknown()`;
   }
   const attributes = Object.entries(properties);
+  // NOTE: Just always quote the propertyName here to make sure we don't run
+  // into issues as they came up before
+  // [here](https://github.com/xddq/schema2typebox/issues/45) or
+  // [here](https://github.com/xddq/schema2typebox/discussions/35). Since we run
+  // prettier as "postprocessor" anyway we will also ensure to still have a sane
+  // output without any unnecessarily quotes attributes.
   const code = attributes
     .map(([propertyName, schema]) => {
-      return `${quotePropertyNameWhenRequired(
-        propertyName
-      )}: ${addOptionalModifier(
+      return `"${propertyName}": ${addOptionalModifier(
         collect(schema),
         propertyName,
         requiredProperties
