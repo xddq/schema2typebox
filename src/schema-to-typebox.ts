@@ -315,7 +315,9 @@ export const parseTypeName = (
       : `Type.Null(${schemaOptions})`;
   } else if (type === "object") {
     return parseObject(schema as ObjectSchema);
-  } else {
+    // We don't want to trust on build time checking here, json can contain anything
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  } else if (type === "array") {
     return parseArray(schema as ArraySchema);
   }
   throw new Error(`Should never happen..? parseType got type: ${type}`);
