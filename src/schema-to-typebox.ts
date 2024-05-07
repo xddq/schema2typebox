@@ -157,7 +157,7 @@ const addOptionalModifier = (
  * Returns the property name wrapped in quotes whenever quotes are required.
  */
 export const quotePropertyNameWhenRequired = (propertyName: string) => {
-  const quotingIsNotRequired = /^[A-Za-z_$].*/.test(propertyName);
+  const quotingIsNotRequired = /^[A-Za-z_]*$/.test(propertyName);
   return quotingIsNotRequired ? propertyName : `"${propertyName}"`;
 };
 
