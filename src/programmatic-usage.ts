@@ -1,12 +1,19 @@
 import { cosmiconfig } from "cosmiconfig";
 import * as prettier from "prettier";
-import { schema2typebox as Schema2Typebox } from "./schema-to-typebox";
+import {
+  schema2typebox as Schema2Typebox,
+  type SupportedFiletypes,
+} from "./schema-to-typebox";
 
 export type Schema2TypeboxOptions = {
   /**
    * The given JSON schema as utf-8 encoded string.
    */
   input: string;
+  /**
+   * The type of code to output, defaults to typescript ("TS")
+   */
+  outputType?: SupportedFiletypes;
 };
 
 /**
@@ -19,8 +26,9 @@ export type Schema2TypeboxOptions = {
  **/
 export const schema2typebox = async ({
   input,
+  outputType,
 }: Schema2TypeboxOptions): Promise<string> => {
-  const generatedTypeboxCode = await Schema2Typebox(input);
+  const generatedTypeboxCode = await Schema2Typebox(input, outputType ?? "TS");
 
   // post-processing
   // 1. format code

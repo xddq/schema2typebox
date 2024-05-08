@@ -40,6 +40,57 @@ describe("programmatic usage - when running the programmatic usage", async () =>
       expectedTypebox
     );
   });
+  test("can swap to JS + JSDocs output based on filetype: ESM", async () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+    `;
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    import { Type } from "@sinclair/typebox";
+    
+    /** @typedef {import("@sinclair/typebox").Static<typeof _Contract>} ContractType */
+    const _Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
+    export const Contract = _Contract;
+    `);
+    await expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema, outputType: "ESM" }),
+      expectedTypebox
+    );
+  });
+  test("can swap to JS + JSDocs output based on filetype: CJS", async () => {
+    const dummySchema = `
+    {
+      "title": "Contract",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+    `;
+    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const { Kind, SchemaOptions, Static, TSchema, TUnion, Type, TypeRegistry } = require("@sinclair/typebox");
+    const { Value } = require("@sinclair/typebox/value");
+    
+    /** @typedef {import("@sinclair/typebox").Static<typeof _Contract>} ContractType */
+    const _Contract = Type.Object({name: Type.String()}, { $id: "Contract" });
+    module.exports.Contract = _Contract;
+    `);
+    await expectEqualIgnoreFormatting(
+      await schema2typebox({ input: dummySchema, outputType: "CJS" }),
+      expectedTypebox
+    );
+  });
   describe("when working with files containing $refs (sanity check of refparser library)", () => {
     test("object with $ref pointing to external files in relative path", async () => {
       const dummySchema = `
