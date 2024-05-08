@@ -1,8 +1,11 @@
 <!--
   Thanks for submitting a pull request!
 
-  Before submitting it, please make sure that you added a test case for the bug
-that you fixed, or new feature that you added. This is required.
+  Before submitting it, please make sure that you:
+- added a test case for the bug that you fixed or new feature that you added ✅
+- bumped the version based on semantic versioning [src](https://semver.org/)
+- updated the changelog.md file ✅
+These are required.
 
 -->
 
