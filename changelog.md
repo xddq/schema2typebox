@@ -1,3 +1,7 @@
+# 1.7.4
+
+- support unions containing objects and/or arrays [src](https://github.com/xddq/schema2typebox/pull/48)
+
 # 1.7.3
 
 - always quote properties to avoid futher issues with regex missing out on

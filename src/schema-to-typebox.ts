@@ -285,13 +285,15 @@ export const parseArray = (schema: ArraySchema): Code => {
 
 export const parseWithMultipleTypes = (schema: MultipleTypesSchema): Code => {
   const code = schema.type.reduce<string>((acc, typeName) => {
-    return acc + `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName)}`;
+    return (
+      acc + `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName, schema)}`
+    );
   }, "");
   return `Type.Union([${code}])`;
 };
 
 export const parseTypeName = (
-  type: Omit<JSONSchema7TypeName, "array" | "object">,
+  type: JSONSchema7TypeName,
   schema: JSONSchema7 = {}
 ): Code => {
   const schemaOptions = parseSchemaOptions(schema);
@@ -311,6 +313,12 @@ export const parseTypeName = (
     return schemaOptions === undefined
       ? "Type.Null()"
       : `Type.Null(${schemaOptions})`;
+  } else if (type === "object") {
+    return parseObject(schema as ObjectSchema);
+    // We don't want to trust on build time checking here, json can contain anything
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  } else if (type === "array") {
+    return parseArray(schema as ArraySchema);
   }
   throw new Error(`Should never happen..? parseType got type: ${type}`);
 };

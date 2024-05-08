@@ -378,6 +378,30 @@ describe("parser unit tests", () => {
       expect(result).to.contain(`Type.String`);
       expect(result).to.contain(`Type.Null`);
     });
+
+    it("creates union types for nullable objects", async () => {
+      const schema: MultipleTypesSchema = {
+        type: ["object", "null"],
+        properties: {},
+      };
+      const result = parseWithMultipleTypes(schema);
+      await expectEqualIgnoreFormatting(
+        result,
+        `Type.Union([Type.Object({}), Type.Null()])`
+      );
+    });
+
+    it("creates union types for nullable arrays", async () => {
+      const schema: MultipleTypesSchema = {
+        type: ["array", "null"],
+        items: { type: "string" },
+      };
+      const result = parseWithMultipleTypes(schema);
+      await expectEqualIgnoreFormatting(
+        result,
+        `Type.Union([Type.Array(Type.String()),Type.Null()])`
+      );
+    });
   });
 
   describe("parseConst() - when parsing a const schema", () => {
