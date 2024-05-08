@@ -1,6 +1,6 @@
 {
   "name": "schema2typebox",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
   "source": "dist/src/index.js",
