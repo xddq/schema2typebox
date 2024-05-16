@@ -20,6 +20,6 @@ jobs:
       - name: Install Dependencies
         run: yarn --immutable
       - name: Build
-        run: yarn build
+        run: yarn compile
       - name: Test
         run: npm test

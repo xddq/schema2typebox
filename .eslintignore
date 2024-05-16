@@ -141,4 +141,4 @@ TODO
 .yarn
 generated-typebox.ts
 examples
-test/integration/schemas/*.ts
+test/fixture/*.ts

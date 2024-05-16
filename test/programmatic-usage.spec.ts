@@ -1,21 +1,17 @@
+import { describe, test } from "@jest/globals";
 import { zip } from "fp-ts/Array";
-import assert from "node:assert/strict";
 import fs from "node:fs";
-import { describe, test } from "node:test";
 import shell from "shelljs";
 
 import {
   addCommentThatCodeIsGenerated,
   schema2typebox,
 } from "../src/programmatic-usage";
-import {
-  buildOsIndependentPath,
-  expectEqualIgnoreFormatting,
-} from "./test-utils";
+import { buildOsIndependentPath, expectEqualIgnoreFormatting } from "./util";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 
-describe("programmatic usage - when running the programmatic usage", async () => {
+describe("programmatic usage - when running the programmatic usage", () => {
   test("generated typebox names are based on title attribute", async () => {
     const dummySchema = `
     {
@@ -105,7 +101,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
     `);
 
       const inputPaths = ["person.json", "status.json"].flatMap((currItem) => {
-        return buildOsIndependentPath([__dirname, "..", "..", currItem]);
+        return buildOsIndependentPath([__dirname, "..", currItem]);
       });
       zip(inputPaths, [referencedPersonSchema, referencedStatusSchema]).map(
         ([fileName, data]) => {
@@ -120,7 +116,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
 
       // cleanup generated files
       const { code: returnCode } = shell.rm("-f", inputPaths);
-      assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+      expect(returnCode).toBe(SHELLJS_RETURN_CODE_OK);
     });
     test("object with $ref inside anyOf", async () => {
       const dummySchema = {
@@ -176,7 +172,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
     `);
 
       const inputPaths = ["cat.json", "dog.json"].flatMap((currItem) => {
-        return buildOsIndependentPath([__dirname, "..", "..", currItem]);
+        return buildOsIndependentPath([__dirname, "..", currItem]);
       });
       zip(inputPaths, [referencedCatSchema, referencedDogSchema]).map(
         ([fileName, data]) => {
@@ -191,7 +187,7 @@ describe("programmatic usage - when running the programmatic usage", async () =>
 
       // cleanup generated files
       const { code: returnCode } = shell.rm("-f", inputPaths);
-      assert.equal(returnCode, SHELLJS_RETURN_CODE_OK);
+      expect(returnCode).toBe(SHELLJS_RETURN_CODE_OK);
     });
     // NOTE: This test might break if github adapts their links to raw github user
     // content.
