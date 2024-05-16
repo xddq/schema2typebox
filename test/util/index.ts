@@ -1,9 +1,9 @@
-import assert from "node:assert/strict";
+import { expect } from "@jest/globals";
 import path from "node:path";
 import * as prettier from "prettier";
 
 const formatWithPrettier = async (input: string): Promise<string> => {
-  return await prettier.format(input, { parser: "typescript" });
+  return prettier.format(input, { parser: "typescript" });
 };
 
 /**
@@ -17,8 +17,7 @@ export const expectEqualIgnoreFormatting = async (
   input1: string,
   input2: string
 ): Promise<void> => {
-  assert.equal(
-    await formatWithPrettier(input1),
+  expect(await formatWithPrettier(input1)).toBe(
     await formatWithPrettier(input2)
   );
 };

@@ -17,25 +17,25 @@ import {
 } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 
-TypeRegistry.Set(
-  "ExtendedOneOf",
-  (schema: any, value) =>
+TypeRegistry.Set("ExtendedOneOf", (schema: any, value) => {
+  return (
     1 ===
-    schema.oneOf.reduce(
-      (acc: number, schema: any) => acc + (Value.Check(schema, value) ? 1 : 0),
-      0
-    )
-);
+    schema.oneOf.reduce((acc: number, schema: any) => {
+      return acc + (Value.Check(schema, value) ? 1 : 0);
+    }, 0)
+  );
+});
 
 const OneOf = <T extends TSchema[]>(
   oneOf: [...T],
   options: SchemaOptions = {}
-) =>
-  Type.Unsafe<Static<TUnion<T>>>({
+) => {
+  return Type.Unsafe<Static<TUnion<T>>>({
     ...options,
     [Kind]: "ExtendedOneOf",
     oneOf,
   });
+};
 
 export type DayOfWeek = Static<typeof DayOfWeek>;
 export const DayOfWeek = OneOf(

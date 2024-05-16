@@ -169,61 +169,24 @@ the target TypeBox officially supports. _These types are fully compatible with
 the JSON Schema Draft 7 specification._ (from typebox repo 20.08.2023).
 
 However, since the amount of breaking changes is quite small between most JSON
-schema specs, support for other specs should "just work". Feel free to open a
-discussion or issue when you find problems. Happy about contributions if you
-want to help out.
-
-- [x] draft-04
-- [x] draft-06
-- [x] draft-07 (main goal of this package, see Feature List for the state)
-- [x] draft-2019-09
-  - should be working with the _current feature set_
-- [ ] draft-2020-12
-  - use with caution. Not expected to fully work. See
-    [here](https://github.com/sinclairzx81/typebox/issues/490)
-
-### Feature List
-
-Tracking the progress/features of `JSON schema -> TypeBox` transformation to see
-whats already implemented and what is missing.
-
-- [x] Type.String() via "string" instance type
-- [x] Type.Boolean() via "boolean" instance type
-- [x] Type.Number() via "number" instance type
-- [x] Type.Null() via "null" instance type
-- [x] Type.Array() via "array" instance type
-- [x] Type.Object() via "object" instance type
-- [x] Type.Literal() via "const" property
-- [x] Type.Union() via "anyOf" or "enum" property
-  - schema2typebox generates union types instead of enums. If you have a problem
-    with this behaviour and valid arguments for using enums please create an
-    issue and it may be considered again.
-- [x] Type.Union() via a list of types given by the 'type' instance type (e.g.
-      type ["string","null"]
-- [x] Type.Intersect() via "allOf" property
-- [x] OneOf() via "oneOf" property
-  - This adds oneOf to the typebox type registry as (Kind: 'ExtendedOneOf') in
-    order to be able to align to oneOf json schema semantics and still be able
-    to use the typebox compiler. [More
-    info](https://github.com/xddq/schema2typebox/issues/16).
-- [x] Type.Not() via "not" property
-- [x] Type.Unknown() for objects without properties
-- [x] Full support for schema options (e.g. minLength: 1, description: "test
-      entity").
-- [x] $refs anywhere using [@apidevtools/json-schema-ref-parser](https://github.com/APIDevTools/json-schema-ref-parser)
-- [ ] (low prio) Type.Tuple() via "array" instance type with minimalItems,
-      maximalItems and additionalItems false
+schema specs, support for other specs (draft-04, draft-06, draft-2019-09) should
+"just work". Feel free to open a discussion or issue when you find problems.
+Happy about contributions if you want to help out. Draft-2020 info can be found
+[here](https://github.com/sinclairzx81/typebox/issues/490) not expected to fully
+work.
 
 ## DEV/CONTRIBUTOR NOTES
 
-- If you have an idea or want to help implement something, feel free to do so.
-  Please always start by creating a discussion post to avoid any unnecessary
-  work.
-  - Please always create tests for new features that are implemented. This will
-    decrease mental overhead for reviewing and developing in the long run.
-- See specification for JSON schema draft-07
-  [here](https://json-schema.org/specification-links.html#draft-7). The meta
-  schema is also stored inside this repo under ./meta-schema-draft-07.json.
+If you have an idea or want to help implement something, feel free to do so.
+Please always start by creating an issue to avoid any unnecessary work on
+either side.
+
+Please always create tests for new features that are implemented. This will
+decrease mental overhead for reviewing and developing in the long run.
+
+To understand the JSON schema draft-07 you can check json-schema.org
+[here](https://json-schema.org/specification-links.html#draft-7). The meta
+schema can be found [here](https://json-schema.org/draft-07/schema).
 
 ## cli usage
 
@@ -261,19 +224,21 @@ The following text is the output that will be displayed when you issue
 
 ### Code coverage
 
-This project aims for high code coverage. When you add new features or fix a
-bug, please add a test for it. This is what I could get out of the [experimental
-code coverage](https://nodejs.org/api/test.html#collecting-code-coverage) from
-node test runner in v20.03.1. Was run with code from 28.06.2023.
+This project aims for a high code coverage. When you add new features or fix a
+bug, please add an according test for it. The current output (17.05.2024) looks
+like this:
 
-| File                           | Line % | Branch % | Funcs % |
-| ------------------------------ | ------ | -------- | ------- |
-| dist/src/programmatic-usage.js | 95.83  | 53.33    | 80.00   |
-| dist/src/schema-to-typebox.js  | 92.06  | 86.54    | 94.74   |
+| File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s            |
+| --------------------- | ------- | -------- | ------- | ------- | ---------------------------- |
+| All files             | 85.86   | 75       | 96.87   | 85.86   |
+| index.ts              | 100     | 100      | 100     | 100     |
+| programmatic-usage.ts | 100     | 66.66    | 100     | 100     | 30                           |
+| schema-matchers.ts    | 97.05   | 100      | 90.9    | 97.05   | 63-64                        |
+| schema-to-typebox.ts  | 81.4    | 72.64    | 100     | 81.4    | ...0,239,259,309-324,345-346 |
 
-While I enjoy using the test runner from nodejs itself,
-this feature is still lacking.
+You can inspect the code coverage in depth by running `npx http-server
+./coverage/lcov-report` and then browsing http://localhost:8080.
 
 ### Template Repo
 
-Template for the repo setup was taken from [here](https://github.com/xddq/nodejs-typescript-modern-starter).
+Template for this repo was taken from [here](https://github.com/xddq/nodejs-typescript-modern-starter).
