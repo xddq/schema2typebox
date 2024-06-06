@@ -18,6 +18,7 @@ import {
   NotSchema,
   ObjectSchema,
   OneOfSchema,
+  UnknownSchema,
   isAllOfSchema,
   isAnyOfSchema,
   isArraySchema,
@@ -28,6 +29,7 @@ import {
   isObjectSchema,
   isOneOfSchema,
   isSchemaWithMultipleTypes,
+  isUnknownSchema,
 } from "./schema-matchers";
 
 type Code = string;
@@ -86,6 +88,8 @@ export const collect = (schema: JSONSchema7Definition): Code => {
     return parseWithMultipleTypes(schema);
   } else if (isConstSchema(schema)) {
     return parseConst(schema);
+  } else if (isUnknownSchema(schema)) {
+    return parseUnknown(schema);
   } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
     return parseTypeName(schema.type, schema);
   }
@@ -211,6 +215,10 @@ export const parseConst = (schema: ConstSchema): Code => {
   return schemaOptions === undefined
     ? `Type.Literal(${schema.const})`
     : `Type.Literal(${schema.const}, ${schemaOptions})`;
+};
+
+export const parseUnknown = (_: UnknownSchema): Code => {
+  return "Type.Unknown()";
 };
 
 export const parseType = (type: JSONSchema7Type): Code => {

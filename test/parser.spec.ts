@@ -10,6 +10,7 @@ import {
   NotSchema,
   ObjectSchema,
   OneOfSchema,
+  UnknownSchema,
 } from "../src/schema-matchers";
 import {
   parseAllOf,
@@ -21,6 +22,7 @@ import {
   parseObject,
   parseOneOf,
   parseTypeName,
+  parseUnknown,
   parseWithMultipleTypes,
 } from "../src/schema-to-typebox";
 import { expectEqualIgnoreFormatting } from "./util";
@@ -130,6 +132,15 @@ describe("parser unit tests", () => {
       const result = parseEnum(dummySchema);
       expect(result).toContain("Type.Union");
       expect(result).toContain('{"$id":"AnyStringHere"}');
+    });
+  });
+
+  describe("parseUnknown() - when parsing an empty schema", () => {
+    it("returns Type.Unknown()", async () => {
+      const dummySchema: UnknownSchema = {};
+      const result = parseUnknown(dummySchema);
+
+      expect(result).toEqual("Type.Unknown()");
     });
   });
 
