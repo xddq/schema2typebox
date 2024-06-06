@@ -1,6 +1,6 @@
 # 1.7.5
 
-- support properties of type any and unknown (TODO: add link)
+- parse {} as UnknownSchema [src](https://github.com/xddq/schema2typebox/pull/51)
 
 # 1.7.4
 
