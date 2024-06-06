@@ -1,0 +1,20 @@
+# src: https://github.com/JS-DevTools/npm-publish
+on:
+  push:
+    branches: main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: ".nvmrc"
+      - name: Install Dependencies
+        run: yarn --immutable
+      - name: Compile
+        run: yarn compile
+      - uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
