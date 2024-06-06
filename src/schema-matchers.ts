@@ -52,6 +52,13 @@ export const isConstSchema = (schema: JSONSchema7): schema is ConstSchema => {
   return schema.const !== undefined;
 };
 
+export type UnknownSchema = JSONSchema7 & Record<string, never>;
+export const isUnknownSchema = (
+  schema: JSONSchema7
+): schema is UnknownSchema => {
+  return typeof schema === "object" && Object.keys(schema).length === 0;
+};
+
 export type MultipleTypesSchema = JSONSchema7 & { type: JSONSchema7TypeName[] };
 export const isSchemaWithMultipleTypes = (
   schema: JSONSchema7
