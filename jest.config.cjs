@@ -13,6 +13,7 @@ const config = {
   coverageReporters: ["lcov", "text"],
   collectCoverageFrom: [
     "src/*.ts",
+    "!src/bin.ts", // this is just the 'executable' to run the program
     "!**/node_modules/**",
     "!**/dist/**",
     "!**/*.(spec|test|d).ts",
