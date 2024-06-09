@@ -11,7 +11,7 @@ import { buildOsIndependentPath, expectEqualIgnoreFormatting } from "./util";
 
 const SHELLJS_RETURN_CODE_OK = 0;
 
-describe("programmatic usage - when running the programmatic usage", () => {
+describe("when running the programmatic usage", () => {
   test("generated typebox names are based on title attribute", async () => {
     const dummySchema = `
     {
@@ -25,7 +25,7 @@ describe("programmatic usage - when running the programmatic usage", () => {
       "required": ["name"]
     }
     `;
-    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated(`
     import { Static, Type } from "@sinclair/typebox";
 
     export type Contract = Static<typeof Contract>;
@@ -79,7 +79,7 @@ describe("programmatic usage - when running the programmatic usage", () => {
     }
     `;
 
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+      const expectedTypebox = addCommentThatCodeIsGenerated(`
       import { Static, Type } from "@sinclair/typebox";
 
 
@@ -154,7 +154,7 @@ describe("programmatic usage - when running the programmatic usage", () => {
         },
         required: ["type", "name"],
       };
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+      const expectedTypebox = addCommentThatCodeIsGenerated(`
       import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
@@ -203,7 +203,7 @@ describe("programmatic usage - when running the programmatic usage", () => {
         ],
       };
 
-      const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+      const expectedTypebox = addCommentThatCodeIsGenerated(`
       import { Static, Type } from "@sinclair/typebox";
 
       export type T = Static<typeof T>;
@@ -248,7 +248,7 @@ describe("programmatic usage - when running the programmatic usage", () => {
       "required": ["a"]
     }
     `;
-    const expectedTypebox = addCommentThatCodeIsGenerated.run(`
+    const expectedTypebox = addCommentThatCodeIsGenerated(`
       import {
         Kind,
         SchemaOptions,

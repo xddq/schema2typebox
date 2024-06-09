@@ -224,17 +224,18 @@ The following text is the output that will be displayed when you issue
 
 ### Code coverage
 
-This project aims for a high code coverage. When you add new features or fix a
-bug, please add an according test for it. The current output (17.05.2024) looks
-like this:
+This project aims for a high code coverage to keep maintenance low. When you add
+new features or fix a bug, please add an according test for it. The current
+(08.06.2024) coverage looks like this:
 
-| File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s            |
-| --------------------- | ------- | -------- | ------- | ------- | ---------------------------- |
-| All files             | 85.86   | 75       | 96.87   | 85.86   |
+| File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                |
+| --------------------- | ------- | -------- | ------- | ------- | -------------------------------- |
+| All files             | 94.76   | 89.87    | 97.29   | 94.76   |
+| cli.ts                | 100     | 100      | 100     | 100     |
 | index.ts              | 100     | 100      | 100     | 100     |
-| programmatic-usage.ts | 100     | 66.66    | 100     | 100     | 30                           |
-| schema-matchers.ts    | 97.05   | 100      | 90.9    | 97.05   | 63-64                        |
-| schema-to-typebox.ts  | 81.4    | 72.64    | 100     | 81.4    | ...0,239,259,309-324,345-346 |
+| programmatic-usage.ts | 100     | 100      | 100     | 100     |
+| schema-matchers.ts    | 97.33   | 100      | 91.66   | 97.33   | 70-71                            |
+| schema-to-typebox.ts  | 92.56   | 88.32    | 100     | 92.56   | ... (manually cut to fit readme) |
 
 You can inspect the code coverage in depth by running `npx http-server
 ./coverage/lcov-report` and then browsing http://localhost:8080.

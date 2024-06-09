@@ -66,10 +66,6 @@ export const isSchemaWithMultipleTypes = (
   return Array.isArray(schema.type);
 };
 
-export const isStringType = (type: JSONSchema7Type): type is string => {
-  return typeof type === "string";
-};
-
 export const isNullType = (type: JSONSchema7Type): type is null => {
   return type === null;
 };

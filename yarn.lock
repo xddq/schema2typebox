@@ -5237,8 +5237,8 @@ __metadata:
     shelljs: 0.8.5
     typescript: 5.0.4
   bin:
-    schema-to-typebox: dist/src/cli/index.js
-    schema2typebox: dist/src/cli/index.js
+    schema-to-typebox: dist/src/bin.js
+    schema2typebox: dist/src/bin.js
   languageName: unknown
   linkType: soft
 

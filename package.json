@@ -6,8 +6,8 @@
   "source": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "bin": {
-    "schema-to-typebox": "dist/src/cli/index.js",
-    "schema2typebox": "dist/src/cli/index.js"
+    "schema-to-typebox": "dist/src/bin.js",
+    "schema2typebox": "dist/src/bin.js"
   },
   "author": "Pierre Dahmani <hi@pierre-dev.com>",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "format:check": "prettier . --check",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "start": "node --enable-source-maps ./dist/src/index.js",
+    "start": "node --enable-source-maps ./dist/src/bin.js",
     "test": "jest --runInBand ."
   },
   "repository": {
@@ -43,7 +43,6 @@
   ],
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "9.0.9",
-    "@sinclair/typebox": "0.30.2",
     "cosmiconfig": "8.1.3",
     "fp-ts": "2.16.0",
     "minimist": "1.2.8",
@@ -56,6 +55,7 @@
     "@babel/preset-env": "7.24.5",
     "@babel/preset-typescript": "7.24.1",
     "@jest/globals": "29.7.0",
+    "@sinclair/typebox": "0.30.2",
     "@tsconfig/node18": "2.0.0",
     "@types/jest": "29.5.12",
     "@types/minimist": "1.2.2",
