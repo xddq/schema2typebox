@@ -32,17 +32,51 @@ import {
   isSchemaWithMultipleTypes,
   isUnknownSchema,
 } from "./schema-matchers";
+// import util from 'node:util';
 
 type Code = string;
+type ModuleEntries = Map<string, Code>;
 
 /** Generates TypeBox code from a given JSON schema */
-export const schema2typebox = async (jsonSchema: string) => {
-  const schemaObj = JSON.parse(jsonSchema);
-  const dereferencedSchema = (await $Refparser.dereference(
-    schemaObj
-  )) as JSONSchema7Definition;
+export const schema2typebox = async (jsonSchema: string | string[]) => {
+  const entries: ModuleEntries = new Map<string, Code>();
+  const schemas = Array.isArray(jsonSchema) ? jsonSchema : [jsonSchema];
+  const parsedSchemas = await Promise.all(
+    schemas.map((jsonSchema) => {
+      return $Refparser.dereference(
+        JSON.parse(jsonSchema)
+      ) as JSONSchema7Definition;
+    })
+  );
+  for (let i = 0; i < parsedSchemas.length; i++) {
+    const parsedSchema = parsedSchemas[i]!;
+    parseSchema(parsedSchema, entries);
+  }
+  const typeBoxType = Array.from(entries.entries())
+    .map(([key, value]) => {
+      return `${key}: ${value}`;
+    })
+    .join(",\n");
+  const typeAliases = Array.from(entries.keys())
+    .map((key) => {
+      return `export const ${key} = Module.Import('${key}');
+    ${createExportedTypeForName(key)};`;
+    })
+    .join("\n");
 
+  return `${createImportStatements()}
+
+${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
+export const Module = Type.Module({${typeBoxType}});
+${typeAliases}`;
+};
+
+const parseSchema = (
+  dereferencedSchema: JSONSchema7Definition,
+  entries: ModuleEntries
+) => {
   const exportedName = createExportNameForSchema(dereferencedSchema);
+
   // Ensuring that generated typebox code will contain an '$id' field.
   // see: https://github.com/xddq/schema2typebox/issues/32
   if (
@@ -51,14 +85,7 @@ export const schema2typebox = async (jsonSchema: string) => {
   ) {
     dereferencedSchema.$id = exportedName;
   }
-  const typeBoxType = collect(dereferencedSchema);
-  const exportedType = createExportedTypeForName(exportedName);
-
-  return `${createImportStatements()}
-
-${typeBoxType.includes("OneOf([") ? createOneOfTypeboxSupportCode() : ""}
-${exportedType}
-export const ${exportedName} = ${typeBoxType}`;
+  collect(dereferencedSchema, entries);
 };
 
 /**
@@ -67,38 +94,59 @@ export const ${exportedName} = ${typeBoxType}`;
  *
  * @throws Error if an unexpected schema (one with no matching parser) was given
  */
-export const collect = (schema: JSONSchema7Definition): Code => {
-  // TODO: boolean schema support..?
-  if (isBoolean(schema)) {
-    return JSON.stringify(schema);
-  } else if (isObjectSchema(schema)) {
-    return parseObject(schema);
-  } else if (isEnumSchema(schema)) {
-    return parseEnum(schema);
-  } else if (isAnyOfSchema(schema)) {
-    return parseAnyOf(schema);
-  } else if (isAllOfSchema(schema)) {
-    return parseAllOf(schema);
-  } else if (isOneOfSchema(schema)) {
-    return parseOneOf(schema);
-  } else if (isNotSchema(schema)) {
-    return parseNot(schema);
-  } else if (isArraySchema(schema)) {
-    return parseArray(schema);
-  } else if (isSchemaWithMultipleTypes(schema)) {
-    return parseWithMultipleTypes(schema);
-  } else if (isConstSchema(schema)) {
-    return parseConst(schema);
-  } else if (isUnknownSchema(schema)) {
-    return parseUnknown(schema);
-  } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
-    return parseTypeName(schema.type, schema);
+export const collect = (
+  schema: JSONSchema7Definition,
+  entries: ModuleEntries
+): Code => {
+  if (typeof schema === "object" && schema.$id !== undefined) {
+    const exportedName = createExportNameForSchema(schema);
+    if (entries.has(exportedName)) {
+      return `Type.Ref("${exportedName}")`;
+    }
+    // we add a placeholder to fill later
+    // this is so that we can support recursive types (we can tell we've already seen this entry)
+    entries.set(exportedName, ``);
   }
-  throw new Error(
-    `Unsupported schema. Did not match any type of the parsers. Schema was: ${JSON.stringify(
-      schema
-    )}`
-  );
+
+  const innerSchema = (() => {
+    // TODO: boolean schema support..?
+    if (isBoolean(schema)) {
+      return JSON.stringify(schema);
+    } else if (isObjectSchema(schema)) {
+      return parseObject(schema, entries);
+    } else if (isEnumSchema(schema)) {
+      return parseEnum(schema);
+    } else if (isAnyOfSchema(schema)) {
+      return parseAnyOf(schema, entries);
+    } else if (isAllOfSchema(schema)) {
+      return parseAllOf(schema, entries);
+    } else if (isOneOfSchema(schema)) {
+      return parseOneOf(schema, entries);
+    } else if (isNotSchema(schema)) {
+      return parseNot(schema, entries);
+    } else if (isArraySchema(schema)) {
+      return parseArray(schema, entries);
+    } else if (isSchemaWithMultipleTypes(schema)) {
+      return parseWithMultipleTypes(schema, entries);
+    } else if (isConstSchema(schema)) {
+      return parseConst(schema);
+    } else if (isUnknownSchema(schema)) {
+      return parseUnknown(schema);
+    } else if (schema.type !== undefined && !Array.isArray(schema.type)) {
+      return parseTypeName(schema.type, schema, entries);
+    }
+    throw new Error(
+      `Unsupported schema. Did not match any type of the parsers. Schema was: ${JSON.stringify(
+        schema
+      )}`
+    );
+  })();
+  if (typeof schema === "object" && schema.$id !== undefined) {
+    const exportedName = createExportNameForSchema(schema);
+    entries.set(exportedName, innerSchema);
+    return `Type.Ref("${exportedName}")`;
+  }
+  return innerSchema;
 };
 
 /**
@@ -167,7 +215,7 @@ const addOptionalModifier = (
     : `Type.Optional(${code})`;
 };
 
-export const parseObject = (schema: ObjectSchema) => {
+export const parseObject = (schema: ObjectSchema, entries: ModuleEntries) => {
   const schemaOptions = parseSchemaOptions(schema);
   const properties = schema.properties;
   const requiredProperties = schema.required;
@@ -184,7 +232,7 @@ export const parseObject = (schema: ObjectSchema) => {
   const code = attributes
     .map(([propertyName, schema]) => {
       return `"${propertyName}": ${addOptionalModifier(
-        collect(schema),
+        collect(schema, entries),
         propertyName,
         requiredProperties
       )}`;
@@ -250,63 +298,81 @@ export const parseType = (type: JSONSchema7Type): Code => {
   }
 };
 
-export const parseAnyOf = (schema: AnyOfSchema): Code => {
+export const parseAnyOf = (
+  schema: AnyOfSchema,
+  entries: ModuleEntries
+): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   const code = schema.anyOf.reduce<string>((acc, schema) => {
-    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
+    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema, entries)}`;
   }, "");
   return schemaOptions === undefined
     ? `Type.Union([${code}])`
     : `Type.Union([${code}], ${schemaOptions})`;
 };
 
-export const parseAllOf = (schema: AllOfSchema): Code => {
+export const parseAllOf = (
+  schema: AllOfSchema,
+  entries: ModuleEntries
+): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   const code = schema.allOf.reduce<string>((acc, schema) => {
-    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
+    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema, entries)}`;
   }, "");
   return schemaOptions === undefined
     ? `Type.Intersect([${code}])`
     : `Type.Intersect([${code}], ${schemaOptions})`;
 };
 
-export const parseOneOf = (schema: OneOfSchema): Code => {
+export const parseOneOf = (
+  schema: OneOfSchema,
+  entries: ModuleEntries
+): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   const code = schema.oneOf.reduce<string>((acc, schema) => {
-    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
+    return acc + `${acc === "" ? "" : ",\n"} ${collect(schema, entries)}`;
   }, "");
   return schemaOptions === undefined
     ? `OneOf([${code}])`
     : `OneOf([${code}], ${schemaOptions})`;
 };
 
-export const parseNot = (schema: NotSchema): Code => {
+export const parseNot = (schema: NotSchema, entries: ModuleEntries): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   return schemaOptions === undefined
-    ? `Type.Not(${collect(schema.not)})`
-    : `Type.Not(${collect(schema.not)}, ${schemaOptions})`;
+    ? `Type.Not(${collect(schema.not, entries)})`
+    : `Type.Not(${collect(schema.not, entries)}, ${schemaOptions})`;
 };
 
-export const parseArray = (schema: ArraySchema): Code => {
+export const parseArray = (
+  schema: ArraySchema,
+  entries: ModuleEntries
+): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   if (Array.isArray(schema.items)) {
     const code = schema.items.reduce<string>((acc, schema) => {
-      return acc + `${acc === "" ? "" : ",\n"} ${collect(schema)}`;
+      return acc + `${acc === "" ? "" : ",\n"} ${collect(schema, entries)}`;
     }, "");
     return schemaOptions === undefined
       ? `Type.Array(Type.Union(${code}))`
       : `Type.Array(Type.Union(${code}),${schemaOptions})`;
   }
-  const itemsType = schema.items ? collect(schema.items) : "Type.Unknown()";
+  const itemsType = schema.items
+    ? collect(schema.items, entries)
+    : "Type.Unknown()";
   return schemaOptions === undefined
     ? `Type.Array(${itemsType})`
     : `Type.Array(${itemsType},${schemaOptions})`;
 };
 
-export const parseWithMultipleTypes = (schema: MultipleTypesSchema): Code => {
+export const parseWithMultipleTypes = (
+  schema: MultipleTypesSchema,
+  entries: ModuleEntries
+): Code => {
   const code = schema.type.reduce<string>((acc, typeName) => {
     return (
-      acc + `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName, schema)}`
+      acc +
+      `${acc === "" ? "" : ",\n"} ${parseTypeName(typeName, schema, entries)}`
     );
   }, "");
   return `Type.Union([${code}])`;
@@ -314,7 +380,8 @@ export const parseWithMultipleTypes = (schema: MultipleTypesSchema): Code => {
 
 export const parseTypeName = (
   type: JSONSchema7TypeName,
-  schema: JSONSchema7 = {}
+  schema: JSONSchema7 = {},
+  entries: ModuleEntries = new Map()
 ): Code => {
   const schemaOptions = parseSchemaOptions(schema);
   if (type === "number" || type === "integer") {
@@ -334,11 +401,11 @@ export const parseTypeName = (
       ? "Type.Null()"
       : `Type.Null(${schemaOptions})`;
   } else if (type === "object") {
-    return parseObject(schema as ObjectSchema);
+    return parseObject(schema as ObjectSchema, entries);
     // We don't want to trust on build time checking here, json can contain anything
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   } else if (type === "array") {
-    return parseArray(schema as ArraySchema);
+    return parseArray(schema as ArraySchema, entries);
   }
   throw new Error(`Should never happen..? parseType got type: ${type}`);
 };

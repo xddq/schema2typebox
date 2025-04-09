@@ -6,7 +6,7 @@ export type Schema2TypeboxOptions = {
   /**
    * The given JSON schema as utf-8 encoded string.
    */
-  input: string;
+  input: string | string[];
 };
 
 /**

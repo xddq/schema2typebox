@@ -1,0 +1,27 @@
+{
+  "$id": "recursive.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "label": {
+      "anyOf": [
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "value": {
+      "$id": "inner.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "cat"
+        }
+      },
+      "title": "Cat",
+      "type": "object"
+    }
+  },
+  "title": "Multi",
+  "type": "object"
+}

@@ -1,4 +1,5 @@
 import { describe, it } from "@jest/globals";
+import glob from "glob";
 import * as fs from "node:fs";
 import * as cli from "../src/cli";
 import * as programmaticUsage from "../src/programmatic-usage";
@@ -9,6 +10,17 @@ jest.mock<typeof fs>("node:fs", () => {
     ...actualModule,
     writeFileSync: jest.fn(),
     readFileSync: jest.fn(),
+  };
+});
+
+jest.mock<typeof glob>("glob", () => {
+  const actualModule = jest.requireActual<typeof glob>("glob");
+  const globFn: (typeof glob)["glob"] = (async () => {
+    return ["dummyschema.json"];
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {
+    ...actualModule,
+    glob: globFn,
   };
 });
 
@@ -91,13 +103,12 @@ describe("when running the cli", () => {
   });
 
   it(`reads from file '${cli.DEFAULT_INPUT_FILE_NAME}' without an 'input' argument`, async () => {
-    const input = "dummyschema.json";
-    process.argv = ["node", "dist/src/cli/index.js", "--input", input];
+    process.argv = ["node", "dist/src/cli/index.js"];
     process.stdout.write = jest.fn();
     await cli.runCli();
     expect(fs.readFileSync).toHaveBeenCalledTimes(1);
     expect(fs.readFileSync).toHaveBeenCalledWith(
-      expect.stringContaining(input),
+      expect.stringContaining(cli.DEFAULT_INPUT_FILE_NAME),
       expect.any(String)
     );
     expect(process.stdout.write).not.toHaveBeenCalled();
@@ -111,6 +122,20 @@ describe("when running the cli", () => {
     expect(fs.readFileSync).toHaveBeenCalledTimes(1);
     expect(fs.readFileSync).toHaveBeenCalledWith(
       expect.stringContaining(input),
+      expect.any(String)
+    );
+    expect(process.stdout.write).not.toHaveBeenCalled();
+  });
+
+  it(`reads from file based on glob 'input' argument`, async () => {
+    const fullInput = "dummyschema.json";
+    const globInput = "dummy*.json";
+    process.argv = ["node", "dist/src/cli/index.js", "--input", globInput];
+    process.stdout.write = jest.fn();
+    await cli.runCli();
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+    expect(fs.readFileSync).toHaveBeenCalledWith(
+      expect.stringContaining(fullInput),
       expect.any(String)
     );
     expect(process.stdout.write).not.toHaveBeenCalled();

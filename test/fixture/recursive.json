@@ -1,0 +1,18 @@
+{
+  "$id": "recursive.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "label": {
+      "anyOf": [
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "value": {
+      "$ref": "#"
+    }
+  },
+  "title": "RecursiveType",
+  "type": "object"
+}

@@ -1,3 +1,4 @@
+import { glob } from "glob";
 import minimist from "minimist";
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -21,8 +22,16 @@ export const runCli = async () => {
     return process.stdout.write(HELP_TEXT);
   }
 
+  const inputPath: string = createInputPath(args.input);
+  const isGlob = inputPath.includes("*");
   const typeboxCode = await schema2typebox({
-    input: readFileSync(createInputPath(args.input), "utf-8"),
+    input: isGlob
+      ? (
+          await glob(inputPath)
+        ).map((file) => {
+          return readFileSync(file, "utf-8");
+        })
+      : readFileSync(inputPath, "utf-8"),
   });
 
   if (args["output-stdout"]) {
