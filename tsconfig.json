@@ -16,5 +16,5 @@
     "declaration": true
   },
   "include": ["src", "test"],
-  "exclude": ["dist", "bundle", "node_modules"]
+  "exclude": ["dist", "bundle", "test/fixture", "node_modules"]
 }

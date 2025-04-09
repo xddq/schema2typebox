@@ -37,39 +37,42 @@ const OneOf = <T extends TSchema[]>(
     oneOf,
   });
 
-export type DayOfWeek = Static<typeof DayOfWeek>;
-export const DayOfWeek = OneOf(
-  [
-    Type.Literal("Friday", {
-      description: "The day of the week between Thursday and Saturday.",
-    }),
-    Type.Literal("Monday", {
-      description: "The day of the week between Sunday and Tuesday.",
-    }),
-    Type.Literal("PublicHolidays", {
+export const Module = Type.Module({
+  DayOfWeek: OneOf(
+    [
+      Type.Literal("Friday", {
+        description: "The day of the week between Thursday and Saturday.",
+      }),
+      Type.Literal("Monday", {
+        description: "The day of the week between Sunday and Tuesday.",
+      }),
+      Type.Literal("PublicHolidays", {
+        description:
+          'This stands for any day that is a public holiday; it is a placeholder for all official public holidays in some particular location. While not technically a "day of the week", it can be used with [[OpeningHoursSpecification]]. In the context of an opening hours specification it can be used to indicate opening hours on public holidays, overriding general opening hours for the day of the week on which a public holiday occurs.',
+      }),
+      Type.Literal("Saturday", {
+        description: "The day of the week between Friday and Sunday.",
+      }),
+      Type.Literal("Sunday", {
+        description: "The day of the week between Saturday and Monday.",
+      }),
+      Type.Literal("Thursday", {
+        description: "The day of the week between Wednesday and Friday.",
+      }),
+      Type.Literal("Tuesday", {
+        description: "The day of the week between Monday and Wednesday.",
+      }),
+      Type.Literal("Wednesday", {
+        description: "The day of the week between Tuesday and Thursday.",
+      }),
+    ],
+    {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "schema:DayOfWeek",
       description:
-        'This stands for any day that is a public holiday; it is a placeholder for all official public holidays in some particular location. While not technically a "day of the week", it can be used with [[OpeningHoursSpecification]]. In the context of an opening hours specification it can be used to indicate opening hours on public holidays, overriding general opening hours for the day of the week on which a public holiday occurs.',
-    }),
-    Type.Literal("Saturday", {
-      description: "The day of the week between Friday and Sunday.",
-    }),
-    Type.Literal("Sunday", {
-      description: "The day of the week between Saturday and Monday.",
-    }),
-    Type.Literal("Thursday", {
-      description: "The day of the week between Wednesday and Friday.",
-    }),
-    Type.Literal("Tuesday", {
-      description: "The day of the week between Monday and Wednesday.",
-    }),
-    Type.Literal("Wednesday", {
-      description: "The day of the week between Tuesday and Thursday.",
-    }),
-  ],
-  {
-    $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: "schema:DayOfWeek",
-    description:
-      "The day of the week, e.g. used to specify to which day the opening hours of an OpeningHoursSpecification refer.\n\nOriginally, URLs from [GoodRelations](http://purl.org/goodrelations/v1) were used (for [[Monday]], [[Tuesday]], [[Wednesday]], [[Thursday]], [[Friday]], [[Saturday]], [[Sunday]] plus a special entry for [[PublicHolidays]]); these have now been integrated directly into schema.org.\n      ",
-  }
-);
+        "The day of the week, e.g. used to specify to which day the opening hours of an OpeningHoursSpecification refer.\n\nOriginally, URLs from [GoodRelations](http://purl.org/goodrelations/v1) were used (for [[Monday]], [[Tuesday]], [[Wednesday]], [[Thursday]], [[Friday]], [[Saturday]], [[Sunday]] plus a special entry for [[PublicHolidays]]); these have now been integrated directly into schema.org.\n      ",
+    }
+  )
+});
+export const DayOfWeek = Module.Import("DayOfWeek");
+export type DayOfWeek = Static<typeof DayOfWeek>;

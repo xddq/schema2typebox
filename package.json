@@ -1,6 +1,6 @@
 {
   "name": "schema2typebox",
-  "version": "1.7.6",
+  "version": "1.8.0",
   "main": "dist/src/index.js",
   "description": "Creates typebox code from JSON schemas",
   "source": "dist/src/index.js",
@@ -56,7 +56,7 @@
     "@babel/preset-env": "7.24.5",
     "@babel/preset-typescript": "7.24.1",
     "@jest/globals": "29.7.0",
-    "@sinclair/typebox": "0.30.2",
+    "@sinclair/typebox": "0.34.33",
     "@tsconfig/node18": "2.0.0",
     "@types/jest": "29.5.12",
     "@types/minimist": "1.2.2",

@@ -136,6 +136,7 @@ dist
 bundle
 dist
 node_modules
+test/fixture
 TODO
 # prettierignore specific
 .yarn

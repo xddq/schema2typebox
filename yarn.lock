@@ -1856,10 +1856,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinclair/typebox@npm:0.30.2":
-  version: 0.30.2
-  resolution: "@sinclair/typebox@npm:0.30.2"
-  checksum: ddb5368b6a11b953edd511d62e4b575c46bafabcc7de815f64be7f34dbfc63649ef1651c0687af952ac6a9b3aba03d2f91ec0dd9ec7d8a1ca24e35b4d6e60ac9
+"@sinclair/typebox@npm:0.34.33":
+  version: 0.34.33
+  resolution: "@sinclair/typebox@npm:0.34.33"
+  checksum: 8393956081079c700a563bc6fd977492be019d0492d92dbc15ff98a011d91c612673535bbbb786d1b8b7a39791a724d301e013d8c903992eed8ebf7e7340686d
   languageName: node
   linkType: hard
 
@@ -5214,7 +5214,7 @@ __metadata:
     "@babel/preset-env": 7.24.5
     "@babel/preset-typescript": 7.24.1
     "@jest/globals": 29.7.0
-    "@sinclair/typebox": 0.30.2
+    "@sinclair/typebox": 0.34.33
     "@tsconfig/node18": 2.0.0
     "@types/jest": 29.5.12
     "@types/minimist": 1.2.2

@@ -1,3 +1,8 @@
+# 1.8.0
+
+- migrate to the Typebox [modules](https://github.com/sinclairzx81/typebox?tab=readme-ov-file#types-modules) to support recursive types [src](https://github.com/xddq/schema2typebox/pull/51)
+- export any inner schema with an `$id` instead of only the top-level type [src](https://github.com/xddq/schema2typebox/pull/51)
+
 # 1.7.5
 
 - support `title` fields containing characters '- .\_' [src](https://github.com/xddq/schema2typebox/pull/53)
