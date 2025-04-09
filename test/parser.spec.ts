@@ -112,6 +112,77 @@ describe("parser unit tests", () => {
       const expectedResult = `Type.Object({a: Type.Optional(Type.Number()),\n b: Type.String()}, { $id: "AnyStringHere" })`;
       await expectEqualIgnoreFormatting(expectedResult, result);
     });
+    it("create add record to object if patternProperties attribute is present", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        properties: {
+          builtin: { type: "number" },
+          nested: {
+            type: "object",
+            properties: {
+              a: { type: "string" },
+              b: { type: "number" },
+            },
+          },
+        },
+        patternProperties: {
+          "^S_": { type: "string" },
+          "^I_": { type: "integer" },
+        },
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `
+        Type.Object({
+          builtin: Type.Number(),
+          nested: Type.Object({
+            a: Type.String(),
+            b: Type.Number(),
+          }),
+          #######
+          Don't Know What to Expect here: 
+          #######
+          Type.Union(
+            [
+              Type.Record(Type.String({pattern:"^S_"}), Type.String()), 
+              Type.Record(Type.String({pattern: "^I_"}), Type.Number())
+            ]),
+        })
+      `;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
+    it("create a record type if patternProperties is present (array)", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        patternProperties: {
+          "^(.*)$": {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `Type.Record(Type.String({pattern:"^(.*)$"}), Type.Array(Type.String()))`;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
+    it("create an union with record types if patternProperties with multiple keys is present", async () => {
+      const dummySchema: ObjectSchema = {
+        type: "object",
+        patternProperties: {
+          "^S_": { type: "string" },
+          "^I_": { type: "integer" },
+        },
+        additionalProperties: false,
+      };
+      const result = parseObject(dummySchema);
+      const expectedResult = `
+        Type.Union([
+          Type.Record(Type.String({pattern:"^S_"}), Type.String(), {additionalProperties: false}), 
+          Type.Record(Type.String({pattern: "^I_"}), Type.Number(), {additionalProperties: false})
+          ])`;
+      await expectEqualIgnoreFormatting(expectedResult, result);
+    });
   });
 
   describe("parseEnum() - when parsing an enum schema", () => {
