@@ -172,6 +172,14 @@ export const parseObject = (schema: ObjectSchema) => {
   const properties = schema.properties;
   const requiredProperties = schema.required;
   if (properties === undefined) {
+    // If no properties are defined but additionalProperties exists, generate Type.Record
+    if (
+      schema.additionalProperties &&
+      typeof schema.additionalProperties === "object"
+    ) {
+      const valueType = collect(schema.additionalProperties);
+      return `Type.Record(Type.String(), ${valueType})`;
+    }
     return `Type.Unknown()`;
   }
   const attributes = Object.entries(properties);
