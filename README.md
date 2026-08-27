@@ -157,6 +157,28 @@ export const Contract = Type.Object({
 
 ```
 
+### Recursive schemas
+
+Self-referential schemas (for example a condition tree where a node contains an
+array of nested nodes) are supported. `schema2typebox` detects the recursion and
+emits [`Type.Recursive`](https://github.com/sinclairzx81/typebox#types-recursive):
+
+```ts
+export const RecursiveCondition = Type.Recursive((This) =>
+  Type.Union([
+    Type.Object({ type: Type.Literal("leaf"), value: Type.Number() }),
+    Type.Object({
+      type: Type.Literal("and"),
+      conditions: Type.Array(This),
+    }),
+  ])
+);
+```
+
+Note: `oneOf` branches that contain the recursive self-reference are emitted as
+`Type.Union` (rather than the custom `OneOf` helper) because the helper cannot
+dereference a self-reference at validation time.
+
 Please take a look at the [feature list](feature-list) below to see the
 currently supported features. For examples, take a look into the
 [examples](https://github.com/xddq/schema2typebox/tree/main/examples) folder.

@@ -1,3 +1,10 @@
+# 1.8.0
+
+- support recursive / self-referential JSON schemas: emit `Type.Recursive(...)`
+  instead of crashing on circular `$ref` graphs. Recursive `oneOf` branches are
+  emitted as `Type.Union` so self-references validate correctly.
+  [src](https://github.com/xddq/schema2typebox/issues/62)
+
 # 1.7.8
 
 - Support empty `properties` field like `{"type": "object", "properties": {}}`, suport additionalProperties when other properties are defined [src](https://github.com/xddq/schema2typebox/pull/59)

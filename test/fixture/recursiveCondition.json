@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RecursiveCondition",
+  "$defs": {
+    "Leaf": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "leaf", "type": "string" },
+        "value": { "type": "number" }
+      },
+      "required": ["type", "value"]
+    },
+    "AndNode": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "and", "type": "string" },
+        "conditions": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/Leaf" }, { "$ref": "#/$defs/AndNode" }]
+          }
+        }
+      },
+      "required": ["type", "conditions"]
+    }
+  },
+  "oneOf": [{ "$ref": "#/$defs/Leaf" }, { "$ref": "#/$defs/AndNode" }]
+}

@@ -159,6 +159,23 @@ describe("parser unit tests", () => {
     });
   });
 
+  describe("parseSchemaOptions() - via parseObject", () => {
+    it("does not crash and omits a circular $defs container", () => {
+      // Build a recursive object graph by hand: node.$defs.Self === node.
+      const node = {
+        type: "object",
+        properties: { value: { type: "number" } },
+        required: ["value"],
+      } as Record<string, unknown>;
+      (node as Record<string, unknown>).$defs = { Self: node }; // circular
+
+      // Must not throw "Converting circular structure to JSON".
+      const result = parseObject(node as unknown as ObjectSchema);
+      expect(result).not.toContain("$defs");
+      expect(result).toContain("Type.Object");
+    });
+  });
+
   describe("parseEnum() - when parsing an enum schema", () => {
     it("returns Type.Union()", () => {
       const dummySchema: EnumSchema = {
