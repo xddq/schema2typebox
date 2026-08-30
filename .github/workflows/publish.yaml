@@ -3,6 +3,10 @@ on:
   push:
     branches: main
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,5 +21,6 @@ jobs:
       - name: Install Dependencies
         run: yarn --immutable
       - name: Compile
-        run: yarn compile
-      - uses: JS-DevTools/npm-publish@v4
+        run: yarn read
+      - name: publish
+        run: npm publish
