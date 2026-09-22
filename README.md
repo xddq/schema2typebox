@@ -1,3 +1,5 @@
+
+
 <h1 align="center">
     Schema2TypeBox
 </h1>
@@ -179,7 +181,7 @@ Note: `oneOf` branches that contain the recursive self-reference are emitted as
 `Type.Union` (rather than the custom `OneOf` helper) because the helper cannot
 dereference a self-reference at validation time.
 
-Please take a look at the [feature list](feature-list) below to see the
+Please take a look at the [Schema Support](#schema-support) below to see the
 currently supported features. For examples, take a look into the
 [examples](https://github.com/xddq/schema2typebox/tree/main/examples) folder.
 You can also check the test cases, every feature is tested.
